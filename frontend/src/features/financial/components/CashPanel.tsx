@@ -17,9 +17,9 @@ import {
   openCashPeriod,
 } from '../api/cash-api';
 import {
+  IDENTIFICACOES_LOCAL,
   OUTRO_LOCAL,
   RESOURCE_KINDS,
-  RESOURCE_KIND_SUGGESTIONS,
   type CashPeriod,
   type ResourceAccount,
 } from '../types/cash';
@@ -32,9 +32,12 @@ export function CashPanel() {
   const [idLocal, setIdLocal] = useState('');
   const [customName, setCustomName] = useState('');
   const [kind, setKind] = useState('CASH');
-  // Nome que vai para o cadastro: sugestão escolhida ou o nome próprio digitado.
+  // Nome que vai para o cadastro: sugestão escolhida (o valor carrega o tipo junto) ou o nome digitado.
   const selectedName =
-    idLocal === OUTRO_LOCAL ? customName.trim() : idLocal;
+    idLocal === OUTRO_LOCAL
+      ? customName.trim()
+      : (IDENTIFICACOES_LOCAL.find((x) => `${x.kind}:${x.name}` === idLocal)
+          ?.name ?? '');
   const [month, setMonth] = useState(
     new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' })
       .format(new Date())
@@ -115,12 +118,19 @@ export function CashPanel() {
               <Select
                 label="Identificação do local"
                 value={idLocal}
-                onChange={(e) => setIdLocal(e.target.value)}
+                onChange={(e) => {
+                  const escolhido = IDENTIFICACOES_LOCAL.find(
+                    (x) => `${x.kind}:${x.name}` === e.target.value,
+                  );
+                  setIdLocal(e.target.value);
+                  if (escolhido) setKind(escolhido.kind);
+                }}
                 options={[
                   { value: '', label: 'Selecione…' },
-                  ...RESOURCE_KIND_SUGGESTIONS[
-                    kind as keyof typeof RESOURCE_KIND_SUGGESTIONS
-                  ].map((s) => ({ value: s, label: s })),
+                  ...IDENTIFICACOES_LOCAL.map((x) => ({
+                    value: `${x.kind}:${x.name}`,
+                    label: `${x.name} · ${RESOURCE_KINDS[x.kind]}`,
+                  })),
                   { value: OUTRO_LOCAL, label: 'Outro (digitar)' },
                 ]}
               />

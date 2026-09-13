@@ -2,6 +2,31 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` (tela) · Identificação do local em lista única (bancos visíveis de imediato)
+
+**Alteração**
+
+- O campo **"Identificação do local"** passou a ser **uma lista única**: Dinheiro (gaveta) · **Banco do
+  Brasil, Caixa Econômica, Itaú, Nubank, Santander, Mercado Pago** · Maquineta principal · Maquineta 2 ·
+  "Outro (digitar)". Antes a lista era **filtrada pelo "Tipo de local"**, que já vinha em "Espécie" — então
+  os bancos só apareciam depois de trocar o tipo, e na primeira abertura do formulário a pessoa via
+  apenas "Dinheiro (gaveta)".
+- Escolher a identificação **define o tipo automaticamente** (`Banco do Brasil` → Banco; `Maquineta 2` →
+  Conta de maquineta; `Dinheiro (gaveta)` → Espécie). O campo "Tipo de local" continua no formulário,
+  refletindo a escolha e servindo ao caso "Outro (digitar)".
+- Cada opção mostra o tipo junto (`Banco do Brasil · Banco`), para não confundir o que é conta do que é
+  maquineta.
+- **Sem backend, sem migração e sem mudança de dados.**
+
+**Impacto**
+
+- A causa era o **passo intermediário** que eu havia criado: a lista dependia do tipo escolhido.
+  Agora não existe mais ordem obrigatória entre os campos.
+- Locais já cadastrados continuam valendo com o nome e o tipo que têm.
+- `tsc`, `oxlint` e build do frontend aprovados; conferido em navegador real (390px): as dez opções
+  aparecem de uma vez, e cada escolha grava com o tipo derivado (Banco do Brasil · Banco,
+  Maquineta 2 · Conta de maquineta, Dinheiro (gaveta) · Espécie), sem erro de tela.
+
 ## 2026-09-13 · `financial` · Saldo total do caixa = soma dos locais (consolidado)
 
 **Alteração**
