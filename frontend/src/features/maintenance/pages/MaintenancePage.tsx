@@ -37,9 +37,16 @@ export function MaintenancePage() {
   const [busca, setBusca] = useState('');
   const [active, setActive] = useState<'true' | 'false' | ''>('');
   const [page, setPage] = useState(1);
+  /**
+   * `token` sobe a cada ação do usuário (filtro, tipo, página) e é o que dispara a busca.
+   * `carregadoToken` marca qual delas já voltou — assim `loading` é **derivado** e nunca fica
+   * preso em "Carregando…" quando a ação não muda nenhum filtro (ex.: refiltrar o mesmo valor).
+   */
+  const [token, setToken] = useState(0);
+  const [carregadoToken, setCarregadoToken] = useState(-1);
   const [itens, setItens] = useState<MaintenanceItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const loading = carregadoToken !== token;
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<MaintenanceItem | null>(null);
@@ -51,6 +58,13 @@ export function MaintenancePage() {
       .then((resumo) => setContagens(resumo.counts))
       .catch(() => setContagens({}));
   }, [recarregar]);
+
+  const buscar = () => setToken((atual) => atual + 1);
+  /** Recarrega lista **e** contagens — usado depois de editar/inativar/reativar. */
+  const recarregarTudo = () => {
+    setRecarregar((atual) => atual + 1);
+    buscar();
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -73,10 +87,10 @@ export function MaintenancePage() {
         if (!controller.signal.aborted) setError(describeApiError(falha));
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setCarregadoToken(token);
       });
     return () => controller.abort();
-  }, [type, busca, active, page, recarregar]);
+  }, [type, busca, active, page, token]);
 
   async function executar(
     item: MaintenanceItem,
@@ -86,7 +100,7 @@ export function MaintenancePage() {
     setError(null);
     try {
       await trabalho();
-      setRecarregar((x) => x + 1);
+      recarregarTudo();
     } catch (falha) {
       setError(describeApiError(falha));
     } finally {
@@ -106,18 +120,18 @@ export function MaintenancePage() {
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
           onSubmit={(evento) => {
             evento.preventDefault();
-            setLoading(true);
             setPage(1);
             setBusca(search.trim());
+            buscar();
           }}
         >
           <Select
             label="Cadastro"
             value={type}
             onChange={(e) => {
-              setLoading(true);
               setType(e.target.value as MaintenanceType);
               setPage(1);
+              buscar();
             }}
             options={MAINTENANCE_TYPE_ORDER.map((valor) => ({
               value: valor,
@@ -137,9 +151,9 @@ export function MaintenancePage() {
             label="Situação"
             value={active}
             onChange={(e) => {
-              setLoading(true);
               setActive(e.target.value as 'true' | 'false' | '');
               setPage(1);
+              buscar();
             }}
             options={[
               { value: '', label: 'Ativos e inativos' },
@@ -185,8 +199,8 @@ export function MaintenancePage() {
                   setSearch('');
                   setBusca('');
                   setActive('');
-                  setLoading(true);
                   setPage(1);
+                  buscar();
                 }}
               >
                 Limpar filtros
@@ -265,8 +279,8 @@ export function MaintenancePage() {
           total={total}
           totalPages={Math.max(1, Math.ceil(total / TAMANHO_PAGINA))}
           onChange={(nova) => {
-            setLoading(true);
             setPage(nova);
+            buscar();
           }}
         />
       </Card>
@@ -278,7 +292,7 @@ export function MaintenancePage() {
           onClose={() => setEditando(null)}
           onSaved={() => {
             setEditando(null);
-            setRecarregar((x) => x + 1);
+            recarregarTudo();
           }}
         />
       ) : null}

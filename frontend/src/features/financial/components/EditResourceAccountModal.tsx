@@ -6,18 +6,15 @@ import { Modal } from '../../../shared/components/Modal';
 import { Select } from '../../../shared/components/Select';
 import { updateResourceAccount } from '../api/cash-api';
 import {
-  IDENTIFICACOES_LOCAL,
   OUTRO_LOCAL,
   RESOURCE_KINDS,
-  type ResourceAccount,
-} from '../types/cash';
+  identificacaoEscolhida,
+  identificacoesOpcoes,
+  valorDaIdentificacao,
+} from '../../../shared/data/locais-recurso';
+import type { ResourceAccount } from '../types/cash';
 
-function valorDaIdentificacao(account: ResourceAccount) {
-  const conhecida = IDENTIFICACOES_LOCAL.find(
-    (x) => x.name === account.name && x.kind === account.kind,
-  );
-  return conhecida ? `${conhecida.kind}:${conhecida.name}` : OUTRO_LOCAL;
-}
+
 
 /**
  * Corrige a identificação do local. O saldo é ligado ao id do local, então renomear
@@ -33,9 +30,10 @@ export function EditResourceAccountModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [idLocal, setIdLocal] = useState(() => valorDaIdentificacao(account));
-  const [outroNome, setOutroNome] = useState(() =>
-    valorDaIdentificacao(account) === OUTRO_LOCAL ? account.name : '',
+  const inicial = valorDaIdentificacao(account.name, account.kind);
+  const [idLocal, setIdLocal] = useState(inicial);
+  const [outroNome, setOutroNome] = useState(
+    inicial === OUTRO_LOCAL ? account.name : '',
   );
   const [kind, setKind] = useState<string>(account.kind);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +41,7 @@ export function EditResourceAccountModal({
   const nome =
     idLocal === OUTRO_LOCAL
       ? outroNome.trim()
-      : (IDENTIFICACOES_LOCAL.find((x) => `${x.kind}:${x.name}` === idLocal)
-          ?.name ?? '');
+      : (identificacaoEscolhida(idLocal)?.name ?? '');
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -68,36 +65,31 @@ export function EditResourceAccountModal({
           label="Identificação do local"
           value={idLocal}
           onChange={(e) => {
-            const escolhido = IDENTIFICACOES_LOCAL.find(
-              (x) => `${x.kind}:${x.name}` === e.target.value,
-            );
+            const escolhido = identificacaoEscolhida(e.target.value);
             setIdLocal(e.target.value);
             if (escolhido) setKind(escolhido.kind);
           }}
-          options={[
-            ...IDENTIFICACOES_LOCAL.map((x) => ({
-              value: `${x.kind}:${x.name}`,
-              label: `${x.name} · ${RESOURCE_KINDS[x.kind]}`,
-            })),
-            { value: OUTRO_LOCAL, label: 'Outro (digitar)' },
-          ]}
+          options={identificacoesOpcoes()}
         />
-        <Select
-          label="Tipo de local"
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-          options={Object.entries(RESOURCE_KINDS).map(([value, label]) => ({
-            value,
-            label,
-          }))}
-        />
+        {/* O tipo só é perguntado no nome próprio: na lista sugerida ele já vem junto. */}
         {idLocal === OUTRO_LOCAL ? (
-          <Input
-            label="Nome do local"
-            required
-            value={outroNome}
-            onChange={(e) => setOutroNome(e.target.value)}
-          />
+          <>
+            <Select
+              label="Tipo de local"
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+              options={Object.entries(RESOURCE_KINDS).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
+            <Input
+              label="Nome do local"
+              required
+              value={outroNome}
+              onChange={(e) => setOutroNome(e.target.value)}
+            />
+          </>
         ) : null}
         <p className="text-xs text-slate-500">
           Renomear não altera valores: o saldo é ligado ao local, não ao nome.

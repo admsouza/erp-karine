@@ -2,6 +2,43 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` + `maintenance` (tela) · Lista única de identificação, sem o tipo redundante
+
+**Alteração**
+
+- **"Tipo de local" só é perguntado quando o nome é próprio.** Na lista de identificação o tipo já vem
+  junto (`Itaú · Banco`), então pedir de novo era redundante — o campo some no cadastro (Financeiro →
+  Caixa) e na edição, e aparece apenas com **"Outro (digitar)"** (aí sim é preciso dizer se é espécie,
+  banco ou maquineta).
+- **A Manutenção de cadastros passou a editar o local pela mesma lista de identificação** (era campo de
+  texto). Escolher `Nubank · Banco` corrige nome **e** tipo de uma vez; nome fora da lista continua
+  possível por "Outro (digitar)".
+- **Catálogo em um lugar só**: as identificações (espécie, bancos, maquinetas) saíram de
+  `features/financial/types/cash.ts` para **`shared/data/locais-recurso.ts`**, usado pelas duas features
+  — decisão 7.50. Antes, incluir um banco novo teria que ser feito em duas listas.
+- **Correção de travamento em "Carregando…"**: o `loading` da tela de manutenção passou a ser
+  **derivado** de um token de busca (decisão 7.51). Antes, uma ação que não mudasse filtro nenhum
+  (refiltrar o mesmo valor, limpar filtros já vazios) ligava o `loading` e o efeito não re-disparava —
+  a lista ficava presa em "Carregando…". Também corrigido: editar/inativar/reativar não recarregava a
+  lista depois de salvar.
+
+**Impacto**
+
+- Quem já tem local cadastrado não perde nada: o tipo segue gravado como antes; mudou só a tela.
+- **Sem migração, sem backend novo** nesta rodada (a lista continua sendo sugestão de tela; o backend
+  aceita qualquer nome e valida tipo/nome repetido).
+- Nenhum outro cadastro da manutenção mudou de comportamento (cliente, procedimento e plano seguem com
+  seus campos próprios).
+
+**Verificação**
+
+- `tsc`, `oxlint` e `build` aprovados (frontend). Backend sem alteração nesta rodada; suite segue
+  **96 unitários** e **93 e2e**.
+- **Navegador real (390px)**: cadastro mostra só a identificação; escolher `Itaú · Banco` grava sem
+  perguntar tipo; `Outro (digitar)` revela tipo e nome e grava os dois; na Manutenção, o modal de edição
+  abre com a lista completa (10 opções, incluindo "Outro (digitar)"), renomear `Itaú` → `Nubank` grava e
+  a lista recarrega sozinha, sem erro de tela.
+
 ## 2026-09-13 · `maintenance` (novo) · Manutenção de cadastros na seção Sistema
 
 **Alteração**
