@@ -2,6 +2,25 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+**Publicação (2026-09-13)**
+
+- PR **#26** aprovado e integrado em `main` (merge `1697975`); deploy no CapRover **concluído**.
+  (Junto dele entrou o PR **#25** — a correção do "Carregando…" preso na tela Usuários, que já estava
+  integrada na mesma linha de trabalho.)
+- **Migração `20260913222515_resource_account_suggestions` aplicada no boot** e confirmada em
+  `_prisma_migrations`; no banco `erp_estetica` a tabela tem as **9 identificações semeadas**.
+- Produção: `/api/health` → `database: up`; bundle `index-YxCvcqpN.js`;
+  `GET /api/financial/account-suggestions?active=true` devolve o catálogo e
+  `GET /api/maintenance/summary` mostra `RESOURCE_ACCOUNT_SUGGESTION: 9` (além de 2 clientes,
+  10 procedimentos e 1 plano).
+- **Navegador real (390px, só leitura)**: em Sistema → Manutenção de cadastros o seletor mostra
+  **Identificações sugeridas (9)** e a lista traz as nove com o botão **"Nova identificação"**; em
+  Financeiro → Caixa o seletor passou a mostrar o catálogo vindo da API (9 + "Outro (digitar)"), sem
+  erro de tela.
+- **Nada foi gravado além da semeadura da migração**: nenhuma identificação nova criada na verificação
+  (a criação fica para o uso da clínica), 0 eventos de trilha do catálogo. Usuário temporário de
+  verificação excluído com suas sessões.
+
 ## 2026-09-13 · `financial` + `maintenance` · Lista de identificações vira cadastro (mantida na tela)
 
 **Alteração**
