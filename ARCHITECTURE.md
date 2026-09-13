@@ -197,6 +197,7 @@ Convenções obrigatórias:
 | 7.31 | Ciclo do agendamento é uma máquina de estados explícita e estados finais são imutáveis | Impede realizar atendimento cancelado ou reabrir falta; cancelamento substitui exclusão física. |
 | 7.32 | Assinatura guarda snapshot comercial do plano | Nome, periodicidade, sessões por período e valor contratado não mudam quando o plano é alterado; pagamentos guardam valor, data e forma praticados. |
 | 7.33 | Uma assinatura ativa ou inadimplente por cliente/plano | Evita contratos concorrentes duplicados; encerrada/cancelada preserva histórico e permite nova contratação. |
+| 7.34 | Overrides transitivos mínimos para `multer@2.3.0`, `deepmerge-ts@8.0.2` e `mysql2@3.24.4` | Em 2026-09-13, as versões estáveis de NestJS 12.0.1 e Prisma 7.10.0 ainda fixavam releases vulneráveis (`multer@2.2.0`, `deepmerge-ts@7.1.5`, `mysql2@3.15.3`). O downgrade automático para NestJS 7/Prisma 6 foi rejeitado por quebrar a arquitetura sem eliminar a causa. Os overrides mantêm as APIs diretas, são compatíveis com Node >=22 e foram validados por geração do Prisma, 42 unitários, 45 e2e, typecheck, lint, builds e smoke HTTP. `@nestjs/mau` foi removido por ser tooling não utilizado e trazer `tmp`/`undici` vulneráveis. A imagem fixa npm 12.0.2 nos três estágios para interpretar de forma consistente o lockfile gerado por npm 12; npm 10 da imagem-base rejeita o peer opcional de TypeScript registrado no lock novo. Reavaliar e remover cada override quando o pacote proprietário incorporar a versão corrigida. |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 
@@ -217,6 +218,8 @@ Convenções obrigatórias:
 9. **Módulo não acessa dados de outro módulo** (seção 3). Toda exceção é dívida arquitetural
    e precisa de decisão registrada.
 10. **`NotFoundModule` por último** no `app.module.ts` (ver 7.6).
+11. **Overrides de segurança transitivos** são temporários e rastreados (ver 7.34); não aceitar
+    downgrade major sugerido pelo `npm audit fix --force` sem análise de compatibilidade.
 
 ## 8.1 Deploy (CapRover)
 

@@ -3,7 +3,7 @@
 > Este arquivo é o **ponto de entrada para qualquer agente que for continuar este projeto**.
 > Leia ele inteiro antes de escrever código. Depois leia `PROJECT.md`, `ARCHITECTURE.md`,
 > `MODULES.md`, `TASKS.md` e `CHANGELOG.md` (a raiz do repo é a fonte da verdade).
-> Última atualização: 2026-09-13, ao final da Fase 5 (assinaturas).
+> Última atualização: 2026-09-13, após a correção de segurança das dependências.
 
 ---
 
@@ -34,6 +34,8 @@ protocolos, exames, dashboard.
 4. **Stack fixa** (não trocar sem registrar decisão em `ARCHITECTURE.md`):
    backend NestJS + TypeScript + Prisma + PostgreSQL + REST + Swagger;
    frontend React + TypeScript + Vite + Tailwind + React Router.
+   Overrides transitivos de segurança ficam documentados na decisão 7.34; não remova sem
+   confirmar que NestJS/Prisma já incorporaram versões corrigidas e repetir os gates.
 5. **Dinheiro sempre em centavos (`Int`)** — nunca float. IDs são UUID.
 6. **Sem exclusão física:** `active`/`deactivatedAt`/`deletedAt`. A API não expõe `DELETE` de entidade
    de domínio (a exceção é a correção de vigência de preço).
@@ -176,8 +178,8 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
 2. **Fase 6 — `financial`**, **7 — `protocols`**, **8 — `exams`**,
    **9 — `dashboard`**, **10 — revisão final** (ver `TASKS.md`).
 4. **Dívidas conhecidas** (registradas em `TASKS.md`): autorização por perfil, reset de senha por
-   e-mail, **backup `pg_dump` agendado + teste de restauração**, 9 vulnerabilidades altas nas
-   dependências do frontend (rodada de atualização com teste), aviso de openssl no build.
+   e-mail, **backup `pg_dump` agendado + teste de restauração** e aviso de openssl no build.
+   A auditoria de dependências foi zerada em 2026-09-13 (backend e frontend, inclusive dev).
 
 ## 9. Como falar com o cliente (ele é quem decide)
 

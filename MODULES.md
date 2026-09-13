@@ -7,6 +7,9 @@
 
 Estado: `[ ]` planejado · `[~]` esqueleto criado · `[x]` implementado
 
+Atualização de infraestrutura de 2026-09-13: dependências corrigidas sem alterar entidades,
+serviços públicos, eventos, endpoints ou regras dos módulos descritos neste documento.
+
 | Módulo | Estado | Fase |
 | ------ | ------ | ---- |
 | health | `[x]` | 1 |
