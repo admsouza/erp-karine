@@ -40,8 +40,9 @@ export function PaymentDetailModal({ subscriptionId, payment, onClose, onSaved }
   return <PaymentDetail subscriptionId={subscriptionId} payment={payment} onClose={onClose} onSaved={onSaved} />;
 }
 
-function valorLegivel(field: string, value: string | number | null): string {
+function valorLegivel(field: string, value: string | number | boolean | null): string {
   if (value === null || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
   if (field === 'amountCents' && typeof value === 'number') return formatCentsToBRL(value);
   if (field === 'paidAt') return formatDate(String(value));
   if (field === 'paymentMethod') return PAYMENT_METHODS[value as PaymentMethod] ?? String(value);

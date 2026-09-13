@@ -16,7 +16,7 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 7 publicadas e verificadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos) **+ módulo transversal `audit` com tela `/auditoria` (ADMIN)**.
+- **Estado:** Fases 1 a 7 publicadas e verificadas (autenticação, agenda, assinaturas, financeiro, protocolos) **+ seção `Sistema`** com **Auditoria**, **Gestão de usuários** e **Integração** (tela preparada, sem agente ainda).
   **Próxima: Fase 8 — `exams`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
@@ -163,12 +163,23 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   o detalhe com **Editar pagamento** e a **linha do tempo**.
 - **Auditoria (`audit`, transversal):** `AuditEvent` append-only + `AuditTrailService` (contrato público,
   aceita `tx`). Registra autor (id + nome/e-mail), módulo, entidade, ação, `requestId`, motivo e **só os
-  campos alterados** (antes → depois). Sem endpoint de edição/exclusão; sem histórico retroativo. A
-  adoção é incremental e feita **pelo caso de uso** do módulo dono — **não** existe interceptor genérico
-  (perderia o significado de negócio e poderia capturar dado sensível).
-  **Tela própria:** `/auditoria` no menu (**9º item, só para ADMIN**), com filtros por usuário, módulo,
-  tipo de registro, ação, período (dia inteiro em `America/Recife`) e busca livre, além de paginação.
+  campos alterados** (antes → depois, aceitando texto, número, data e **booleano**). Sem endpoint de
+  edição/exclusão; sem histórico retroativo. A adoção é incremental e feita **pelo caso de uso** do módulo
+  dono — **não** existe interceptor genérico (perderia o significado de negócio e poderia capturar dado sensível).
+  **Tela própria:** `/sistema/auditoria` (a rota antiga `/auditoria` redireciona), com filtros por usuário,
+  módulo, tipo de registro, ação, período (dia inteiro em `America/Recife`) e busca livre, além de paginação.
   Endpoints `GET /api/audit/events` e `GET /api/audit/filters`, ambos com `@Roles('ADMIN')`.
+- **Menu agora tem seções:** 8 itens de operação (Dashboard, Clientes, Agenda, Procedimentos, Assinaturas,
+  Financeiro, Protocolos, Exames) + a seção **Sistema** (Auditoria, Usuários, Integração). Todas as três
+  rotas são `/sistema/*` e restritas a ADMIN no frontend (`RequireRole`) **e** no backend (`@Roles`).
+- **Gestão de usuários (`auth`):** endpoints `/api/users` (`GET`, `POST`, `PATCH :id/role`,
+  `PATCH :id/inactivate|reactivate`, `POST :id/password`), todos ADMIN. Regras: e-mail único, senha
+  inicial/redefinida sempre com troca obrigatória, inativação e redefinição **encerram as sessões**,
+  **nunca ficar sem ADMIN ativo**, o admin não se inativa nem se rebaixa, sem `DELETE`, e a senha
+  **nunca** entra na trilha. Vive no módulo `auth` porque ele é o dono da tabela `User`.
+- **Integração (`/sistema/integracoes`):** tela **preparada** que lista os pontos de integração que já
+  existem (trilha de auditoria, eventos de domínio, contratos públicos) e o que está por vir.
+  **Não há agente de IA conectado** e a tela não executa ação nenhuma.
 - **Autorização por perfil:** `RolesGuard` global + decorator `@Roles(...)` (`common/decorators/roles.decorator.ts`).
   Ele é **opt-in por rota**: sem `@Roles`, qualquer sessão válida passa (é o que mantém os módulos
   publicados funcionando); com `@Roles`, falha fechado (403). No frontend, `navItemsPara(role)` filtra o

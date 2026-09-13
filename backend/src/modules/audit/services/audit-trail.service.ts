@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../../generated/prisma/client.js';
 import { AuditEventRepository } from '../repositories/audit-event.repository.js';
-export interface AuditChange { field:string; before:string|number|null; after:string|number|null }
+export interface AuditChange { field:string; before:string|number|boolean|null; after:string|number|boolean|null }
 export interface RecordAuditEvent { actorUserId:string;actorName?:string;actorEmail?:string;module:string;entityType:string;entityId:string;action:string;requestId?:string;reason?:string;changes:AuditChange[] }
 @Injectable()
 export class AuditTrailService {

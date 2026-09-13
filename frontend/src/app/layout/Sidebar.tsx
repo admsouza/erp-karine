@@ -1,17 +1,38 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { CloseIcon } from '../../shared/components/Icons';
-import { navItemsPara } from './navigation';
+import { NAV_GROUPS, navItemsDoGrupoPara, navItemsRaizPara, type NavItem } from './navigation';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
+/** Um item do menu lateral. */
+function ItemLink({ item, onClose }: { item: NavItem; onClose: () => void }) {
+  const Icone = item.icon;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      onClick={onClose}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+          isActive ? 'bg-brand-600/90 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+        }`
+      }
+    >
+      <Icone className="h-5 w-5 shrink-0" />
+      {item.label}
+    </NavLink>
+  );
+}
+
 /** Menu lateral administrativo. Em telas pequenas funciona como gaveta. */
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user } = useAuth();
-  const itens = navItemsPara(user?.role);
+  const raiz = navItemsRaizPara(user?.role);
+  const grupos = NAV_GROUPS.map((grupo) => ({ grupo, itens: navItemsDoGrupoPara(user?.role, grupo) })).filter((item) => item.itens.length > 0);
   return (
     <>
       {open ? (
@@ -44,23 +65,19 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {itens.map(({ label, to, icon: ItemIcon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
-                  isActive
-                    ? 'bg-brand-600/90 text-white'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                }`
-              }
-            >
-              <ItemIcon className="h-5 w-5 shrink-0" />
-              {label}
-            </NavLink>
+          {raiz.map((item) => (
+            <ItemLink key={item.to} item={item} onClose={onClose} />
+          ))}
+
+          {grupos.map(({ grupo, itens }) => (
+            <div key={grupo} className="pt-4">
+              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{grupo}</p>
+              <div className="space-y-1 border-l border-white/10 pl-2">
+                {itens.map((item) => (
+                  <ItemLink key={item.to} item={item} onClose={onClose} />
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
