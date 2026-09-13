@@ -108,6 +108,10 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
   regra de negócio.
 
 ### Procedimentos
+
+Catálogo implementado (Fase 3): cadastro, edição, busca, filtro por situação,
+valor padrão em reais/centavos e duração aproximada; inativação sem excluir.
+É o catálogo referenciado por agenda, protocolos e financeiro.
 - Nome, descrição, duração aproximada, valor padrão, ativo.
 - Outros módulos referenciam por **id**; onde o dado precisa sobreviver a mudanças de
   cadastro, guarda-se *snapshot* (caso de `Appointment.procedureName`).

@@ -4,6 +4,24 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · módulo `procedures` · Fase 3 implementada
+
+**Alteração**
+
+- Novo módulo `procedures` (catálogo): repositório único com Prisma, DTOs, `ProcedureService` e `ProcedureQueryService` — este último **exportado** como contrato público para agenda, protocolos e financeiro referenciarem procedimento pelo id.
+- Endpoints: cadastrar, listar/pesquisar (paginado, filtro `active=true|false`), detalhar, editar, inativar e reativar. Sem `DELETE`, como no módulo de clientes.
+- Regras: nome único (409), valor padrão em centavos, duração inteira de 5 a 600 minutos.
+- Frontend: `features/procedures/` (tipos, api, hook com debounce, tabela, formulário em modal com valor em reais convertido para centavos) e novo item **Procedimentos** no menu lateral (8 itens).
+- Testes: 7 unitários do `ProcedureService`, 5 e2e do módulo (21 unitários e 23 e2e no total).
+- **Correção no `OriginGuard`** (da fase anterior): a comparação entre `Origin` e `Host` recusava o login legítimo quando um proxy troca o `Host` (proxy do Vite em desenvolvimento). O guard agora considera `X-Forwarded-Host` e a lista `CORS_ORIGINS`, aceitando mesmo hostname em porta diferente; o caso positivo passou a ter teste (antes só o caso negativo era testado — foi assim que o bug escapou).
+
+**Impacto**
+
+- Nenhuma migração de banco: a tabela `Procedure` já existia desde a Fase 1.
+- Nenhuma alteração em contrato de módulo existente; `clients` e `auth` intocados.
+
+---
+
 ## 2026-09-13 · módulo `auth` · autenticação e sessão (Fase 2.5)
 
 **Alteração**

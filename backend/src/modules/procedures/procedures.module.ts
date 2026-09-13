@@ -1,10 +1,20 @@
 import { Module } from '@nestjs/common';
+import { ProceduresController } from './controllers/procedures.controller.js';
+import { ProcedureService } from './services/procedure.service.js';
+import { ProcedureQueryService } from './services/procedure-query.service.js';
+import { ProcedureRepository } from './repositories/procedure.repository.js';
 
 /**
- * Módulo de Procedimentos.
+ * Catálogo de procedimentos da clínica.
  *
- * Contrato público, eventos e dependências permitidas: ver MODULES.md.
- * Implementação prevista para a Fase 3.
+ * Depende de: nada (usa `common/database`).
+ * Não depende de: nenhum outro módulo de domínio.
+ * Expõe: `ProcedureQueryService` — contrato público para agenda, protocolos e
+ * financeiro referenciarem procedimentos **pelo id**.
  */
-@Module({})
+@Module({
+  controllers: [ProceduresController],
+  providers: [ProcedureRepository, ProcedureService, ProcedureQueryService],
+  exports: [ProcedureQueryService],
+})
 export class ProceduresModule {}

@@ -4,6 +4,7 @@ import {
   DashboardIcon,
   ExamIcon,
   FinancialIcon,
+  ProcedureIcon,
   ProtocolIcon,
   SubscriptionIcon,
 } from '../../shared/components/Icons';
@@ -19,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: DashboardIcon },
   { label: 'Clientes', to: '/clientes', icon: ClientsIcon },
   { label: 'Agenda', to: '/agenda', icon: CalendarIcon },
+  { label: 'Procedimentos', to: '/procedimentos', icon: ProcedureIcon },
   { label: 'Assinaturas', to: '/assinaturas', icon: SubscriptionIcon },
   { label: 'Financeiro', to: '/financeiro', icon: FinancialIcon },
   { label: 'Protocolos', to: '/protocolos', icon: ProtocolIcon },

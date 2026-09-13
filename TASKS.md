@@ -46,18 +46,19 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Documentação Swagger exigindo sessão
 - [x] CLI `node dist/scripts/create-user.js` para criar o primeiro usuário
 - [x] Frontend: `/login`, `/trocar-senha` (obrigatória com senha temporária) e menu do usuário na topbar
-- [x] Testes: 8 unitários do `AuthService`, 9 e2e do módulo de auth, 16 e2e no total
+- [x] Testes: 8 unitários do `AuthService`, 9 e2e do módulo de auth (16 e2e no total na época)
 - [x] Usuário de produção criado (`mkarineon@gmail.com`, perfil ADMIN) e bloqueio conferido em produção: `/api/clients` e `/api/docs-json` respondem 401 sem sessão
 - [ ] Autorização por perfil (ADMIN/USER) e recuperação de senha pelo sistema — não implementados
 
 ---
 
-## Fase 3 — Módulo `procedures` `[ ]`
+## Fase 3 — Módulo `procedures` `[x]`
 
-- [ ] CRUD + inativação (nome, descrição, duração, valor padrão, ativo)
-- [ ] `ProcedureQueryService` como contrato para appointments/financial
-- [ ] Frontend: `features/procedures/` (listagem + formulário)
-- [ ] Testes do módulo
+- [x] CRUD + inativação (nome, descrição, duração, valor padrão, ativo) — migração não necessária (tabela já existia)
+- [x] `ProcedureQueryService` exportado como contrato para appointments/financial/protocols
+- [x] Frontend: `features/procedures/` (listagem com busca e filtro, formulário em modal, item novo no menu)
+- [x] Testes: 7 unitários do `ProcedureService` e 5 e2e do módulo (23 e2e no total) + smoke HTTP e verificação da tela em navegador real
+- [x] Bug real corrigido: `OriginGuard` recusava o login legítimo quando o proxy troca o `Host` (dev) — guard passou a aceitar `X-Forwarded-Host` e `CORS_ORIGINS`, com testes do caso positivo
 
 ## Fase 4 — Módulo `appointments` `[ ]`
 
