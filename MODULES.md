@@ -61,10 +61,17 @@ situação ativo/inativo). É o módulo dono da identidade do cliente.
 | PATCH | `/api/clients/:id/inactivate` | inativar |
 | PATCH | `/api/clients/:id/reactivate` | reativar |
 
-**Regras principais:**
-- CPF único quando informado.
-- Nunca excluir cliente: `active = false` + `deactivatedAt`. Exclusão física só por decisão
-  explícita e sem histórico vinculado (campo `deletedAt` existe para isso).
+**Regras principais (implementadas):**
+- CPF normalizado (só dígitos) e validado por dígito verificador; **único** quando informado
+  (409 `Já existe um cliente com este CPF.`).
+- Data de nascimento não pode ser futura; e-mail validado; campos extras recusados
+  (`forbidNonWhitelisted`).
+- Listagem paginada (padrão 20, máx. 100) com busca por nome, CPF, telefone, WhatsApp e
+  e-mail (case-insensitive) e filtro `active=true|false` — contrato explícito em texto para
+  não cair na conversão implícita de booleano do `ValidationPipe`.
+- Nunca excluir cliente: `active = false` + `deactivatedAt` (a API não expõe DELETE).
+  Inativar duas vezes devolve 409; reativar limpa `deactivatedAt`.
+  Exclusão física só por decisão explícita e sem histórico vinculado (`deletedAt` existe para isso).
 - Busca por nome, CPF, telefone e WhatsApp; listagem sempre paginada.
 - A página do cliente agrega dados de outros módulos **via serviços públicos deles**, sem
   duplicar regra de negócio.
