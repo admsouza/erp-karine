@@ -2,6 +2,21 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+**Publicação (2026-09-13)**
+
+- PR **#27** aprovado e integrado em `main` (merge `774292d`); deploy no CapRover **concluído**.
+- **Migração `20260913232459_transaction_discount_and_creditor` aplicada no boot** e confirmada em
+  `_prisma_migrations`; as colunas `counterparty`, `grossAmountCents` e `discountCents` existem no banco
+  `erp_estetica`.
+- Produção: `/api/health` → `database: up`; bundle `index-BPBMZBaf.js`. A regra de papel respondeu em
+  produção: `POST /api/financial/transactions` com `type: DESPESA` e `clientId` devolveu **400**
+  ("Cliente é só para receita; em despesa informe o credor.").
+- **Navegador real (390px, só leitura)**: no Novo lançamento a receita mostra **Cliente** (sem credor) e a
+  despesa mostra **Credor** (sem cliente); **Categoria** e **Situação** não estão no formulário;
+  Procedimento, Desconto, Local do recurso e a linha **"Total a receber"** estão presentes; sem erro de tela.
+- **Nada foi gravado** na verificação (`FinancialTransaction` sem lançamento de teste) e o usuário
+  temporário de verificação foi excluído com suas sessões.
+
 ## 2026-09-13 · `financial` · Lançamento manual: cliente/credor, procedimento, desconto e confirmação de pagamento
 
 **Alteração**
