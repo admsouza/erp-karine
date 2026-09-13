@@ -7,6 +7,8 @@ export interface FinancialFilters { from?: Date; to?: Date; clientId?: string; o
 export class FinancialQueryService {
   constructor(private readonly repository: FinancialTransactionRepository) {}
   async list(filters: FinancialFilters) { return (await this.repository.findMany(filters)).map(toFinancialTransactionEntity); }
+  /** Credores já usados — alimenta a sugestão do campo credor sem criar cadastro de fornecedores. */
+  listCounterparties() { return this.repository.counterparties(); }
   async summary(filters: Pick<FinancialFilters, 'from'|'to'|'clientId'>) {
     const items = await this.repository.findMany(filters);
     const paid = items.filter((item) => item.status === 'PAGO');

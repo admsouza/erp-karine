@@ -45,7 +45,7 @@ describe('Módulo financeiro (e2e)', () => {
     expect(items).toHaveLength(1); expect(items[0]).toMatchObject({ subscriptionName: `Plano Financeiro ${token}`, amountCents: 15000, origin: 'SUBSCRIPTION' });
   });
   it('cria despesa manual, valida entrada e filtra por período/origem/tipo/status', async () => {
-    const created = await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie).send({ clientId, description: `Material ${token}`, category: 'Insumos', amountCents: 5000, date: `${testDate}T11:00:00-03:00`, paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' }).expect(201); manualId = created.body.id;
+    const created = await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie).send({ counterparty: `Distribuidora ${token}`, description: `Material ${token}`, amountCents: 5000, date: `${testDate}T11:00:00-03:00`, paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' }).expect(201); manualId = created.body.id;
     await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie).send({ description: '', amountCents: 1.5, date: 'invalida', paymentMethod: 'INVALIDO', type: 'INVALIDO', status: 'PAGO', extra: true }).expect(400);
     const filtered = await request(app.getHttpServer()).get('/api/financial/transactions').query({ from: testDate, to: nextDate, origin: 'MANUAL', type: 'DESPESA', status: 'PAGO' }).set('Cookie', session.cookie).expect(200);
     expect(filtered.body.map((x: { id: string }) => x.id)).toContain(manualId);
@@ -55,7 +55,9 @@ describe('Módulo financeiro (e2e)', () => {
   });
   it('calcula indicadores e relatórios por snapshots', async () => {
     const summary = await request(app.getHttpServer()).get('/api/financial/summary').query({ from: testDate, to: nextDate, clientId }).set('Cookie', session.cookie).expect(200);
-    expect(summary.body).toMatchObject({ revenueCents: 45000, expenseCents: 5000, balanceCents: 40000, receiptCount: 2 });
+    // Resumo **do cliente**: receita aponta para o cliente (FK) e despesa aponta para o credor
+    // (texto), então despesa não entra no recorte por cliente — o saldo aqui é o que o cliente pagou.
+    expect(summary.body).toMatchObject({ revenueCents: 45000, expenseCents: 0, balanceCents: 45000, receiptCount: 2 });
     const reports = await request(app.getHttpServer()).get('/api/financial/reports').query({ from: testDate, to: nextDate, clientId }).set('Cookie', session.cookie).expect(200);
     expect(reports.body.byProcedure).toContainEqual({ name: `Procedimento Financeiro ${token}`, amountCents: 30000 });
     expect(reports.body.bySubscription).toContainEqual({ name: `Plano Financeiro ${token}`, amountCents: 15000 });
@@ -65,4 +67,47 @@ describe('Módulo financeiro (e2e)', () => {
     await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', session.cookie).expect(409);
     expect(await prisma.financialTransaction.findUnique({ where: { id: manualId } })).toMatchObject({ status: 'CANCELADO', cancelledAt: expect.any(Date) });
   });
+  it('mantém papéis de receita/despesa, vincula procedimento e aplica desconto', async () => {
+    // Receita com cliente + procedimento (snapshot do nome)
+    const venda = await request(app.getHttpServer())
+      .post('/api/financial/transactions')
+      .set('Cookie', session.cookie)
+      .send({ clientId, procedureId, description: `Venda ${token}`, amountCents: 27000, grossAmountCents: 30000, discountType: 'PERCENT', discountValue: 1000, date: `${testDate}T14:00:00-03:00`, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' })
+      .expect(201);
+    const receita = await prisma.financialTransaction.findUniqueOrThrow({ where: { id: venda.body.id } });
+    expect(receita).toMatchObject({
+      clientId,
+      procedureId,
+      procedureName: `Procedimento Financeiro ${token}`,
+      amountCents: 27000,
+      grossAmountCents: 30000,
+      discountCents: 3000,
+      discountType: 'PERCENT',
+      discountValue: 1000,
+    });
+    // Desconto em reais
+    const emReais = await request(app.getHttpServer())
+      .post('/api/financial/transactions')
+      .set('Cookie', session.cookie)
+      .send({ clientId, description: `Venda em reais ${token}`, amountCents: 28000, grossAmountCents: 30000, discountType: 'AMOUNT', discountValue: 2000, date: `${testDate}T14:30:00-03:00`, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' })
+      .expect(201);
+    expect((await prisma.financialTransaction.findUniqueOrThrow({ where: { id: emReais.body.id } })).discountCents).toBe(2000);
+    // Papéis trocados, desconto impossível e conta que não fecha
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ clientId, counterparty: `Credor ${token}`, description: 'Receita com credor', amountCents: 1000, date: testDate, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' }).expect(400);
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ clientId, description: 'Despesa com cliente', amountCents: 1000, date: testDate, paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' }).expect(400);
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ clientId, description: 'Desconto maior', amountCents: 0, grossAmountCents: 1000, discountType: 'AMOUNT', discountValue: 5000, date: testDate, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' }).expect(400);
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ clientId, description: 'Conta errada', amountCents: 5000, grossAmountCents: 10000, discountType: 'PERCENT', discountValue: 1000, date: testDate, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' }).expect(400);
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ clientId: '00000000-0000-4000-8000-000000000000', description: 'Cliente inexistente', amountCents: 1000, date: testDate, paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO' }).expect(404);
+    // Credor já usado aparece na sugestão do campo
+    await request(app.getHttpServer()).post('/api/financial/transactions').set('Cookie', session.cookie)
+      .send({ counterparty: `Credor Sugerido ${token}`, description: `Insumo ${token}`, amountCents: 1200, date: `${testDate}T15:00:00-03:00`, paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' }).expect(201);
+    const credores = await request(app.getHttpServer()).get('/api/financial/transactions/counterparties').set('Cookie', session.cookie).expect(200);
+    expect(credores.body).toContain(`Credor Sugerido ${token}`);
+  });
+
 });

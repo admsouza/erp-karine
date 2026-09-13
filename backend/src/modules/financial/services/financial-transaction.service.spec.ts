@@ -20,7 +20,34 @@ function setup() {
     findBySubscriptionPaymentId: vi.fn().mockResolvedValue(null),
     update: vi.fn().mockImplementation(async (_id, data) => transaction(data)),
   };
-  return { repository, service: new FinancialTransactionService(repository as never, {transaction:async(work: (tx: object)=>Promise<unknown>)=>work({})} as never, {assertWritable:vi.fn(),assertAccount:vi.fn()} as never, {record:vi.fn()} as never) };
+  const clientes = {
+    exists: vi.fn().mockResolvedValue(true),
+    getById: vi.fn().mockResolvedValue({ id: 'c1', fullName: 'Ana Souza' }),
+  };
+  const procedimentos = {
+    exists: vi.fn().mockResolvedValue(true),
+    getById: vi.fn().mockResolvedValue({
+      id: 'p1',
+      name: 'Botox',
+      unit: 'APLICACAO',
+      currentValueCents: 90000,
+    }),
+  };
+  return {
+    repository,
+    clientes,
+    procedimentos,
+    service: new FinancialTransactionService(
+      repository as never,
+      {
+        transaction: async (work: (tx: object) => Promise<unknown>) => work({}),
+      } as never,
+      { assertWritable: vi.fn(), assertAccount: vi.fn() } as never,
+      { record: vi.fn() } as never,
+      clientes as never,
+      procedimentos as never,
+    ),
+  };
 }
 
 describe('FinancialTransactionService', () => {
@@ -63,4 +90,118 @@ describe('FinancialTransactionService', () => {
     expect(repository.update).not.toHaveBeenCalled();
   });
 
+  it('vincula o cliente na receita e recusa cliente inexistente', async () => {
+    const { service, repository, clientes } = setup();
+    await service.createManual({
+      description: 'Venda avulsa', amountCents: 9000, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', clientId: 'c1',
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: 'c1', type: 'RECEITA' }),
+      expect.anything(),
+    );
+    clientes.exists.mockResolvedValue(false);
+    await expect(
+      service.createManual({
+        description: 'Venda', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', clientId: 'c9',
+      }),
+    ).rejects.toThrow('Cliente não encontrado');
+  });
+
+  it('guarda o credor na despesa e recusa troca de papéis entre receita e despesa', async () => {
+    const { service, repository } = setup();
+    await service.createManual({
+      description: '  Insumos  ', amountCents: 3590, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO', counterparty: '  Distribuidora X  ',
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ counterparty: 'Distribuidora X' }),
+      expect.anything(),
+    );
+    await expect(
+      service.createManual({
+        description: 'Despesa', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO', clientId: 'c1',
+      }),
+    ).rejects.toThrow('Cliente é só para receita');
+    await expect(
+      service.createManual({
+        description: 'Receita', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', counterparty: 'Alguém',
+      }),
+    ).rejects.toThrow('Credor é só para despesa');
+  });
+
+  it('vincula o procedimento gravando o snapshot do nome', async () => {
+    const { service, repository, procedimentos } = setup();
+    await service.createManual({
+      description: 'Botox sessão', amountCents: 90000, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', procedureId: 'p1',
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ procedureId: 'p1', procedureName: 'Botox' }),
+      expect.anything(),
+    );
+    procedimentos.exists.mockResolvedValue(false);
+    await expect(
+      service.createManual({
+        description: 'X', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', procedureId: 'p9',
+      }),
+    ).rejects.toThrow('Procedimento não encontrado');
+  });
+
+  it('aplica desconto percentual guardando o valor cheio e o desconto efetivo', async () => {
+    const { service, repository } = setup();
+    await service.createManual({
+      description: 'Venda com desconto', amountCents: 9000, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+      grossAmountCents: 10000, discountType: 'PERCENT' as never, discountValue: 1000,
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountCents: 9000, grossAmountCents: 10000, discountCents: 1000,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('aplica desconto em reais e recusa desconto maior que o valor', async () => {
+    const { service, repository } = setup();
+    await service.createManual({
+      description: 'Desconto em reais', amountCents: 8500, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+      grossAmountCents: 10000, discountType: 'AMOUNT' as never, discountValue: 1500,
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ discountCents: 1500, amountCents: 8500 }),
+      expect.anything(),
+    );
+    await expect(
+      service.createManual({
+        description: 'Desconto absurdo', amountCents: 0, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+        grossAmountCents: 10000, discountType: 'AMOUNT' as never, discountValue: 20000,
+      }),
+    ).rejects.toThrow('Desconto não pode ser maior');
+  });
+
+  it('recusa desconto sem valor cheio e líquido que não confere com o desconto', async () => {
+    const { service } = setup();
+    await expect(
+      service.createManual({
+        description: 'Sem valor cheio', amountCents: 9000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+        discountType: 'PERCENT' as never, discountValue: 1000,
+      }),
+    ).rejects.toThrow('Informe o valor cheio');
+    await expect(
+      service.createManual({
+        description: 'Conta errada', amountCents: 9500, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+        grossAmountCents: 10000, discountType: 'PERCENT' as never, discountValue: 1000,
+      }),
+    ).rejects.toThrow('não confere com o desconto');
+  });
 });

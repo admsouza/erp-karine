@@ -163,6 +163,11 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   (`resourceAccountId`).
 - Formas: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`, `OUTRO`.
 - **Impede lançamento duplicado** para o mesmo atendimento/pagamento (vínculos únicos).
+- **Lançamento manual**: receita pergunta o **cliente** (vinculado ao cadastro); despesa pergunta o
+  **credor** (texto, com sugestão dos já usados). O **procedimento** vinculado preenche o valor vigente
+  (editável) e o nome fica em snapshot. **Desconto** por percentual ou em reais, com o valor cheio, o
+  desconto e o **líquido** gravados. Ao salvar, o sistema **pergunta se já foi recebido/pago** — Sim
+  grava `PAGO`, Não grava `PENDENTE`. `Categoria` saiu do formulário (o dado antigo permanece).
 - Regra financeira vive no backend, nunca no frontend.
 - Implementado: receitas e despesas manuais, geração automática idempotente por eventos,
   cancelamento lógico, filtros, indicadores e relatórios por snapshots históricos.
