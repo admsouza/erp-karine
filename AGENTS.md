@@ -3,7 +3,7 @@
 > Este arquivo é o **ponto de entrada para qualquer agente que for continuar este projeto**.
 > Leia ele inteiro antes de escrever código. Depois leia `PROJECT.md`, `ARCHITECTURE.md`,
 > `MODULES.md`, `TASKS.md` e `CHANGELOG.md` (a raiz do repo é a fonte da verdade).
-> Última atualização: 2026-09-13, ao final da Fase 3 (+ unidade de medida e vigência de preço).
+> Última atualização: 2026-09-13, ao final da Fase 4 (agenda).
 
 ---
 
@@ -16,8 +16,8 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1, 2 (clientes), 2.5 (autenticação) e 3 (procedimentos) publicadas e verificadas.
-  **Próxima: Fase 4 — `appointments`.**
+- **Estado:** Fases 1, 2 (clientes), 2.5 (autenticação), 3 (procedimentos) e 4 (agenda) publicadas e verificadas.
+  **Próxima: Fase 5 — `subscriptions`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
 
@@ -171,13 +171,7 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
    em lote: nesse caso use `PATCH /api/procedures/:id` (unidade) e
    `PATCH /api/procedures/:id/prices/:priceId` (valor vigente) — nunca crie vigência nova para corrigir
    valor atual, e nunca edite vigência encerrada.
-2. **Fase 4 — `appointments`** (`TASKS.md`): agenda com transições
-   `AGENDADO → CONFIRMADO → REALIZADO / CANCELADO / FALTOU`, consultas por dia/semana/período/cliente/
-   status, `AppointmentQueryService` exportado para financeiro e dashboard, e `features/appointments/`.
-   Respeitar: consumir `ClientQueryService` e `ProcedureQueryService` (nunca as tabelas deles) e,
-   ao realizar atendimento, **gravar o valor unitário e a unidade aplicados** (snapshot) + registrar a
-   quantidade — é disso que o financeiro vai viver.
-3. **Fase 5 — `subscriptions`**, **6 — `financial`**, **7 — `protocols`**, **8 — `exams`**,
+2. **Fase 5 — `subscriptions`**, **6 — `financial`**, **7 — `protocols`**, **8 — `exams`**,
    **9 — `dashboard`**, **10 — revisão final** (ver `TASKS.md`).
 4. **Dívidas conhecidas** (registradas em `TASKS.md`): autorização por perfil, reset de senha por
    e-mail, **backup `pg_dump` agendado + teste de restauração**, 9 vulnerabilidades altas nas

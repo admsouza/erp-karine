@@ -4,6 +4,22 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · `appointments` · Fase 4 implementada
+
+**Alteração**
+
+- Agenda completa: repository exclusivo, serviços de comando/consulta, REST e `AppointmentQueryService` exportado.
+- Snapshot comercial de procedimento, quantidade, valor unitário vigente e total; dependências apenas pelos serviços públicos.
+- Máquina de estados sem exclusão física; consultas diária, semanal, período, cliente e status.
+- Frontend mobile-first com alternância dia/semana, criação e ações nos cards.
+- Gate aprovado: 38 unitários, 41 e2e, typecheck, lint e builds dos dois projetos.
+
+**Impacto**
+
+- Migração aditiva `appointment_snapshot`; `AppointmentQueryService` é o contrato de leitura das Fases 6 e 9.
+
+---
+
 ## 2026-09-13 · `procedures` · unidade de medida e correção do valor vigente
 
 **Alteração** (pedido do cliente: alterar o valor e definir unidade dos procedimentos já gravados)
