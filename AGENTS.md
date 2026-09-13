@@ -16,8 +16,10 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 7 publicadas e verificadas (autenticação, agenda, assinaturas, financeiro, protocolos) **+ seção `Sistema`** com **Auditoria**, **Gestão de usuários** e **Integração** (tela preparada, sem agente ainda) **+ Fase 6.1 do financeiro** (caixa mensal, contas a receber/pagar e conciliação) — **implementada e testada nesta branch, ainda NÃO publicada**.
-  **Próxima: Fase 8 — `exams`** (depois de publicar a 6.1).
+- **Estado:** Fases 1 a 7 **+ seção `Sistema`** (Auditoria, Usuários, Integração) **+ Fase 6.1 do financeiro
+  publicadas e verificadas em produção**: caixa mensal com saldo consolidado, contas a receber/pagar e
+  conciliação. Ajustes de tela do cadastro de local (lista única de identificações) também já publicados.
+  **Próxima: Fase 8 — `exams`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
 
@@ -215,11 +217,10 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
 
 ## 8. Próximos passos (em ordem)
 
-0. **Publicar a Fase 6.1 (financeiro)**: revisar o PR, fazer o merge e rodar o deploy. Depois do deploy,
-   conferir em produção as abas **Caixa**, **Contas a receber**, **Contas a pagar** e **Conciliação** e
-   cadastrar os locais do recurso da clínica (espécie, banco e maquineta) — **sem local cadastrado não é
-   possível abrir o caixa**. O mês de abertura deve ser o mês seguinte ao último período fechado; o
-   primeiro caixa (histórico) nasce sem transporte de saldo.
+0. **Próximo ajuste de tela pendente do cliente (se pedir):** o cadastro de local já é lista única
+   (espécie, bancos pelo nome, maquinetas e "Outro (digitar)"), o tipo é derivado da escolha e o caixa
+   mostra o **saldo total = soma dos locais**. Novos bancos que a clínica usar entram em
+   `features/financial/types/cash.ts` (`IDENTIFICACOES_LOCAL`) — é só uma lista no frontend.
 1. **Ajuste do cliente nos 6 procedimentos** (unidade + valor vigente). Ele pode pedir para aplicar
    em lote: nesse caso use `PATCH /api/procedures/:id` (unidade) e
    `PATCH /api/procedures/:id/prices/:priceId` (valor vigente) — nunca crie vigência nova para corrigir
