@@ -18,6 +18,12 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 - Migração aditiva `appointment_snapshot`; `AppointmentQueryService` é o contrato de leitura das Fases 6 e 9.
 
+**Publicação**
+
+- PR #8 revisado e mesclado em `main` (`d8ec3e7`); deploy CapRover concluído.
+- Migração `20260913050509_appointment_snapshot` aplicada no boot; container saudável e banco operacional.
+- Produção verificada: health 200, agenda sem sessão 401, SPA `/agenda` 200 e navegador real autenticado exibindo Dia, Semana e Novo agendamento; consulta diária autenticada 200.
+
 ---
 
 ## 2026-09-13 · `procedures` · unidade de medida e correção do valor vigente
