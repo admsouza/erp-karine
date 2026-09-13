@@ -27,10 +27,13 @@ export class CreateProcedureDto {
   @Max(600, { message: 'Duração máxima de 600 minutos.' })
   durationMinutes?: number;
 
-  @ApiPropertyOptional({ example: 18000, description: 'Valor padrão em centavos (R$ 180,00)' })
+  @ApiPropertyOptional({
+    example: 18000,
+    description: 'Valor unitário inicial em centavos (R$ 180,00). Vira a primeira vigência.',
+  })
   @IsOptional()
   @IsInt({ message: 'Informe o valor em centavos (número inteiro).' })
   @Min(0)
   @Max(100_000_000)
-  defaultValueCents?: number;
+  initialValueCents?: number;
 }

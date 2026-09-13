@@ -188,6 +188,9 @@ Convenções obrigatórias:
 | 7.22 | Defesa de CSRF sem token em storage: o navegador sempre manda `Origin` em requisição não-GET, e requisição sem `Origin` (curl, teste) só passa porque não é navegador. |
 | 7.23 | A senha inicial é combinada por fora do sistema (chat); obrigar a troca elimina o risco de credencial compartilhada circular para sempre. |
 | 7.24 | O `SwaggerModule` registra handlers direto no Express e não passa pelo pipeline de guards do Nest; o middleware é registrado **antes** do Swagger porque no Express quem casa primeiro é quem foi registrado primeiro. |
+| 7.25 | Preço de procedimento com **vigência** (`ProcedurePrice`), não campo único | Valores mudam com o tempo e o histórico precisa sobreviver: o valor único (`defaultValueCents`) foi **removido** em favor da série de vigências, e o que a API devolve como valor vigente é derivado (`currentValueCents`). Duas fontes de verdade (campo + histórico) divergiriam no primeiro reajuste. |
+| 7.26 | Vigências não se sobrepõem e o passado não é reescrito | Novo valor fecha a vigência anterior no dia em que começa; vigência só entra depois da mais recente (409). Correção se faz removendo a vigência (a anterior volta a valer) — assim a série histórica permanece auditável. |
+| 7.27 | Consulta de valor por data (`valueOn`) e data "pura" no fuso da clínica | O financeiro precisa do valor **que valia no dia do atendimento**, não do valor de hoje. Como as colunas são `DATE`, o "hoje" é calculado em `America/Recife` (UTC-3), senão a virada do dia cairia às 21h e uma vigência de hoje começaria "amanhã". |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 

@@ -109,9 +109,16 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
 
 ### Procedimentos
 
-Catálogo implementado (Fase 3): cadastro, edição, busca, filtro por situação,
-valor padrão em reais/centavos e duração aproximada; inativação sem excluir.
-É o catálogo referenciado por agenda, protocolos e financeiro.
+Catálogo implementado (Fase 3): cadastro, edição, busca, filtro por situação e
+duração aproximada; inativação sem excluir. É o catálogo referenciado por agenda,
+protocolos e financeiro.
+
+**Valor unitário com vigência:** o preço não é um campo fixo — cada valor vale a
+partir de uma data (`validFrom`) e o valor anterior é encerrado automaticamente
+quando entra um novo. A tela do procedimento mostra o valor vigente e o histórico
+completo, e a API permite consultar o valor que valia em qualquer data
+(`/api/procedures/:id/price-on?date=`). Nada é reescrito: reajustes entram como
+vigência nova, então relatórios e atendimentos antigos continuam com o preço da época.
 - Nome, descrição, duração aproximada, valor padrão, ativo.
 - Outros módulos referenciam por **id**; onde o dado precisa sobreviver a mudanças de
   cadastro, guarda-se *snapshot* (caso de `Appointment.procedureName`).

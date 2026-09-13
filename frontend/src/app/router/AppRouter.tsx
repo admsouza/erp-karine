@@ -6,6 +6,7 @@ import { ChangePasswordPage } from '../../features/auth/pages/ChangePasswordPage
 import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 import { ClientsPage } from '../../features/clients/pages/ClientsPage';
 import { ProceduresPage } from '../../features/procedures/pages/ProceduresPage';
+import { ProcedureDetailPage } from '../../features/procedures/pages/ProcedureDetailPage';
 import { ClientDetailPage } from '../../features/clients/pages/ClientDetailPage';
 import { AgendaPage } from '../../features/appointments/pages/AgendaPage';
 import { SubscriptionsPage } from '../../features/subscriptions/pages/SubscriptionsPage';
@@ -34,6 +35,7 @@ export function AppRouter() {
           <Route path="/clientes/:id" element={<ClientDetailPage />} />
           <Route path="/agenda" element={<AgendaPage />} />
           <Route path="/procedimentos" element={<ProceduresPage />} />
+          <Route path="/procedimentos/:id" element={<ProcedureDetailPage />} />
           <Route path="/assinaturas" element={<SubscriptionsPage />} />
           <Route path="/financeiro" element={<FinancialPage />} />
           <Route path="/protocolos" element={<ProtocolsPage />} />

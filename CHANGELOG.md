@@ -4,6 +4,26 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · `procedures` · valor unitário com vigência (série histórica)
+
+**Alteração** (pedido do cliente: valores mudam e precisam manter histórico)
+
+- Nova entidade `ProcedurePrice`: `valueCents`, `validFrom`, `validTo` (nulo = vigência atual) e observação. O campo único `Procedure.defaultValueCents` foi **removido** — duas fontes de verdade divergiriam no primeiro reajuste.
+- A API passa a devolver `currentValueCents` (derivado da vigência atual) e o histórico em `GET /api/procedures/:id/prices`.
+- Endpoints novos: `POST /api/procedures/:id/prices` (novo valor: fecha a vigência anterior no dia em que a nova começa), `DELETE /api/procedures/:id/prices/:priceId` (correção; a anterior volta a valer) e `GET /api/procedures/:id/price-on?date=` (valor que valia no dia).
+- Regras: vigência só entra depois da mais recente (409); o único valor não pode ser removido (409); o valor não é editável pelo `PATCH` do cadastro (400); datas são `DATE` calculadas no fuso da clínica.
+- `ProcedureQueryService.valueOn(id, data)` entra no contrato público, para o financeiro usar o preço **do dia do atendimento** em vez do preço de hoje.
+- Frontend: tela do procedimento (`/procedimentos/:id`) com valor vigente, duração, situação e **histórico de valores**; modal "Novo valor"; edição do cadastro não mexe em preço.
+- **Migração de dados:** a migração `procedure_prices` copia o valor único de cada procedimento para uma vigência aberta antes de remover a coluna. Validada contra uma cópia dos dados reais de produção: **6 procedimentos → 6 vigências, soma R$ 5.100,00 preservada**.
+- Testes: 31 unitários e 31 e2e no total (novos: 10 unitários do serviço de vigência e 6 e2e da série histórica).
+
+**Impacto**
+
+- Mudança de contrato no módulo novo: `defaultValueCents` sai, `currentValueCents` entra. Nenhum outro módulo consumia o campo ainda (agenda e financeiro são fases futuras) — por isso a troca é barata agora e cara depois.
+- Consumidores futuros devem gravar o valor aplicado no próprio registro, nunca recalcular pelo preço de hoje.
+
+---
+
 ## 2026-09-13 · módulo `procedures` · Fase 3 implementada
 
 **Alteração**

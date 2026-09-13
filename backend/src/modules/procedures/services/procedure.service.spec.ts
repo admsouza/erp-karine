@@ -2,6 +2,7 @@ import { ConflictException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcedureService } from './procedure.service.js';
 import type { ProcedureQueryService } from './procedure-query.service.js';
+import type { ProcedurePriceService } from './procedure-price.service.js';
 import type { ProcedureRepository } from '../repositories/procedure.repository.js';
 import type { ProcedureEntity } from '../entities/procedure.entity.js';
 
@@ -10,7 +11,7 @@ function procedimento(overrides: Partial<ProcedureEntity> = {}): ProcedureEntity
     id: 'proc-1',
     name: 'Limpeza de pele',
     description: 'Higienização e extração',
-    defaultValueCents: 18000,
+    currentValueCents: 18000,
     durationMinutes: 60,
     active: true,
     createdAt: new Date(),
@@ -24,9 +25,10 @@ function montar(atual: ProcedureEntity = procedimento(), duplicado: ProcedureEnt
     create: vi.fn().mockImplementation((data: Record<string, unknown>) =>
       Promise.resolve({ ...atual, ...data }),
     ),
-    update: vi.fn().mockImplementation((_id: string, data: Record<string, unknown>) =>
-      Promise.resolve({ ...atual, ...data }),
-    ),
+    update: vi.fn().mockImplementation((_id: string, data: Record<string, unknown>) => {
+      Object.assign(atual, data);
+      return Promise.resolve({ ...atual });
+    }),
     findById: vi.fn().mockResolvedValue(atual),
     findByName: vi.fn().mockResolvedValue(duplicado),
     findPage: vi.fn(),
@@ -36,10 +38,18 @@ function montar(atual: ProcedureEntity = procedimento(), duplicado: ProcedureEnt
     findById: vi.fn().mockResolvedValue(atual),
     getById: vi.fn().mockResolvedValue(atual),
     exists: vi.fn().mockResolvedValue(true),
+    valueOn: vi.fn().mockResolvedValue(18000),
     list: vi.fn(),
   } as unknown as ProcedureQueryService;
 
-  return { service: new ProcedureService(repository, queries), repository, queries };
+  const prices = {
+    add: vi.fn().mockResolvedValue({ id: 'price-1', valueCents: 18000 }),
+    list: vi.fn(),
+    remove: vi.fn(),
+    currentValueCents: vi.fn().mockResolvedValue(18000),
+  } as unknown as ProcedurePriceService;
+
+  return { service: new ProcedureService(repository, queries, prices), repository, queries, prices };
 }
 
 describe('ProcedureService', () => {
@@ -49,14 +59,22 @@ describe('ProcedureService', () => {
     base = procedimento();
   });
 
-  it('cadastra procedimento com valor padrão zero quando não informado', async () => {
-    const { service, repository } = montar();
-    const criado = await service.create({ name: 'Drenagem linfática' } as never);
+  it('cadastra procedimento sem valor quando não informado', async () => {
+    const { service, repository, prices } = montar();
+    const criado = await service.create({ name: 'Drenagem linfática', durationMinutes: 50 } as never);
 
     expect(criado.name).toBe('Drenagem linfática');
     expect(repository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Drenagem linfática', defaultValueCents: 0, durationMinutes: null }),
+      expect.objectContaining({ name: 'Drenagem linfática', durationMinutes: 50 }),
     );
+    expect(prices.add).not.toHaveBeenCalled();
+  });
+
+  it('valor inicial do cadastro vira a primeira vigência', async () => {
+    const { service, prices } = montar();
+    await service.create({ name: 'Massagem', initialValueCents: 12000 } as never);
+
+    expect(prices.add).toHaveBeenCalledWith('proc-1', { valueCents: 12000 });
   });
 
   it('recusa nome já cadastrado (409)', async () => {
@@ -64,10 +82,11 @@ describe('ProcedureService', () => {
     await expect(service.create({ name: 'Limpeza de pele' } as never)).rejects.toThrow(ConflictException);
   });
 
-  it('aceita o mesmo nome quando é o próprio registro sendo editado', async () => {
-    const { service } = montar(base, procedimento({ id: 'proc-1' }));
-    const atualizado = await service.update('proc-1', { name: 'Limpeza de pele' });
-    expect(atualizado.name).toBe('Limpeza de pele');
+  it('edita apenas os campos enviados e não mexe em valor', async () => {
+    const { service, repository } = montar();
+    await service.update('proc-1', { durationMinutes: 90 });
+
+    expect(repository.update).toHaveBeenCalledWith('proc-1', { durationMinutes: 90 });
   });
 
   it('recusa renomear para um nome de outro procedimento', async () => {
@@ -91,12 +110,5 @@ describe('ProcedureService', () => {
 
     const { service: jaAtivo } = montar(procedimento({ active: true }));
     await expect(jaAtivo.reactivate('proc-1')).rejects.toThrow(ConflictException);
-  });
-
-  it('edita apenas os campos enviados', async () => {
-    const { service, repository } = montar();
-    await service.update('proc-1', { durationMinutes: 90 });
-
-    expect(repository.update).toHaveBeenCalledWith('proc-1', { durationMinutes: 90 });
   });
 });

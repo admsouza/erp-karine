@@ -90,15 +90,15 @@ model User {
 
 /// Sessão de login. O token vai ao cliente em cookie httpOnly; aqui fica só o hash.
 model Session {
-  id         String   @id @default(uuid())
-  userId     String
-  tokenHash  String   @unique
-  userAgent  String?
-  ip         String?
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -140,19 +140,41 @@ model Client {
 // ---------------------------------------------------------------------------
 
 model Procedure {
-  id                String   @id @default(uuid())
-  name              String   @unique
-  description       String?
-  defaultValueCents Int      @default(0)
-  durationMinutes   Int?
-  active            Boolean  @default(true)
-  deletedAt         DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String    @unique
+  description     String?
+  durationMinutes Int?
+  active          Boolean   @default(true)
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   appointments Appointment[]
+  prices       ProcedurePrice[]
 
   @@index([active])
+}
+
+/// Vigência de valor de um procedimento.
+///
+/// O preço vale de `validFrom` (inclusive) até `validTo` (exclusivo).
+/// `validTo = null` significa "vigência atual, em aberto". O histórico nunca é
+/// reescrito: mudar o preço cria uma vigência nova e fecha a anterior, para
+/// preservar a série histórica.
+model ProcedurePrice {
+  id          String    @id @default(uuid())
+  procedureId String
+  valueCents  Int
+  validFrom   DateTime  @db.Date
+  validTo     DateTime? @db.Date
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  procedure Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+
+  @@unique([procedureId, validFrom])
+  @@index([procedureId, validFrom])
 }
 
 // ---------------------------------------------------------------------------
@@ -339,7 +361,7 @@ model ExamRecommendation {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  client Client                  @relation(fields: [clientId], references: [id])
+  client Client                   @relation(fields: [clientId], references: [id])
   items  ExamRecommendationItem[]
 
   @@index([clientId])

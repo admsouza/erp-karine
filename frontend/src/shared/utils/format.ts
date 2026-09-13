@@ -41,6 +41,25 @@ export function formatDate(value: string | Date | null | undefined): string {
   return DATE_FORMATTER.format(date);
 }
 
+/**
+ * Data sem hora (vigências de valor). Lê só o `AAAA-MM-DD` da string ISO —
+ * converter para Date mudaria o dia por causa do fuso (o banco guarda `DATE`).
+ */
+export function formatDateOnly(value: string | null | undefined): string {
+  if (!value) return '—';
+  const [ano, mes, dia] = value.slice(0, 10).split('-');
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : '—';
+}
+
+/** Hoje no fuso da clínica, em `AAAA-MM-DD` (valor de `<input type="date">`). */
+export function todayISO(): string {
+  const agora = new Date();
+  const local = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Recife' }));
+  const mes = String(local.getMonth() + 1).padStart(2, '0');
+  const dia = String(local.getDate()).padStart(2, '0');
+  return `${local.getFullYear()}-${mes}-${dia}`;
+}
+
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return '-';
   const date = value instanceof Date ? value : new Date(value);
