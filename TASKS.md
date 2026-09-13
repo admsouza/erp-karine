@@ -99,8 +99,11 @@ antes de começar a próxima.
 
 ## Infraestrutura / deploy (não bloqueia fases, mas precede o uso real)
 
-- [ ] `Dockerfile` + `captain-definition` para o app CapRover `erp-estetica`
-- [ ] Volume persistente do CapRover para o SQLite + `prisma migrate deploy` no boot
+- [x] `Dockerfile` multi-stage + `captain-definition` + `.dockerignore` para o app `erp-estetica`
+- [x] `prisma migrate deploy` no entrypoint do container (fail fast se a migração falhar)
+- [x] PostgreSQL no CapRover (`srv-captain--postgresql`, bancos `erp_estetica` e `erp_estetica_dev`)
+- [x] Deploy publicado em https://erp-estetica.solucoes.cloud
+- [ ] Rotina de backup do banco (`pg_dump` agendado) + teste de restauração
 - [ ] Autenticação de acesso (hoje o sistema é aberto) — decidir abordagem com o cliente
 - [ ] Seed inicial (procedimentos e planos reais da clínica)
 
@@ -110,5 +113,8 @@ antes de começar a próxima.
       `resolve.tsconfigPaths` (apenas aviso; remover na Fase 10).
 - [ ] `oxlint` do backend não exclui `src/generated` — hoje passa, mas convém restringir
       quando as regras ficarem mais rígidas.
-- [ ] Sem volume persistente no CapRover, o SQLite é recriado a cada deploy (resolver junto
-      com o Dockerfile).
+- [ ] O volume persistente `erp-estetica-data` continua registrado no CapRover e **não é
+      mais usado** (o banco saiu do container). Não é possível desativar `hasPersistentData`
+      pela API; fica disponível para uploads futuros ou deve ser removido no painel.
+- [ ] Redis e MinIO disponíveis no CapRover e não usados — registrar dependência só quando
+      existir funcionalidade real.

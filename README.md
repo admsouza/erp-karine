@@ -14,13 +14,15 @@ recomendações de exames.
 
 - **Frontend:** React 19 + TypeScript + Vite 8 + Tailwind CSS 4 + React Router 7 + Axios
 - **Backend:** NestJS 12 + TypeScript + REST + Swagger + class-validator
-- **Banco:** SQLite + Prisma ORM 7 (driver adapter libSQL)
+- **Banco:** PostgreSQL + Prisma ORM 7 (driver adapter `pg`)
 - **Testes:** Vitest
 
 ## Requisitos
 
 - Node.js 22 ou superior
 - npm
+- Um PostgreSQL acessível (produção: `srv-captain--postgresql` no CapRover; local: o host que
+  sua máquina alcança). A conexão vai em `DATABASE_URL`.
 
 ## Como executar (desenvolvimento)
 
@@ -43,7 +45,7 @@ npm install
 npm run dev                   # http://localhost:5173
 ```
 
-Em produção o backend serve o build do frontend (`frontend/dist`) na mesma origem:
+Em produção o build é servido pelo próprio backend (`frontend/dist`), em um único container:
 
 ```bash
 cd frontend && npm run build

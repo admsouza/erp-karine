@@ -6,10 +6,10 @@
 > da conversa não.
 
 - **Repositório:** https://github.com/admsouza/erp-karine
-- **App CapRover:** `erp-estetica` (ainda não criado/confirmado)
+- **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fase 1 concluída (estrutura, arquitetura modular, banco, layout e
-  documentação). Próxima: Fase 2 — módulo `clients`.
+- **Estado atual:** Fase 1 concluída (estrutura, arquitetura modular, banco PostgreSQL,
+  layout, documentação e deploy no CapRover). Próxima: Fase 2 — módulo `clients`.
 
 ---
 
@@ -29,7 +29,7 @@ responsabilidades**. Cada módulo evolui com o mínimo de impacto nos demais.
 | -------- | ---------------------------------------------------------------------- |
 | Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Axios     |
 | Backend  | NestJS 12, TypeScript, REST, Swagger (OpenAPI), class-validator         |
-| Dados    | SQLite + Prisma ORM 7 (driver adapter libSQL)                           |
+| Dados    | PostgreSQL + Prisma ORM 7 (driver adapter `pg`)                           |
 | Testes   | Vitest                                                                  |
 
 Tecnologia só é substituída com necessidade real e decisão registrada em `ARCHITECTURE.md`.
@@ -43,7 +43,7 @@ Requisito: Node.js 22 ou superior.
 cd backend
 cp .env.example .env      # primeira vez
 npm install               # o postinstall roda `prisma generate`
-npm run db:migrate        # cria/atualiza o SQLite de desenvolvimento
+npm run db:migrate        # aplica as migrações no PostgreSQL de desenvolvimento
 npm run start:dev
 
 # Frontend (5173, com proxy de /api para o backend)
@@ -66,7 +66,7 @@ Scripts: backend `start:dev`, `build`, `test:e2e`, `db:migrate`, `db:generate`, 
 
 | Onde | Variável | Para quê |
 | ---- | -------- | -------- |
-| `backend/.env` | `DATABASE_URL` | caminho do SQLite (`file:./dev.db`) |
+| `backend/.env` | `DATABASE_URL` | conexão PostgreSQL (`postgresql://...`); em produção `srv-captain--postgresql:5432`, banco `erp_estetica` |
 | `backend/.env` | `PORT` | porta da API (3001) |
 | `backend/.env` | `CORS_ORIGINS` | origens liberadas em desenvolvimento |
 | `backend/.env` | `FRONTEND_DIST` | caminho alternativo do build do SPA (opcional) |
@@ -168,5 +168,7 @@ Ordem de execução em `TASKS.md`: Fase 2 `clients` → 3 `procedures` → 4 `ap
 5 `subscriptions` → 6 `financial` → 7 `protocols` → 8 `exams` → 9 `dashboard` → 10 revisão
 arquitetural, UX, validações, testes e documentação final.
 
-Decisões ainda abertas: autenticação de acesso (não existe) e empacotamento de deploy no
-CapRover (Dockerfile + volume persistente para o SQLite).
+Decisões ainda abertas: autenticação de acesso (não existe) e rotina de backup do banco
+(`pg_dump` agendado). Deploy já configurado: imagem única no CapRover servindo API + SPA,
+com migração aplicada no boot do container. Infra disponível e ainda não usada: Redis
+(cache/sessão) e MinIO (fotos e fichas digitalizadas).

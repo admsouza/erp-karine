@@ -1,0 +1,20 @@
+# Contexto de build do Docker — não mandar lixo (nem segredo) para a imagem.
+# Atenção: padrões do Docker casam com o caminho relativo à raiz do contexto,
+# por isso ".env" sozinho NÃO bloqueia "backend/.env". Usar **/ para todos os níveis.
+**/node_modules
+**/dist
+**/src/generated
+**/.env
+**/.env.*
+!**/.env.example
+**/*.db
+**/*.db-journal
+**/*.sqlite
+.git
+.gitignore
+**/coverage
+**/*.log
+**/*.tar.gz
+**/*.png
+**/.vscode
+**/.idea

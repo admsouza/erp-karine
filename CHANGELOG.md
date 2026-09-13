@@ -4,6 +4,39 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · banco de dados + deploy · PostgreSQL e publicação no CapRover
+
+**Alteração**
+
+- Banco trocado de **SQLite para PostgreSQL** (`srv-captain--postgresql`), a pedido do
+  cliente, com driver adapter `@prisma/adapter-pg` (node-postgres, JS puro).
+  Removidas as dependências `@prisma/adapter-libsql`, `@libsql/client` e `better-sqlite3`.
+- Migração `init` recriada para Postgres; enums agora são **tipos nativos** do banco.
+  Bancos: `erp_estetica` (produção) e `erp_estetica_dev` (desenvolvimento e testes e2e).
+- `PrismaService` passa a exigir `DATABASE_URL` — se faltar, a aplicação falha na hora com
+  mensagem clara em vez de subir apontando para o banco errado.
+- Deploy criado: `Dockerfile` multi-stage (build do frontend + build do backend + runtime
+  não-root com `tini` e `HEALTHCHECK`), `captain-definition`, `.dockerignore` e
+  `backend/docker-entrypoint.sh` rodando `prisma migrate deploy` antes de subir a API.
+  O CLI do Prisma foi movido de `devDependencies` para `dependencies` (é usado no boot).
+- CapRover: `containerHttpPort=3001`, `forceSsl=true`, `DATABASE_URL` do Postgres e volume
+  `erp-estetica-data` mantido (não usado: o banco saiu do container).
+- Infra **disponível e não usada** ficou registrada em `ARCHITECTURE.md`: Redis
+  (`srv-captain--redis`) e MinIO/S3 (`storage-api.solucoes.cloud`).
+
+**Impacto**
+
+- Sistema publicado em **https://erp-estetica.solucoes.cloud** (API + SPA no mesmo container).
+- Deploy e restart **não apagam mais dado**: o banco vive fora do container.
+- Duas falhas reais de build foram corrigidas na publicação: `prisma generate` sem
+  `DATABASE_URL` no build (fallback explícito no `prisma.config.ts`) e `.dockerignore`
+  deixando `backend/.env` entrar na imagem (padrão `**/.env`).
+- Quem for rodar localmente precisa de um PostgreSQL acessível em `DATABASE_URL`
+  (ver `backend/.env.example`).
+- Validação de status ganha uma segunda barreira: o próprio banco recusa valor fora do enum.
+
+---
+
 ## 2026-09-13 · arquitetura (global) · realinhamento à arquitetura modular
 
 **Alteração**

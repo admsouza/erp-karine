@@ -12,7 +12,7 @@
 frontend (SPA React)  ──HTTP/JSON──▶  backend (API REST NestJS, monólito modular)
                                               │
                                               ├─ módulos de domínio (clientes, agenda, ...)
-                                              └─▶ SQLite (arquivo, um único banco)
+                                              └─▶ PostgreSQL (srv-captain--postgresql, banco erp_estetica)
 ```
 
 - **Monólito modular, não microserviços.** Cada domínio é um módulo independente dentro da
@@ -121,14 +121,18 @@ Convenções obrigatórias:
 - `createdAt DateTime @default(now())` e `updatedAt DateTime @updatedAt`.
 - Índices nas colunas de filtro recorrente (`clientId`, `date`/`scheduledAt`, `status`, `active`).
 - **Dinheiro em centavos (`Int`)**: `valueCents`, `amountCents`, `priceCents`,
-  `contractedValueCents`, `defaultValueCents`.
+  `contractedValueCents`, `defaultValueCents`. O Postgres tem `numeric` exato, mas centavos
+  em inteiro mantém uma única representação (exata, JSON-friendly) entre banco, API e
+  frontend — JavaScript não tem tipo decimal nativo.
+- **Enums são tipos nativos do Postgres** (valem `CHECK` de domínio no banco), mas a
+  validação de entrada continua no DTO e no Prisma Client.
 - Soft delete conforme a entidade: `active` (+ `deactivatedAt`) para cadastros que se
   inativam (Client, Procedure, SubscriptionPlan), `active`/`deletedAt` para Protocol,
   `status` para ciclos de vida (Appointment, ClientSubscription, ExamRecommendation).
   Exclusão física só para dado descartável (`ExamRecommendationItem` em cascata com a
   recomendação).
-- Um único banco SQLite, **mas cada módulo responde pelas suas entidades** — nenhum módulo
-  consulta tabela de outro.
+- Um único banco PostgreSQL, **mas cada módulo responde pelas suas entidades** — nenhum
+  módulo consulta tabela de outro.
 
 ## 5. Convenções do frontend
 
@@ -164,7 +168,7 @@ Convenções obrigatórias:
 | 7.2 | Backend em **ESM** (`"type": "module"`), imports relativos com extensão `.js` | Padrão do NestJS 12. Omitir o `.js` quebra o runtime. |
 | 7.3 | Prisma 7: URL do banco em `prisma.config.ts` (não no `schema.prisma`) | Mudança do Prisma 7; o schema tem só `provider = "sqlite"`. |
 | 7.4 | Generator `prisma-client` gerando em `src/generated/prisma` (não versionado) | O cliente é TS e precisa ser compilado junto com a app; `npm run db:generate` (e o `postinstall`) recria. |
-| 7.5 | Driver adapter **libSQL** (`@prisma/adapter-libsql`) em vez de `better-sqlite3` | libSQL usa binário **N-API**: o mesmo `node_modules` roda em qualquer versão de Node. `better-sqlite3` é compilado por `NODE_MODULE_VERSION` e quebra com `ERR_DLOPEN_FAILED` quando o runtime muda (esta máquina tem Node 22 e 26). |
+| 7.5 | Banco **PostgreSQL** com driver adapter `@prisma/adapter-pg` (node-postgres) | Decisão do cliente em 2026-09-13: trocar SQLite por PostgreSQL. O `pg` é JS puro (sem binário nativo), então também elimina o problema de versão de Node que motivou o adapter libSQL anterior. Antes de haver dado real, a troca custou uma migração `init` nova. |
 | 7.6 | `NotFoundModule` importado **por último** no `app.module.ts` | A ordem de resolução dos módulos define a ordem das rotas; o curinga `@All('*path')` importado antes engole rotas reais. |
 | 7.7 | `ServeStaticModule` registrado **condicionalmente** (só se `frontend/dist` existir) | Em desenvolvimento o build pode não existir e o backend precisa subir mesmo assim. `FRONTEND_DIST` permite outro caminho. |
 | 7.8 | Filtro de erro único (`@Catch()`) em vez de um filtro por tipo | Um só lugar formatando erro, nenhuma exceção escapa do envelope. |
@@ -174,36 +178,72 @@ Convenções obrigatórias:
 | 7.12 | `modules/<dominio>/{controllers,services,dto,repositories,entities}` | Estrutura de camadas pedida para o monólito modular: cada módulo encapsula sua regra e seu acesso a dados. |
 | 7.13 | Pastas vazias reservadas (`.gitkeep`) em `common/guards`, `interceptors`, `decorators`, `utils` e nas features ainda não usadas | O layout existe desde a Fase 1; o conteúdo entra no primeiro uso real, sem scaffolding morto de código. |
 | 7.14 | Uma migração `init` única, recriada na Fase 1 após realinhamento do schema | Ainda não existe dado real; recriar é mais limpo que empilhar migração de renomeação. |
+| 7.15 | Imagem única multi-stage (frontend build → backend build → runtime) com o Nest servindo o SPA | Um container, um deploy, sem CORS e sem dois apps para manter sincronizados. |
+| 7.16 | Banco **fora do container** (`srv-captain--postgresql`), sem volume de dados na imagem | O dado é do serviço de banco, não do app: deploy/restart não apaga nada e a capacidade de backup é a do Postgres (`pg_dump`). O diretório persistente `erp-estetica-data` continua registrado no CapRover, hoje sem uso. |
+| 7.17 | `prisma migrate deploy` no entrypoint, com o CLI do Prisma em `dependencies` (não em devDependencies) | O container precisa aplicar migração no boot; deixar o CLI só em dev quebraria o start em produção. |
+| 7.18 | `containerHttpPort = 3001` no CapRover (a API escuta 3001, não 80) | Evita depender de porta privilegiada dentro do container. |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 
-1. **Dinheiro em centavos (`Int`).** `Float`/`Decimal` reintroduzem erro de arredondamento; o
-   SQLite não tem decimal exato (`Decimal` do Prisma cai em `NUMERIC`).
+1. **Dinheiro em centavos (`Int`).** Manter uma única representação exata e JSON-friendly
+   entre banco, API e frontend (JS não tem decimal nativo); `Float` está fora de questão.
 2. **UUID como chave primária** em todas as entidades.
 3. **Não apagar histórico clínico e financeiro.** Cliente se inativa; sessão de protocolo é
    acrescentada, nunca sobrescrita.
 4. **Anti-duplicidade de faturamento no banco**: `FinancialTransaction.appointmentId` e
    `subscriptionPaymentId` são `@unique`.
 5. **Validação de entrada no backend** obrigatória em todo endpoint de escrita.
-6. **Driver adapter libSQL** (ver 7.5).
-7. **Enums viram `TEXT` no SQLite** — o banco não valida o domínio do status. A validação
-   real é o DTO (`@IsEnum`) e o Prisma Client.
+6. **PostgreSQL + driver adapter `@prisma/adapter-pg`** (ver 7.5). Trocar de banco de novo é
+   decisão registrada, não detalhe de implementação.
+7. **Validação de domínio no DTO** (`@IsEnum`), mesmo com enum nativo no banco — o banco não
+   deve ser a única barreira contra payload inválido.
 8. **Serviço único no CapRover** (backend servindo o SPA). Dois apps exigiriam CORS, cookie
    compartilhado e nova decisão aqui.
 9. **Módulo não acessa dados de outro módulo** (seção 3). Toda exceção é dívida arquitetural
    e precisa de decisão registrada.
 10. **`NotFoundModule` por último** no `app.module.ts` (ver 7.6).
 
+## 8.1 Deploy (CapRover)
+
+- **App:** `erp-estetica` em `https://erp-estetica.solucoes.cloud` (app único).
+- **Imagem:** `Dockerfile` multi-stage. O estágio de runtime roda como usuário `node`
+  (não-root), com `tini` como PID 1, `HEALTHCHECK` batendo em `/api/health` e `EXPOSE 3001`.
+- **Volume:** `/app/data` → volume CapRover `erp-estetica-data`. O arquivo SQLite é
+  `file:/app/data/erp.db` (definido em `DATABASE_URL` na app definition **e** como padrão na
+  imagem). Deploy não apaga mais o banco.
+- **Migração:** `backend/docker-entrypoint.sh` roda `npx prisma migrate deploy` antes de
+  subir a API. Se a migração falhar, o container não sobe (fail fast) em vez de servir um
+  schema desatualizado.
+- **Config do CapRover:** `containerHttpPort=3001`, `forceSsl=true`, `instanceCount=1`,
+  `hasPersistentData=true` + volume registrado. Sem volume registrado, `hasPersistentData`
+  sozinho não persiste nada.
+- **Empacotamento:** tar com `Dockerfile`, `captain-definition`, `.dockerignore`, `backend/`
+  e `frontend/`, excluindo `node_modules`, `dist`, `src/generated`, `*.db`, `.env`.
+  As dependências são instaladas dentro do build (`npm ci`), nunca enviadas do host.
+- **Pré-requisito de release:** `npm ci` precisa aceitar os `package-lock.json` (o build usa
+  `npm ci`, que falha se o lock estiver fora de sincronia com o `package.json`).
+
 ## 9. Ambiente e execução
 
 - Node ≥ 22. **Atenção:** esta máquina tem duas versões de Node (22 em
   `/opt/data/home/.local/bin/node`, usada pelo shell interativo; 26 em
-  `/usr/local/bin/node`, usada por processos em background). O adapter libSQL funciona nas
-  duas — é justamente por isso que ele foi escolhido.
+  `/usr/local/bin/node`, usada por processos em background). Como o `pg` é JS puro, o
+  `node_modules` funciona nas duas sem rebuild.
 - Portas: backend `3001`, frontend `5173` (proxy `/api`).
 - Variáveis: `backend/.env` (`DATABASE_URL`, `PORT`, `CORS_ORIGINS`, `FRONTEND_DIST`
   opcional) e `frontend/.env` (`VITE_API_URL`, padrão `/api`).
-- `backend/dev.db` é o SQLite de desenvolvimento (não versionado).
+- **Banco:** PostgreSQL em `srv-captain--postgresql:5432` (mesma rede overlay do CapRover).
+  Bancos: `erp_estetica` (produção) e `erp_estetica_dev` (desenvolvimento e testes e2e).
+  Credencial fica em `backend/.env` (não versionado) e na env var do app no CapRover.
+- **Redis:** `srv-captain--redis:6379` está disponível no CapRover e **não é usado** — o
+  sistema não tem cache nem sessão nesta fase. Dependência só entra quando existir uso real.
+- **MinIO / S3:** `https://storage-api.solucoes.cloud` (console em
+  `https://storage.solucoes.cloud`, região `eu-east-1`) está disponível para fotos clínicas e
+  fichas digitalizadas — módulo futuro. **Não há dependência de S3 no projeto hoje.**
+  As credenciais ficam apenas em `backend/.env` e nas env vars do CapRover, nunca no
+  repositório. **Recomendação para quando o módulo existir:** criar um bucket dedicado
+  (`erp-estetica`) com um usuário/access key próprio, em vez de usar a credencial root —
+  e URLs assinadas de curta duração para exibir imagem de paciente.
 
 ## 10. Princípios de trabalho
 
