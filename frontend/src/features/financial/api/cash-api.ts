@@ -6,6 +6,14 @@ export const createResourceAccount = async (input: {
   name: string;
   kind: string;
 }) => (await http.post<ResourceAccount>('/financial/accounts', input)).data;
+export const updateResourceAccount = async (
+  id: string,
+  input: { name?: string; kind?: string },
+) => (await http.patch<ResourceAccount>(`/financial/accounts/${id}`, input)).data;
+export const inactivateResourceAccount = async (id: string) =>
+  (await http.patch<ResourceAccount>(`/financial/accounts/${id}/inactivate`)).data;
+export const reactivateResourceAccount = async (id: string) =>
+  (await http.patch<ResourceAccount>(`/financial/accounts/${id}/reactivate`)).data;
 export const listCashPeriods = async () =>
   (await http.get<CashPeriod[]>('/financial/cash-periods')).data;
 export const getCashPeriod = async (id: string) =>

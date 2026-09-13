@@ -11,6 +11,7 @@ import {
   createFinancialAdjustment,
 } from '../api/financial-api';
 import type { ResourceAccount } from '../types/cash';
+import { locaisAtivos } from '../types/cash';
 import {
   TRANSACTION_TYPES,
   PAYMENT_METHODS,
@@ -93,7 +94,7 @@ export function TransactionResourceModal({
           onChange={(e) => setAccount(e.target.value)}
           options={[
             { value: '', label: 'Selecione' },
-            ...accounts.map((a) => ({ value: a.id, label: a.name })),
+            ...locaisAtivos(accounts).map((a) => ({ value: a.id, label: a.name })),
           ]}
         />
         {mode === 'adjustment' && (

@@ -19,6 +19,7 @@ import {
   settleFinancialTitle,
 } from '../api/title-api';
 import type { ResourceAccount } from '../types/cash';
+import { locaisAtivos } from '../types/cash';
 import {
   PAYMENT_METHODS,
   type PaymentMethod,
@@ -318,7 +319,7 @@ export function TitlesPanel({
                   }}
                   options={[
                     { value: '', label: 'Selecione' },
-                    ...accounts.map((a) => ({ value: a.id, label: a.name })),
+                    ...locaisAtivos(accounts).map((a) => ({ value: a.id, label: a.name })),
                   ]}
                 />
                 <Select

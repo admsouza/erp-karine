@@ -23,6 +23,8 @@ describe('Caixa mensal (e2e)', () => {
   const titleIds: string[] = [];
   let adjustmentId: string;
   const otherAccounts: string[] = [];
+  let period3Id = '';
+  const extraTransactions: string[] = [];
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       imports: [AppModule],
@@ -73,6 +75,14 @@ describe('Caixa mensal (e2e)', () => {
         where: { periodId: nextPeriodId },
       });
       await prisma.cashPeriod.delete({ where: { id: nextPeriodId } });
+    }
+    if (extraTransactions.length)
+      await prisma.financialTransaction.deleteMany({
+        where: { id: { in: extraTransactions } },
+      });
+    if (period3Id) {
+      await prisma.cashBalance.deleteMany({ where: { periodId: period3Id } });
+      await prisma.cashPeriod.delete({ where: { id: period3Id } });
     }
     if (periodId) {
       await prisma.cashBalance.deleteMany({ where: { periodId } });
@@ -594,7 +604,94 @@ describe('Caixa mensal (e2e)', () => {
     expect(closing.status).toBe(201);expect([201,409]).toContain(moving.status);
     const snapshot=await prisma.cashBalance.findUniqueOrThrow({where:{periodId_accountId:{periodId:nextPeriodId,accountId}}});
     expect(snapshot.expectedCents).toBe(moving.status===201?1600:1300);
-    if(moving.status===201)await prisma.financialTransaction.delete({where:{id:moving.body.id}});
+    if (moving.status===201)await prisma.financialTransaction.delete({where:{id:moving.body.id}});
+  });
+  it('edita a identificação, inativa preservando o histórico e reativa recriando o saldo', async () => {
+    const alvo = otherAccounts[0];
+    const novoNome = `Renomeado ${crypto.randomUUID().slice(0, 8)}`;
+    const renomeado = await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}`)
+      .set('Cookie', session.cookie)
+      .send({ name: novoNome })
+      .expect(200);
+    expect(renomeado.body.name).toBe(novoNome);
+    // Nome já usado por outro local (sem diferenciar maiúsculas) e edição sem mudança são recusados.
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${otherAccounts[1]}`)
+      .set('Cookie', session.cookie)
+      .send({ name: novoNome.toUpperCase() })
+      .expect(409);
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}`)
+      .set('Cookie', session.cookie)
+      .send({ name: novoNome })
+      .expect(400);
+    // Abre o mês seguinte e coloca um lançamento em outro local (bloqueia inativar aquele local).
+    const aberto = await request(app.getHttpServer())
+      .post('/api/financial/cash-periods')
+      .set('Cookie', session.cookie)
+      .send({ month: '2098-03' })
+      .expect(201);
+    period3Id = aberto.body.id;
+    const movimento = await request(app.getHttpServer())
+      .post('/api/financial/transactions')
+      .set('Cookie', session.cookie)
+      .send({
+        description: 'Movimento do mês aberto',
+        type: 'RECEITA',
+        status: 'PAGO',
+        amountCents: 700,
+        date: '2098-03-05',
+        resourceAccountId: otherAccounts[1],
+        paymentMethod: 'DINHEIRO',
+      })
+      .expect(201);
+    extraTransactions.push(movimento.body.id);
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${otherAccounts[1]}/inactivate`)
+      .set('Cookie', session.cookie)
+      .expect(409);
+    // Sem lançamento no mês aberto, inativa: sai da lista nova, histórico dos meses fechados intacto.
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}/inactivate`)
+      .set('Cookie', session.cookie)
+      .expect(200);
+    const saldosHistoricos = await prisma.cashBalance.count({
+      where: { accountId: alvo },
+    });
+    expect(saldosHistoricos).toBeGreaterThan(0);
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}/inactivate`)
+      .set('Cookie', session.cookie)
+      .expect(409);
+    const detalhe = await request(app.getHttpServer())
+      .get(`/api/financial/cash-periods/${period3Id}`)
+      .set('Cookie', session.cookie)
+      .expect(200);
+    expect(
+      detalhe.body.balances.some(
+        (b: { accountId: string }) => b.accountId === alvo,
+      ),
+    ).toBe(false);
+    expect(detalhe.body.balances.length).toBe(2);
+    // Reativar traz o local de volta ao mês aberto, começando do zero.
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}/reactivate`)
+      .set('Cookie', session.cookie)
+      .expect(200);
+    const depois = await request(app.getHttpServer())
+      .get(`/api/financial/cash-periods/${period3Id}`)
+      .set('Cookie', session.cookie)
+      .expect(200);
+    const reativado = depois.body.balances.find(
+      (b: { accountId: string }) => b.accountId === alvo,
+    );
+    expect(reativado).toMatchObject({ openingCents: 0, expectedCents: 0 });
+    expect(depois.body.balances.length).toBe(3);
+    await request(app.getHttpServer())
+      .patch(`/api/financial/accounts/${alvo}/reactivate`)
+      .set('Cookie', session.cookie)
+      .expect(409);
   });
 
 });

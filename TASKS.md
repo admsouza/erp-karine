@@ -98,6 +98,10 @@ Invariantes cobertos por unitários **e** e2e, cada fatia implementada com teste
 
 - [x] Locais do recurso (`ResourceAccount`: `CASH`, `BANK`, `CARD`) como cadastro do módulo financeiro —
   substituem os campos fixos de espécie/banco/maquineta
+- [x] **Identificação do local em lista única** (espécie, bancos pelo nome real, maquinetas e
+  "Outro (digitar)"), com o tipo derivado da escolha
+- [x] **Editar o local** (nome/tipo, com auditoria) e **inativar/reativar** sem exclusão física:
+  inativo sai dos novos lançamentos e de novas aberturas, meses fechados preservados
 - [x] Abertura mensal do caixa (`CashPeriod`) com **transporte automático** dos saldos apurados do último
   período fechado e **recusa de abertura duplicada** (409) e de período fora de sequência
 - [x] Saldo inicial informado à mão é recusado (400): o transporte é a regra

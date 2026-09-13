@@ -65,7 +65,11 @@ export class CashPeriodService {
         throw new BadRequestException(
           'Saldos iniciais são transportados automaticamente.',
         );
-      const accounts = await this.repository.accounts(tx);
+      // Só locais ativos entram na abertura: inativado sai das novas aberturas e o
+      // histórico dos meses fechados continua intacto.
+      const accounts = (await this.repository.accounts(tx)).filter(
+        (x) => x.active,
+      );
       if (!accounts.length)
         throw new ConflictException(
           'Cadastre um local de recurso antes de abrir o caixa.',

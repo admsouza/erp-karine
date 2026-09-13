@@ -484,6 +484,7 @@ model ResourceAccount {
   name String @unique
   kind ResourceAccountKind
   active Boolean @default(true)
+  deactivatedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   transactions FinancialTransaction[]

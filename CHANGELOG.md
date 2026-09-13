@@ -2,6 +2,48 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` · Corrigir identificação do local e inativar/reativar
+
+**Alteração**
+
+- **Editar local do recurso**: `PATCH /api/financial/accounts/:id` corrige **identificação (nome)** e
+  **tipo**. Recusa nome já usado por outro local (409, sem diferenciar maiúsculas) e recusa edição sem
+  mudança efetiva (400, para a trilha não virar carimbo). Tela: botão **Editar** em cada local, com a
+  mesma lista de identificações do cadastro.
+- **Inativar / reativar**: `PATCH /api/financial/accounts/:id/inactivate|reactivate`, no padrão de
+  clientes e procedimentos — **sem exclusão física**. O local inativado sai das listas de **novos
+  lançamentos** e de **novas aberturas**; os meses **já fechados** continuam com a composição e o apurado
+  daquele local. Inativar **remove o saldo zerado do mês aberto** (senão o fechamento pediria contagem de
+  um local que não recebe mais nada) e é **recusado se houver lançamento no mês aberto** (409).
+  Reativar devolve o local e recria o saldo do mês aberto começando do zero.
+- Toda alteração grava `AuditEvent` pelo caso de uso (autor, motivo, campos alterados antes → depois):
+  `UPDATED`, `INACTIVATED`, `REACTIVATED`.
+- Migração **aditiva** `20260913204430_resource_account_deactivated_at` (`ResourceAccount.deactivatedAt`).
+- Frontend: lista de locais com **Editar**/**Inativar**, seção **Inativos** com **Reativar**, e os
+  seletores de destino (lançamento, baixa, conferência de lançamento) passam a oferecer apenas locais
+  ativos.
+
+**Impacto**
+
+- **Nada muda nos saldos**: renomear não move valor — o saldo é ligado ao `id` do local. O histórico
+  (inclusive meses fechados) passa a exibir o nome novo, que é o esperado numa correção.
+- Sem mudança de contrato nos endpoints existentes; `ResourceAccount` ganhou o campo `deactivatedAt`
+  (aditivo) e `GET /api/financial/accounts` continua devolvendo todos, com `active` para filtrar.
+- Quem tem lançamento no mês aberto precisa ajustar/cancelar antes de inativar o local — a mensagem diz isso.
+
+**Verificação**
+
+- Unitários: **88 passando** (6 novos do `ResourceAccountService`: nome repetido, edição sem mudança,
+  trilha só com o campo alterado, bloqueio por mês aberto, inativação limpando o saldo do mês aberto e
+  reativação recriando).
+- e2e: **87 passando**, com um caso novo de ponta a ponta (renomear, 409 de nome repetido, 400 de no-op,
+  bloqueio de inativação com lançamento no mês aberto, inativação preservando saldos de meses fechados,
+  local inativo fora da nova abertura e reativação recriando o saldo).
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: criar → **Editar** (Santander → Banco do Brasil) → **Inativar** (vai para
+  "Inativos") → o local inativo **não aparece** nas opções de destino do novo lançamento → **Reativar**
+  (volta à lista ativa) — sem erro de tela.
+
 ## 2026-09-13 · `financial` (tela) · Identificação do local em lista única (bancos visíveis de imediato)
 
 **Alteração**

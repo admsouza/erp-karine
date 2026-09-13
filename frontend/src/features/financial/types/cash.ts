@@ -3,7 +3,11 @@ export interface ResourceAccount {
   name: string;
   kind: 'CASH' | 'BANK' | 'CARD';
   active: boolean;
+  deactivatedAt: string | null;
 }
+/** Local inativado sai das listas de escolha, mas o histórico dos meses fechados continua. */
+export const locaisAtivos = (locais: ResourceAccount[]) =>
+  locais.filter((x) => x.active);
 export interface CashBalance {
   accountId: string;
   account: ResourceAccount;

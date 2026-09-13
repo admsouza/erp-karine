@@ -12,14 +12,18 @@ import {
   closeCashPeriod,
   createResourceAccount,
   getCashPeriod,
+  inactivateResourceAccount,
   listCashPeriods,
   listResourceAccounts,
   openCashPeriod,
+  reactivateResourceAccount,
 } from '../api/cash-api';
+import { EditResourceAccountModal } from './EditResourceAccountModal';
 import {
   IDENTIFICACOES_LOCAL,
   OUTRO_LOCAL,
   RESOURCE_KINDS,
+  locaisAtivos,
   type CashPeriod,
   type ResourceAccount,
 } from '../types/cash';
@@ -29,6 +33,7 @@ export function CashPanel() {
   const [detail, setDetail] = useState<CashPeriod | null>(null);
   const [counted, setCounted] = useState<Record<string, string>>({});
   const [reason, setReason] = useState('');
+  const [editando, setEditando] = useState<ResourceAccount | null>(null);
   const [idLocal, setIdLocal] = useState('');
   const [customName, setCustomName] = useState('');
   const [kind, setKind] = useState('CASH');
@@ -91,6 +96,17 @@ export function CashPanel() {
   }
   return (
     <div className="space-y-4">
+      {editando && (
+        <EditResourceAccountModal
+          key={editando.id}
+          account={editando}
+          onClose={() => setEditando(null)}
+          onSaved={() => {
+            setEditando(null);
+            void act(reload);
+          }}
+        />
+      )}
       {error && (
         <p role="alert" className="text-sm text-rose-700">
           {error}
@@ -167,13 +183,73 @@ export function CashPanel() {
                 </p>
               )}
             </form>
-            <ul className="mt-3 space-y-1 text-sm">
-              {accounts.map((a) => (
-                <li key={a.id}>
-                  {a.name} · {RESOURCE_KINDS[a.kind]}
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
+              {locaisAtivos(accounts).map((a) => (
+                <li
+                  key={a.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2"
+                >
+                  <span>
+                    {a.name} · {RESOURCE_KINDS[a.kind]}
+                  </span>
+                  <span className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setEditando(a)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => void act(() => inactivateResourceAccount(a.id))}
+                    >
+                      Inativar
+                    </Button>
+                  </span>
                 </li>
               ))}
             </ul>
+            {accounts.some((a) => !a.active) && (
+              <>
+                <h3 className="mt-4 text-xs font-semibold uppercase text-slate-400">
+                  Inativos
+                </h3>
+                <ul className="mt-1 divide-y divide-slate-100 text-sm">
+                  {accounts
+                    .filter((a) => !a.active)
+                    .map((a) => (
+                      <li
+                        key={a.id}
+                        className="flex flex-wrap items-center justify-between gap-2 py-2 text-slate-500"
+                      >
+                        <span>
+                          {a.name} · {RESOURCE_KINDS[a.kind]}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() =>
+                            void act(() => reactivateResourceAccount(a.id))
+                          }
+                        >
+                          Reativar
+                        </Button>
+                      </li>
+                    ))}
+                </ul>
+                <p className="mt-2 text-xs text-slate-400">
+                  Inativo sai das listas de novos lançamentos e de novas
+                  aberturas; os meses já fechados continuam com a composição.
+                </p>
+              </>
+            )}
           </Card>
           <Card title="Abertura mensal">
             <form
@@ -185,7 +261,7 @@ export function CashPanel() {
                     month,
                     ...(!periods.length
                       ? {
-                          initialBalances: accounts.map((a) => ({
+                          initialBalances: locaisAtivos(accounts).map((a) => ({
                             accountId: a.id,
                             amountCents: parseBRLToCents(initial[a.id] || '0'),
                           })),
@@ -204,7 +280,7 @@ export function CashPanel() {
               />
               {periods.length === 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {accounts.map((a) => (
+                  {locaisAtivos(accounts).map((a) => (
                     <Input
                       key={a.id}
                       label={`Saldo inicial — ${a.name} (R$)`}
@@ -222,7 +298,10 @@ export function CashPanel() {
                   local.
                 </p>
               )}
-              <Button disabled={busy || accounts.length === 0} type="submit">
+              <Button
+                disabled={busy || locaisAtivos(accounts).length === 0}
+                type="submit"
+              >
                 Abrir caixa
               </Button>
             </form>

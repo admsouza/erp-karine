@@ -7,6 +7,7 @@ import {
   Headers,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import {
   CloseCashPeriodDto,
   CreateResourceAccountDto,
   OpenCashPeriodDto,
+  UpdateResourceAccountDto,
 } from '../dto/cash.dto.js';
 import { CashPeriodService } from '../services/cash-period.service.js';
 import { ResourceAccountService } from '../services/resource-account.service.js';
@@ -59,6 +61,28 @@ export class CashController {
     @Headers('x-request-id') requestId?: string,
   ) {
     return this.accounts.create(dto, user, requestId || randomUUID());
+  }
+  @Patch('accounts/:id') updateAccount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateResourceAccountDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.accounts.update(id, dto, user, requestId || randomUUID());
+  }
+  @Patch('accounts/:id/inactivate') inactivateAccount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.accounts.inactivate(id, user, requestId || randomUUID());
+  }
+  @Patch('accounts/:id/reactivate') reactivateAccount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.accounts.reactivate(id, user, requestId || randomUUID());
   }
   @Get('cash-periods') list() {
     return this.periods.list();
