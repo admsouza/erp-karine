@@ -83,13 +83,13 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend mobile-first com filtros, formulários e estados de tela
 - [x] Unitários/e2e, smoke HTTP e navegador real
 
-## Fase 6 — Módulo `financial` `[ ]`
+## Fase 6 — Módulo `financial` `[x]`
 
-- [ ] `FinancialTransactionService` com anti-duplicidade (appointmentId/subscriptionPaymentId únicos)
-- [ ] Geração de lançamento a partir de `AppointmentCompleted` e `SubscriptionPaymentReceived`
-- [ ] `FinancialQueryService`: faturamento do mês, por período, por procedimento, por assinatura
-- [ ] Frontend: `features/financial/` (lançamentos + indicadores)
-- [ ] Testes do módulo
+- [x] `FinancialTransactionService` com anti-duplicidade (appointmentId/subscriptionPaymentId únicos)
+- [x] Geração de lançamento a partir de `AppointmentCompleted` e `SubscriptionPaymentReceived`
+- [x] `FinancialQueryService`: faturamento, despesas, saldo e relatórios por procedimento/assinatura
+- [x] Frontend mobile-first: indicadores, lançamentos, filtros, lançamento manual e estados de tela
+- [x] Testes unitários/e2e, smoke HTTP, auditoria e verificação em navegador real
 
 ## Fase 7 — Módulo `protocols` `[ ]`
 

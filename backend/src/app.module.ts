@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { DatabaseModule } from './common/database/database.module.js';
+import { DomainEventsModule } from './common/events/domain-events.module.js';
 import { NotFoundModule } from './common/exceptions/not-found.module.js';
 import { HealthModule } from './common/health/health.module.js';
 import { OriginGuard } from './common/guards/origin.guard.js';
@@ -42,6 +43,7 @@ function staticFilesImports(): DynamicModule[] {
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
+    DomainEventsModule,
     ...staticFilesImports(),
     HealthModule,
     // Sessão: o guard global abaixo protege todas as rotas de /api.
