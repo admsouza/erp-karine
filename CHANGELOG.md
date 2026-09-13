@@ -2,6 +2,55 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `maintenance` (novo) · Manutenção de cadastros na seção Sistema
+
+**Alteração**
+
+- Novo módulo **`maintenance`**, com tela em **Sistema → Manutenção de cadastros**
+  (`/sistema/manutencao`, **ADMIN**): um lugar só para **corrigir** e **inativar/reativar** os cadastros
+  básicos, sem caçar a tela de cada módulo.
+- Tipos cobertos nesta entrega: **locais do recurso**, **clientes**, **procedimentos** e **planos de
+  assinatura**. Filtros por **cadastro**, **busca** e **situação** (ativos/inativos), com paginação.
+- Campos editáveis por tipo (deliberadamente poucos): local → identificação e tipo; cliente → nome e
+  telefone; procedimento → nome e unidade (**valor unitário não entra**: tem vigência própria);
+  plano → nome e valor.
+- Endpoints (todos `@Roles('ADMIN')`): `GET /api/maintenance/registrations`,
+  `PATCH /api/maintenance/registrations/:type/:id` e `.../inactivate` / `.../reactivate`.
+- **Arquitetura (decisão 7.49):** o módulo **não tem tabela nem regra própria** — a lista é montada pelos
+  **contratos públicos de consulta** dos donos e as operações são **delegadas ao serviço público do
+  módulo dono**, que continua validando. Nenhum repository/controller interno é acessado.
+- **Trilha sem duplicidade:** o hub grava `AuditEvent` (`module: 'maintenance'`) **somente quando o dono
+  não grava**. Como `financial` já registra o local do recurso, essas operações seguem com um único
+  evento; clientes, procedimentos e planos (que não registravam) passam a ter rastro.
+- Exportações aditivas nos módulos donos (`ClientService`, `ProcedureService`,
+  `SubscriptionPlanService`, `SubscriptionPlanQueryService`, `ResourceAccountService`) para servir de
+  contrato público ao hub.
+- Item novo no menu da seção **Sistema** com ícone próprio; **sem migração** (nenhuma tabela nova).
+
+**Impacto**
+
+- **Nada muda nas telas atuais** dos módulos: elas continuam sendo o caminho completo de cada cadastro.
+  O hub é um atalho de manutenção, não uma segunda regra.
+- **Não existe exclusão** em nenhum caminho do hub (`DELETE` → 404) e ele **não cria** cadastro.
+- A seção Sistema passa a ter **4 itens**: Auditoria, Usuários, Manutenção de cadastros e Integração.
+- Erros de domínio continuam vindo do dono (nome repetido, validação de CPF etc.), sem tradução própria
+  do hub.
+
+**Verificação**
+
+- Unitários: **95 passando** (7 novos do `MaintenanceService`: listagem com rótulo/detalhe e valores,
+  filtro por situação e busca no caso sem paginação do dono, edição de cliente com trilha, edição de
+  local **sem** duplicar a trilha do dono, inativação de plano com trilha, edição sem campo aplicável e
+  tipo inválido).
+- e2e: **92 passando**, com `test/maintenance.e2e-spec.ts` (5 casos): 403 para perfil comum e 401 sem
+  sessão, listagem por tipo, edição de cliente com **um** evento de trilha e `changes` corretos, edição
+  de local do recurso com **zero** evento do hub (dono = 2), inativação/reativação com trilha, 409 em
+  operação repetida e 404 em `DELETE`.
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: tela abre em `/sistema/manutencao`, lista com busca funciona, editar
+  cliente pelo modal renomeia, **Inativar** e **Reativar** funcionam pela lista e os quatro tipos
+  carregam sem erro de tela.
+
 ## 2026-09-13 · `financial` · Corrigir identificação do local e inativar/reativar
 
 **Alteração**

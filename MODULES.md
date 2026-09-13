@@ -20,6 +20,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | financial | `[x]` | 6 · 6.1 |
 | protocols | `[x]` | 7 |
 | audit | `[x]` | transversal |
+| maintenance | `[x]` | Sistema |
 | exams | `[~]` | 8 |
 | dashboard | `[~]` | 9 |
 
@@ -379,6 +380,45 @@ Não importa os módulos donos nem seus serviços/repositories.
   o **saldo efetivo** informado, e **registra a divergência** (`FinancialReconciliation`, append-only).
 - **Não altera lançamentos**: o registro é histórico e serve para conferência/trilha.
 - Também grava `AuditEvent` com o motivo/referência da conferência.
+
+---
+
+## maintenance
+
+**Responsabilidade:** **manutenção de cadastros** (seção Sistema): corrigir a identificação e
+inativar/reativar cadastros básicos de outros módulos em um lugar só. **Não cria, não exclui e não
+tem tabela nem regra de domínio próprias** — é um hub que consulta e delega.
+
+**Entidades:** nenhuma (não tem tabela).
+
+**Serviços públicos:** nenhum exportado; o `MaintenanceService` é interno ao hub.
+
+**Eventos:** não emite nem consome.
+
+**Dependências permitidas:** contratos públicos de `clients` (`ClientQueryService`, `ClientService`),
+`procedures` (`ProcedureQueryService`, `ProcedureService`), `subscriptions`
+(`SubscriptionPlanQueryService`, `SubscriptionPlanService`), `financial` (`ResourceAccountService`) e
+`audit` (`AuditTrailService`). **Não** acessa repository, controller ou arquivo interno de outro módulo.
+
+**Endpoints:** `GET /api/maintenance/registrations` (tipo, busca, situação e paginação),
+`PATCH /api/maintenance/registrations/:type/:id`,
+`PATCH /api/maintenance/registrations/:type/:id/inactivate`,
+`PATCH /api/maintenance/registrations/:type/:id/reactivate`. **Todos com `@Roles('ADMIN')`.**
+
+**Regras principais:**
+
+- Tipos cobertos: `RESOURCE_ACCOUNT` (local do recurso), `CLIENT`, `PROCEDURE` e `SUBSCRIPTION_PLAN`.
+  Tipo desconhecido devolve **400**.
+- Campos editáveis por tipo (o resto continua na tela do módulo dono): local → identificação e tipo;
+  cliente → nome e telefone; procedimento → nome e unidade (o **valor unitário tem vigência própria** e
+  não é editado aqui); plano → nome e valor.
+- **A validação é sempre do módulo dono** — o hub só monta o payload e repassa. Erros de domínio
+  (nome repetido, CPF etc.) voltam como o dono devolve.
+- **Trilha de auditoria sem duplicidade:** o hub registra `AuditEvent` (`module: 'maintenance'`) apenas
+  quando o módulo dono **não** registra. Hoje o dono registra em `financial` (local do recurso), então
+  essas operações **não** geram evento do hub; clientes, procedimentos e planos (que não registram)
+  passam a ter rastro por aqui.
+- Sem exclusão física em nenhum caminho; `DELETE` continua **404**.
 
 ---
 

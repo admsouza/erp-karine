@@ -1,5 +1,6 @@
 import {
   AuditIcon,
+  MaintenanceIcon,
   CalendarIcon,
   ClientsIcon,
   DashboardIcon,
@@ -38,6 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Seção Sistema: administração do próprio sistema (hoje toda de ADMIN).
   { label: 'Auditoria', to: '/sistema/auditoria', icon: AuditIcon, roles: ['ADMIN'], group: 'Sistema' },
   { label: 'Usuários', to: '/sistema/usuarios', icon: UsersIcon, roles: ['ADMIN'], group: 'Sistema' },
+  { label: 'Manutenção de cadastros', to: '/sistema/manutencao', icon: MaintenanceIcon, roles: ['ADMIN'], group: 'Sistema' },
   { label: 'Integração', to: '/sistema/integracoes', icon: IntegrationIcon, roles: ['ADMIN'], group: 'Sistema' },
 ];
 

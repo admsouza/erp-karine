@@ -179,6 +179,12 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   inicial/redefinida sempre com troca obrigatória, inativação e redefinição **encerram as sessões**,
   **nunca ficar sem ADMIN ativo**, o admin não se inativa nem se rebaixa, sem `DELETE`, e a senha
   **nunca** entra na trilha. Vive no módulo `auth` porque ele é o dono da tabela `User`.
+- **Manutenção de cadastros (`/sistema/manutencao`, ADMIN):** hub do módulo `maintenance` para **corrigir**
+  e **inativar/reativar** locais do recurso, clientes, procedimentos e planos de assinatura em um lugar só.
+  **Não cria, não exclui e não tem tabela nem regra própria**: a lista vem dos contratos públicos de
+  consulta dos donos e as operações são delegadas ao serviço público do dono (que valida). A trilha é
+  gravada pelo hub **apenas quando o dono não grava** (em `financial` o dono já registra). Campos
+  editáveis são poucos de propósito: identificação + dado principal.
 - **Integração (`/sistema/integracoes`):** tela **preparada** que lista os pontos de integração que já
   existem (trilha de auditoria, eventos de domínio, contratos públicos) e o que está por vir.
   **Não há agente de IA conectado** e a tela não executa ação nenhuma.

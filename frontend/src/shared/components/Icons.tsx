@@ -131,6 +131,15 @@ export function IntegrationIcon(props: IconProps) {
   );
 }
 
+export function MaintenanceIcon(props: IconProps) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 6.5a3.5 3.5 0 0 0 4.6 4.6L21 13l-3 3-1.9-1.9a3.5 3.5 0 0 0-4.6-4.6L10 8 7 5H4v3l3 3 1.5 1.5" />
+      <path d="M9.5 14.5L4 20l1.5 1.5 5.5-5.5" />
+    </svg>
+  );
+}
+
 export function MenuIcon(props: IconProps) {
   return (
     <Icon {...props}>
