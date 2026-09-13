@@ -4,6 +4,35 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · módulo `clients` · Fase 2 implementada e publicada
+
+**Alteração**
+
+- Backend do módulo: `ClientRepository` (único ponto com Prisma), DTOs de entrada/saída,
+  `ClientQueryService` (contrato público, exportado) e `ClientService` (criar, editar,
+  inativar, reativar), `ClientsController` com Swagger e `ClientsModule`.
+- Regras: CPF normalizado + dígito verificador + único (409), nascimento não futuro,
+  e-mail validado, campos extras recusados, busca por nome/CPF/telefone/WhatsApp/e-mail e
+  filtro `active=true|false` paginado. Sem exclusão física (inativar/reativar; 409 na repetição).
+- Validador genérico `IsCpf` em `common/validators` e utilitários de paginação em `common/pagination`.
+- Testes: 6 unitários do service + e2e do fluxo completo.
+- Frontend `features/clients/`: tipos, API, hooks (`useClients`/`useClient` com
+  `AbortController`), tabela, formulário em modal, badge de situação e página do cliente com
+  as seções dos módulos futuros. Componentes genéricos novos em `shared/components`
+  (Button, Input, Select, Modal, Pagination, Badge) e `useDebouncedValue`. Rota `/clientes/:id`.
+
+**Impacto**
+
+- Primeiro módulo de domínio completo; passa a ser a referência de camadas para os próximos.
+- **Bug real corrigido:** `active=false` era convertido para `true` pela conversão implícita do
+  `ValidationPipe` — o contrato do filtro passou a ser texto explícito.
+- Nenhuma alteração de contrato de módulo existente (os outros 7 módulos seguem sem regra).
+- Publicação: PR #3 revisado e mesclado em `main` (`b5a0cd5`); branch `feat/clientes` mantida.
+  Deploy no CapRover concluído e verificado em produção (`/api/health`, `GET /api/clients`
+  paginado, validação 400, uuid malformado 400, Swagger com as 4 rotas).
+
+---
+
 ## 2026-09-13 · banco de dados + deploy · PostgreSQL e publicação no CapRover
 
 **Alteração**

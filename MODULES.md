@@ -40,7 +40,9 @@ situação ativo/inativo). É o módulo dono da identidade do cliente.
 
 **Entidades:** `Client`.
 
-**Serviços públicos (previstos):**
+**Estado:** implementado (Fase 2) — backend, frontend e testes.
+
+**Serviços públicos:**
 - `ClientService` — criar, editar, inativar, reativar.
 - `ClientQueryService` — buscar por id, listar/pesquisar, verificar existência.
 
@@ -50,7 +52,7 @@ situação ativo/inativo). É o módulo dono da identidade do cliente.
 
 **Dependências permitidas:** nenhuma (módulo base).
 
-**Endpoints (previstos):**
+**Endpoints (implementados, todos com Swagger):**
 
 | Método | Rota | Descrição |
 | ------ | ---- | --------- |
@@ -72,7 +74,10 @@ situação ativo/inativo). É o módulo dono da identidade do cliente.
 - Nunca excluir cliente: `active = false` + `deactivatedAt` (a API não expõe DELETE).
   Inativar duas vezes devolve 409; reativar limpa `deactivatedAt`.
   Exclusão física só por decisão explícita e sem histórico vinculado (`deletedAt` existe para isso).
-- Busca por nome, CPF, telefone e WhatsApp; listagem sempre paginada.
+- Busca por nome, CPF, telefone, WhatsApp e e-mail (case-insensitive); listagem sempre
+  paginada (padrão 20, máx. 100). O filtro de situação é o contrato **em texto**
+  `active=true|false`, para não cair na conversão implícita de booleano do `ValidationPipe`
+  (bug real corrigido na Fase 2).
 - A página do cliente agrega dados de outros módulos **via serviços públicos deles**, sem
   duplicar regra de negócio.
 
