@@ -4,6 +4,10 @@
 > `ARCHITECTURE.md`, `MODULES.md`, `TASKS.md` e `CHANGELOG.md`, rode `git status`, examine o
 > módulo que será alterado e verifique os testes existentes. O repositório manda — a memória
 > da conversa não.
+>
+> **Agente de IA continuando o projeto:** o ponto de entrada é o **`AGENTS.md`** (handoff com
+> estado atual de produção, ritual branch → testes → PR → OK → deploy, infra, credenciais,
+> armadilhas já pagas e próximos passos).
 
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud

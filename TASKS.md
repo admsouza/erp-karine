@@ -1,5 +1,8 @@
 # TASKS.md — ERP Clínica
 
+> **Agente que for continuar este projeto:** leia primeiro o `AGENTS.md` (handoff completo: ritual de
+> trabalho, armadilhas já pagas, infra e próximos passos). Este arquivo é a lista de tarefas por fase.
+
 Legenda: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
 **Somente uma funcionalidade importante em andamento por vez.** Concluir e testar uma fase
 antes de começar a próxima.
