@@ -236,20 +236,33 @@ export function CashPanel() {
               ]}
             />
             {detail && (
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {detail.balances.map((b) => (
-                  <article
-                    key={b.accountId}
-                    className="rounded-lg border border-slate-200 p-3"
-                  >
-                    <h3 className="font-semibold">{b.account.name}</h3>
+              <>
+                {/* O saldo do caixa é um só: o total é a soma dos locais. */}
+                <div className="mt-4 rounded-lg border border-slate-300 bg-slate-50 p-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="font-semibold">Saldo total</h3>
+                    <strong className="text-lg">
+                      {formatCentsToBRL(
+                        (detail.totals.countedCents ??
+                          detail.totals.expectedCents) || 0,
+                      )}
+                    </strong>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {detail.totals.countedCents !== null
+                      ? 'Apurado na conferência'
+                      : 'Esperado pelo sistema (ainda não conferido)'}{' '}
+                    · composição: soma de {detail.balances.length}{' '}
+                    {detail.balances.length === 1 ? 'local' : 'locais'}
+                  </p>
+                  <div className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
                     {[
-                      ['Saldo inicial', b.openingCents],
-                      ['Entradas', b.incomingCents],
-                      ['Saídas', b.outgoingCents],
-                      ['Saldo esperado', b.expectedCents],
-                      ['Saldo apurado', b.countedCents],
-                      ['Divergência', b.differenceCents],
+                      ['Saldo inicial', detail.totals.openingCents],
+                      ['Entradas', detail.totals.incomingCents],
+                      ['Saídas', detail.totals.outgoingCents],
+                      ['Saldo esperado', detail.totals.expectedCents],
+                      ['Saldo apurado', detail.totals.countedCents],
+                      ['Divergência', detail.totals.differenceCents],
                     ].map(([label, value]) => (
                       <p
                         key={String(label)}
@@ -263,9 +276,42 @@ export function CashPanel() {
                         </strong>
                       </p>
                     ))}
-                  </article>
-                ))}
-              </div>
+                  </div>
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-slate-600">
+                  Composição por local do recurso
+                </h3>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {detail.balances.map((b) => (
+                    <article
+                      key={b.accountId}
+                      className="rounded-lg border border-slate-200 p-3"
+                    >
+                      <h3 className="font-semibold">{b.account.name}</h3>
+                      {[
+                        ['Saldo inicial', b.openingCents],
+                        ['Entradas', b.incomingCents],
+                        ['Saídas', b.outgoingCents],
+                        ['Saldo esperado', b.expectedCents],
+                        ['Saldo apurado', b.countedCents],
+                        ['Divergência', b.differenceCents],
+                      ].map(([label, value]) => (
+                        <p
+                          key={String(label)}
+                          className="flex justify-between gap-2 text-sm"
+                        >
+                          <span>{label}</span>
+                          <strong>
+                            {value === null
+                              ? '—'
+                              : formatCentsToBRL(Number(value))}
+                          </strong>
+                        </p>
+                      ))}
+                    </article>
+                  ))}
+                </div>
+              </>
             )}
             {detail && !detail.closedAt && (
               <form

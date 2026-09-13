@@ -1,4 +1,4 @@
-import { balanceTotals } from '../entities/cash-balance.js';
+import { balanceTotals, consolidateBalances } from '../entities/cash-balance.js';
 import {
   BadRequestException,
   ConflictException,
@@ -30,18 +30,22 @@ export class CashPeriodService {
   async detail(id: string) {
     const period = await this.repository.period(id);
     if (!period) throw new NotFoundException('Caixa não encontrado.');
-    if (period.closedAt) return period;
+    if (period.closedAt)
+      return { ...period, totals: consolidateBalances(period.balances) };
     const { from, to } = monthBounds(period.month);
     const movements = await this.repository.movements(from, to);
+    const balances = period.balances.map((balance) => {
+      const items = movements.filter(
+        (x) => x.resourceAccountId === balance.accountId,
+      );
+      return { ...balance, ...balanceTotals(balance.openingCents, items) };
+    });
     return {
       ...period,
       unassignedCount: movements.filter((x) => !x.resourceAccountId).length,
-      balances: period.balances.map((balance) => {
-        const items = movements.filter(
-          (x) => x.resourceAccountId === balance.accountId,
-        );
-        return { ...balance, ...balanceTotals(balance.openingCents, items) };
-      }),
+      balances,
+      // Saldo total = soma dos locais (composição por origem do recurso).
+      totals: consolidateBalances(balances),
     };
   }
   open(dto: OpenCashPeriodDto, user: AuthenticatedUser, requestId?: string) {
