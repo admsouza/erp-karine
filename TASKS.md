@@ -60,6 +60,7 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Testes: 7 unitários do `ProcedureService` e 5 e2e do módulo (23 e2e no total) + smoke HTTP e verificação da tela em navegador real
 - [x] Bug real corrigido: `OriginGuard` recusava o login legítimo quando o proxy troca o `Host` (dev) — guard passou a aceitar `X-Forwarded-Host` e `CORS_ORIGINS`, com testes do caso positivo
 - [x] Publicado em produção (`194758e`) e conferido em navegador real: menu com 8 itens e catálogo de procedimentos no ar
+- [x] **Ajuste pós-publicação (pedido do cliente):** valor unitário passa a ter **vigência** (`ProcedurePrice`), com série histórica; campo único removido; migração com backfill validada contra cópia dos dados reais de produção (6 procedimentos, R$ 5.100,00 preservados); tela de histórico em `/procedimentos/:id`
 
 ## Fase 4 — Módulo `appointments` `[ ]`
 

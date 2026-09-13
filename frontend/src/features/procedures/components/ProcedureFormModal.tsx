@@ -28,9 +28,8 @@ function paraFormulario(procedure: Procedure | null): Formulario {
     name: procedure.name,
     description: procedure.description ?? '',
     durationMinutes: procedure.durationMinutes ? String(procedure.durationMinutes) : '',
-    valorReais: procedure.defaultValueCents
-      ? (procedure.defaultValueCents / 100).toFixed(2).replace('.', ',')
-      : '',
+    // O valor só é informado no cadastro; depois disso ele muda por vigência.
+    valorReais: '',
   };
 }
 
@@ -67,14 +66,13 @@ export function ProcedureFormModal({ open, procedure, onClose, onSaved }: Proced
       name: form.name.trim(),
       description: form.description.trim() || undefined,
       durationMinutes: minutos,
-      defaultValueCents: paraCentavos(form.valorReais),
     };
 
     try {
       if (procedure) {
         await updateProcedure(procedure.id, payload);
       } else {
-        await createProcedure(payload);
+        await createProcedure({ ...payload, initialValueCents: paraCentavos(form.valorReais) });
       }
       onSaved();
       onClose();
@@ -134,12 +132,22 @@ export function ProcedureFormModal({ open, procedure, onClose, onSaved }: Proced
             onChange={(evento) => campo('durationMinutes')(evento.target.value)}
             placeholder="60"
           />
-          <Input
-            label="Valor padrão (R$)"
-            value={form.valorReais}
-            onChange={(evento) => campo('valorReais')(evento.target.value)}
-            placeholder="180,00"
-          />
+          {procedure ? (
+            <div>
+              <span className="field-label">Valor unitário</span>
+              <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                O valor muda por <strong>vigência</strong>, para preservar o histórico. Use “Valores” na
+                listagem ou o botão <strong>Novo valor</strong> na tela do procedimento.
+              </p>
+            </div>
+          ) : (
+            <Input
+              label="Valor inicial (R$)"
+              value={form.valorReais}
+              onChange={(evento) => campo('valorReais')(evento.target.value)}
+              placeholder="180,00"
+            />
+          )}
         </div>
 
         {erro && (

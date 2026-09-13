@@ -134,8 +134,12 @@ valor padrão, ativo).
 
 **Serviços públicos:**
 - `ProcedureService` — criar, editar, inativar, reativar.
-- `ProcedureQueryService` — buscar por id, listar/pesquisar, verificar existência. **É o contrato
-  que agenda, protocolos e financeiro usam para referenciar procedimento pelo id.**
+- `ProcedureQueryService` — buscar por id, listar/pesquisar, verificar existência e
+  **`valueOn(id, data)`**: o valor unitário que valia em um dia. **É o contrato que agenda,
+  protocolos e financeiro usam para referenciar procedimento pelo id.**
+- `ProcedurePriceService` — série histórica de valores (interna ao módulo).
+
+**Entidades:** `Procedure` e `ProcedurePrice` (vigência de valor).
 
 **Eventos:** emite nenhum; consome nenhum.
 
@@ -151,10 +155,24 @@ valor padrão, ativo).
 | PATCH | `/api/procedures/:id` | editar |
 | PATCH | `/api/procedures/:id/inactivate` | inativar |
 | PATCH | `/api/procedures/:id/reactivate` | reativar |
+| GET | `/api/procedures/:id/prices` | histórico de valores (vigências) |
+| POST | `/api/procedures/:id/prices` | novo valor: cria vigência e fecha a anterior |
+| DELETE | `/api/procedures/:id/prices/:priceId` | remove vigência (correção) |
+| GET | `/api/procedures/:id/price-on?date=AAAA-MM-DD` | valor que valia na data |
 
 **Regras principais (implementadas):**
 - Nome **único** (409 `Já existe procedimento com este nome.`), mínimo de 3 caracteres.
-- Valor padrão **em centavos (`Int`)**, nunca float; a tela converte o que o usuário digita.
+- **Valor unitário em centavos (`Int`)** e com **vigência**: `ProcedurePrice` guarda
+  `valueCents`, `validFrom`, `validTo` (nulo = vigência atual) e observação.
+- O histórico **não é reescrito**: novo valor cria uma vigência e fecha a anterior no dia em que a
+  nova começa; remover a vigência atual faz a anterior voltar a valer (correção), e o único valor
+  do procedimento não pode ser removido (409).
+- Vigência só pode começar **depois** da mais recente (409) — nada de reescrever o passado.
+- O valor **não é editável** no `PATCH /api/procedures/:id` (400): preço muda só por vigência.
+- Datas são "puras" (`DATE`), calculadas no fuso da clínica (`America/Recife`) para a virada do dia
+  não acontecer às 21h.
+- Quem consome (financeiro/agenda) deve usar `valueOn(id, data)` e **gravar o valor aplicado** no
+  próprio registro — o preço do passado não pode ser recalculado com o preço de hoje.
 - Duração em minutos, inteiro, entre 5 e 600, ou vazio.
 - Nunca excluir: `active = false` (409 ao repetir); reativar devolve ao catálogo.
 - Listagem ordenada por nome, paginada, com busca por nome/descrição e filtro `active=true|false`

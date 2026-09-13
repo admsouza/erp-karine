@@ -11,8 +11,12 @@ export class ProcedureResponseDto {
   @ApiPropertyOptional({ nullable: true })
   description: string | null;
 
-  @ApiProperty({ description: 'Valor padrão em centavos' })
-  defaultValueCents: number;
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'Valor unitário vigente (centavos), derivado da série de vigências. null = sem valor cadastrado.',
+  })
+  currentValueCents: number | null;
 
   @ApiPropertyOptional({ nullable: true, description: 'Duração aproximada em minutos' })
   durationMinutes: number | null;
