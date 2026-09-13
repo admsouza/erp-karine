@@ -328,6 +328,11 @@ model SubscriptionPayment {
 // Módulo: financial
 // ---------------------------------------------------------------------------
 
+enum DiscountType {
+  PERCENT
+  AMOUNT
+}
+
 model FinancialTransaction {
   adjustmentOfId String?
   adjustmentOf FinancialTransaction? @relation("FinancialAdjustments", fields:[adjustmentOfId], references:[id])
@@ -339,6 +344,15 @@ model FinancialTransaction {
   @@index([resourceAccountId, date])
   id                    String            @id @default(uuid())
   clientId              String?
+  /// Credor da despesa (texto): quem recebeu. Receita usa `clientId` (FK).
+  counterparty          String?
+  /// Valor cheio da venda antes do desconto (auditoria da composição).
+  grossAmountCents      Int?
+  discountType          DiscountType?
+  /// Percentual em pontos-base (10% = 1000) quando PERCENT; centavos quando AMOUNT.
+  discountValue         Int?
+  /// Desconto efetivo em centavos (a conta fica reproduzível).
+  discountCents         Int?
   description           String
   category              String?
   amountCents           Int               @default(0)

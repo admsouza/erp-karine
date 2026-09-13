@@ -19,6 +19,7 @@ export class FinancialController {
   @Patch('transactions/:id/cancel') cancel(@Param('id', ParseUUIDPipe) id: string,@CurrentUser() user:AuthenticatedUser,@Headers('x-request-id') requestId?:string) { return this.transactions.cancel(id,user,requestId||randomUUID()); }
   @Patch('transactions/:id/resource') assign(@Param('id',ParseUUIDPipe) id:string,@Body() dto:AssignResourceDto,@CurrentUser() user:AuthenticatedUser,@Headers('x-request-id') requestId?:string){return this.transactions.assign(id,dto,user,requestId||randomUUID());}
   @Post('transactions/:id/adjustments') adjustment(@Param('id',ParseUUIDPipe) id:string,@Body() dto:CreateAdjustmentDto,@CurrentUser() user:AuthenticatedUser,@Headers('x-request-id') requestId?:string){return this.adjustments.create(id,dto,user,requestId||randomUUID());}
+  @Get('transactions/counterparties') counterparties() { return this.query.listCounterparties(); }
   @Get('summary') summary(@Query() q: ListFinancialTransactionsQueryDto) { return this.query.summary(dates(q)); }
   @Get('reports') reports(@Query() q: ListFinancialTransactionsQueryDto) { return this.query.reports(dates(q)); }
 }

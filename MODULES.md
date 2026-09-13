@@ -333,6 +333,22 @@ Não importa os módulos donos nem seus serviços/repositories.
 
 **Regras principais:**
 - `origin`: `APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`.
+- **Papéis são assimétricos** no lançamento manual: **receita** aponta para o **cliente**
+  (`clientId`, FK — compõe a ficha dele) e **despesa** guarda o **credor** (`counterparty`, texto — a
+  maioria é credor eventual). Informar cliente em despesa (ou credor em receita) devolve **400**:
+  recusar é melhor que gerar dado ambíguo. `GET /transactions/counterparties` devolve os credores já
+  usados para sugerir no formulário (sem cadastro de fornecedores).
+- **Procedimento vinculado** (`procedureId`) grava o **snapshot do nome** (`procedureName`): venda
+  antiga não pode ser reescrita pelo catálogo de hoje. O valor que a tela sugere é o **vigente**
+  (`valueOn`), mas o que fica gravado é o que o usuário confirmou.
+- **Desconto** guarda a intenção e o resultado: `discountType` (`PERCENT`/`AMOUNT`), `discountValue`
+  (pontos-base quando percentual; centavos quando em reais) e `discountCents` (efetivo). O
+  **`amountCents` é o líquido** — o que de fato entrou/saiu —, então relatórios, indicadores e
+  conciliação continuam com o mesmo significado; `grossAmountCents` guarda o valor cheio. Recusas:
+  desconto sem valor cheio, percentual acima de 100%, desconto maior que o valor e líquido que não
+  fecha com o desconto (400).
+- `category` **continua na tabela** (histórico e uso interno de Contas a receber/pagar) mas **saiu do
+  formulário**: campo livre que não virou filtro.
 - `paymentMethod`: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`, `OUTRO`.
 - **Anti-duplicidade:** `appointmentId` e `subscriptionPaymentId` são únicos; o serviço
   recusa lançamento repetido para a mesma origem/referência.

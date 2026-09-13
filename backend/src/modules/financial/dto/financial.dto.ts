@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
-import { FinancialStatus, FinancialTransactionType, PaymentMethod, TransactionOrigin } from '../../../generated/prisma/client.js';
+import { DiscountType, FinancialStatus, FinancialTransactionType, PaymentMethod, TransactionOrigin } from '../../../generated/prisma/client.js';
 const trim = ({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value;
 export class CreateManualTransactionDto {
   @ApiPropertyOptional() @IsOptional() @IsUUID() resourceAccountId?: string;
@@ -13,11 +13,21 @@ export class CreateManualTransactionDto {
   @ApiProperty({ enum: FinancialTransactionType }) @IsEnum(FinancialTransactionType) type: FinancialTransactionType;
   @ApiProperty({ enum: FinancialStatus }) @IsEnum(FinancialStatus) status: FinancialStatus;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() clientId?: string;
+  @ApiPropertyOptional({ description: 'Credor da despesa (quem recebeu)' }) @Transform(trim) @IsOptional() @IsString() @MaxLength(120) counterparty?: string;
+  @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() procedureId?: string;
+  @ApiPropertyOptional({ description: 'Valor cheio antes do desconto (centavos)' }) @IsOptional() @IsInt() @Min(1) @Max(100_000_000) grossAmountCents?: number;
+  @ApiPropertyOptional({ enum: DiscountType }) @IsOptional() @IsEnum(DiscountType) discountType?: DiscountType;
+  @ApiPropertyOptional({ description: 'Percentual em pontos-base (10% = 1000) ou centavos' }) @IsOptional() @IsInt() @Min(0) @Max(100_000_000) discountValue?: number;
   @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(120) externalReference?: string;
   @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(1000) notes?: string;
 }
 export class ListFinancialTransactionsQueryDto {
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() clientId?: string;
+  @ApiPropertyOptional({ description: 'Credor da despesa (quem recebeu)' }) @Transform(trim) @IsOptional() @IsString() @MaxLength(120) counterparty?: string;
+  @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() procedureId?: string;
+  @ApiPropertyOptional({ description: 'Valor cheio antes do desconto (centavos)' }) @IsOptional() @IsInt() @Min(1) @Max(100_000_000) grossAmountCents?: number;
+  @ApiPropertyOptional({ enum: DiscountType }) @IsOptional() @IsEnum(DiscountType) discountType?: DiscountType;
+  @ApiPropertyOptional({ description: 'Percentual em pontos-base (10% = 1000) ou centavos' }) @IsOptional() @IsInt() @Min(0) @Max(100_000_000) discountValue?: number;
   @ApiPropertyOptional() @IsOptional() @IsDateString() from?: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() to?: string;
   @ApiPropertyOptional({ enum: TransactionOrigin }) @IsOptional() @IsEnum(TransactionOrigin) origin?: TransactionOrigin;

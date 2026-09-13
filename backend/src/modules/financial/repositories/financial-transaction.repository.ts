@@ -5,6 +5,18 @@ import type { FinancialFilters } from '../services/financial-query.service.js';
 @Injectable()
 export class FinancialTransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
+  counterparties() {
+    return this.prisma.financialTransaction
+      .findMany({
+        where: { counterparty: { not: null } },
+        distinct: ['counterparty'],
+        select: { counterparty: true },
+        orderBy: { counterparty: 'asc' },
+        take: 200,
+      })
+      .then((linhas) => linhas.map((x) => x.counterparty as string));
+  }
+
   create(data: Prisma.FinancialTransactionUncheckedCreateInput, tx?: Prisma.TransactionClient) { return (tx ?? this.prisma).financialTransaction.create({ data }); }
   findByKey(idempotencyKey:string,tx:Prisma.TransactionClient){return tx.financialTransaction.findUnique({where:{idempotencyKey}});}
   settlementFor(transactionId:string,tx:Prisma.TransactionClient){return tx.financialSettlement.findUnique({where:{transactionId}});}

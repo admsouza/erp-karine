@@ -2,6 +2,51 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` · Lançamento manual: cliente/credor, procedimento, desconto e confirmação de pagamento
+
+**Alteração**
+
+- **Receita pergunta o cliente; despesa pergunta o credor.** O cliente é **FK** (compõe a ficha dele) e o
+  credor é **texto**, com sugestão dos credores já usados (`GET /api/financial/transactions/counterparties`).
+  Informar cliente em despesa (ou credor em receita) devolve **400** — recusar é melhor que gerar dado ambíguo.
+- **Procedimento vinculado** (`procedureId`, coluna que já existia) agora aparece na tela: escolher o
+  procedimento **preenche o valor vigente** (editável) e o nome fica em **snapshot** no lançamento.
+- **Desconto por percentual ou em reais**, com o valor cheio, o desconto efetivo e o líquido gravados:
+  `grossAmountCents`, `discountType`, `discountValue`, `discountCents`. **`amountCents` continua sendo o
+  líquido** — nenhum relatório, indicador ou conciliação muda de significado. O formulário mostra a
+  composição ("Valor · Desconto · Total a receber/pagar") antes de salvar. Recusa desconto sem valor
+  cheio, percentual acima de 100%, desconto maior que o valor e líquido que não fecha com o desconto (400).
+- **`Categoria` saiu do formulário** (coluna e histórico preservados; o fluxo de Contas a receber/pagar
+  continua usando o campo internamente).
+- **Situação não é mais campo do formulário**: ao clicar em **Salvar lançamento** o sistema pergunta
+  **"Já foi recebido?"** (receita) ou **"Já foi pago?"** (despesa) — **Sim** grava `PAGO`, **Não** grava
+  `PENDENTE`. Modal do sistema, com o texto certo para cada tipo.
+- Migração **aditiva** `20260913232459_transaction_discount_and_creditor` (enum `DiscountType` e cinco
+  colunas no lançamento).
+
+**Impacto**
+
+- **Nada muda para os lançamentos existentes**: as colunas novas ficam nulas e `amountCents` segue com o
+  mesmo significado de antes.
+- O **resumo por cliente** (`/summary?clientId=`) passa a somar só receitas: despesa não se vincula a
+  cliente (decisão 7.53). Reflexo direto: "saldo do cliente" = o que ele pagou.
+- Lançamento de **despesa com cliente** (que antes era aceito) agora é recusado — quem tinha esse costume
+  passa a informar o credor.
+- **Sem tela nova de fornecedor**: credor é texto com sugestão. Se a clínica passar a ter credores
+  recorrentes, aí vale o módulo `suppliers`.
+
+**Verificação**
+
+- **110 unitários** (22 arquivos; 6 novos: cliente na receita e cliente inexistente, credor na despesa e
+  papéis trocados, snapshot do procedimento, desconto percentual, desconto em reais com recusa de
+  desconto maior, e as recusas de conta que não fecha) e **95 e2e** (12 arquivos).
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: formulário sem **Categoria** e sem **Situação**; receita mostra **Cliente**
+  e despesa mostra **Credor** (mutuamente exclusivos); escolher o procedimento preencheu **R$ 300,00**;
+  desconto de **10%** mostrou **Total a receber R$ 270,00**; ao salvar apareceu **"Já foi recebido?"** e
+  "Sim, já recebi" gravou — conferido no banco: `grossAmountCents 30000`, `PERCENT 1000`,
+  `discountCents 3000`, `amountCents 27000`, `status PAGO`, cliente vinculado e `procedureName` em snapshot.
+
 **Publicação (2026-09-13)**
 
 - PR **#26** aprovado e integrado em `main` (merge `1697975`); deploy no CapRover **concluído**.

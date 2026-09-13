@@ -148,6 +148,23 @@ organizada para o sistema inteiro (módulo transversal, não remendo na tela).
 - [x] **Autorização por perfil** finalmente implementada para esta área: `RolesGuard` global + `@Roles('ADMIN')`, falhando fechado (403); o item de menu é escondido para outros perfis
 - [ ] Adoção gradual da trilha nos demais módulos (clientes, procedimentos, agenda, protocolos) — o padrão está definido; a adoção é incremental e não reescreve histórico passado
 
+## Financeiro — Parte A: lançamento de venda/despesa `[x]`
+
+Pedido do cliente na tela **Novo lançamento**: cliente na receita e credor na despesa, procedimento
+vinculado, desconto (% ou R$), remoção de categoria e confirmação de pagamento ao salvar.
+
+- [x] **Receita → cliente** (FK) e **despesa → credor** (texto com sugestão dos já usados); trocar os
+  papéis devolve **400** e cliente/procedimento inexistente devolve **404**
+- [x] **Procedimento vinculado** com snapshot do nome; a tela preenche o **valor vigente** (editável)
+- [x] **Desconto** percentual ou em reais: grava tipo, valor informado, desconto efetivo e valor cheio —
+  e mantém `amountCents` como **líquido**
+- [x] **Categoria removida do formulário** (coluna e histórico preservados)
+- [x] **Situação perguntada ao salvar** ("Já foi recebido/pago?" → Sim `PAGO` / Não `PENDENTE`)
+- [x] Testes: 6 unitários novos + e2e das regras (papéis, desconto, sugestão de credores)
+- [ ] **Parte B — produtos:** catálogo `products` (nome, valor, ativo) e vínculo no lançamento
+- [ ] Avaliar o desconto na composição dos relatórios (bruto − desconto = líquido) e o caso de
+  **estorno/devolução para cliente** (hoje uma despesa não se vincula a cliente, por decisão 7.53)
+
 ## Transversal — Manutenção de cadastros `[x]`
 
 Hub na seção **Sistema** para corrigir e inativar/reativar cadastros básicos sem caçar a tela de cada

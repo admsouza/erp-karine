@@ -3,7 +3,9 @@ import { CashPolicyService } from './cash-policy.service.js';
 import { AuditTrailService } from '../../audit/services/audit-trail.service.js';
 import type { AuthenticatedUser } from '../../auth/entities/authenticated-user.entity.js';
 import type { AssignResourceDto } from '../dto/cash.dto.js';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ClientQueryService } from '../../clients/services/client-query.service.js';
+import { ProcedureQueryService } from '../../procedures/services/procedure-query.service.js';
 import type { AppointmentCompleted } from '../../appointments/events/appointment-completed.event.js';
 import type { SubscriptionPaymentReceived } from '../../subscriptions/events/subscription-payment-received.event.js';
 import type { CreateManualTransactionDto } from '../dto/financial.dto.js';
@@ -12,16 +14,70 @@ import { FinancialTransactionRepository } from '../repositories/financial-transa
 import type { PaymentMethod, Prisma } from '../../../generated/prisma/client.js';
 @Injectable()
 export class FinancialTransactionService {
-  constructor(private readonly repository: FinancialTransactionRepository, private readonly cash: CashRepository, private readonly policy: CashPolicyService, private readonly audit: AuditTrailService) {}
+  constructor(private readonly repository: FinancialTransactionRepository, private readonly cash: CashRepository, private readonly policy: CashPolicyService, private readonly audit: AuditTrailService, private readonly clientes: ClientQueryService, private readonly procedimentos: ProcedureQueryService) {}
+
+  /**
+   * Lançamento manual (venda avulsa ou despesa).
+   *
+   * Papéis são assimétricos de propósito: **receita** aponta para o **cliente** (FK, compõe a ficha
+   * dele) e **despesa** guarda o **credor** como texto (a maioria é credor eventual — não se paga um
+   * cadastro de fornecedores para isso). Trocar os papéis é recusado em vez de virar dado sujo.
+   *
+   * O desconto guarda a **intenção** (tipo + valor informado) e o **efetivo em centavos**; o
+   * `amountCents` continua sendo o **líquido** — o que de fato entrou/saiu —, então nenhum relatório,
+   * indicador ou conciliação muda de significado. O valor cheio fica em `grossAmountCents`.
+   */
   async createManual(dto: CreateManualTransactionDto, user?: AuthenticatedUser, requestId?: string) {
     return this.cash.transaction(async tx => {
       const date = new Date(dto.date.length===10 ? `${dto.date}T12:00:00-03:00` : dto.date);
       await this.policy.assertWritable(date,tx);
       if(dto.resourceAccountId)await this.policy.assertAccount(dto.resourceAccountId,tx);
-      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
-      if(user)await this.audit.record({actorUserId:user.id,actorName:user.name,actorEmail:user.email,module:'financial',entityType:'FinancialTransaction',entityId:item.id,action:'CREATED',requestId,changes:[{field:'amountCents',before:null,after:item.amountCents},{field:'resourceAccountId',before:null,after:item.resourceAccountId}]},tx);
+
+      const receita = dto.type === 'RECEITA';
+      if (!receita && dto.clientId)
+        throw new BadRequestException('Cliente é só para receita; em despesa informe o credor.');
+      if (receita && dto.counterparty)
+        throw new BadRequestException('Credor é só para despesa; em receita informe o cliente.');
+      if (dto.clientId && !(await this.clientes.exists(dto.clientId)))
+        throw new NotFoundException('Cliente não encontrado.');
+      let procedureName: string | null = null;
+      if (dto.procedureId) {
+        if (!(await this.procedimentos.exists(dto.procedureId)))
+          throw new NotFoundException('Procedimento não encontrado.');
+        // Snapshot: o nome de hoje não pode reescrever o histórico do que foi vendido.
+        procedureName = (await this.procedimentos.getById(dto.procedureId)).name;
+      }
+      const { discountCents, grossAmountCents } = this.desconto(dto);
+
+      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, counterparty: dto.counterparty?.trim() || null, procedureId: dto.procedureId ?? null, procedureName, grossAmountCents, discountCents, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
+      if(user)await this.audit.record({actorUserId:user.id,actorName:user.name,actorEmail:user.email,module:'financial',entityType:'FinancialTransaction',entityId:item.id,action:'CREATED',requestId,changes:[{field:'amountCents',before:null,after:item.amountCents},...(discountCents===null?[]:[{field:'discountCents',before:null,after:discountCents}]),{field:'resourceAccountId',before:null,after:item.resourceAccountId}]},tx);
       return toFinancialTransactionEntity(item);
     });
+  }
+
+  /** Confere o desconto informado e devolve o efetivo em centavos (null quando não há desconto). */
+  private desconto(dto: CreateManualTransactionDto) {
+    if (dto.discountType === undefined) {
+      if (dto.grossAmountCents !== undefined && dto.grossAmountCents !== dto.amountCents)
+        throw new BadRequestException('O valor líquido não confere com o valor cheio.');
+      return { discountCents: null, grossAmountCents: dto.grossAmountCents ?? null };
+    }
+    if (dto.grossAmountCents === undefined)
+      throw new BadRequestException('Informe o valor cheio para aplicar desconto.');
+    if (dto.discountValue === undefined)
+      throw new BadRequestException('Informe o valor do desconto.');
+    if (dto.discountType === 'PERCENT' && dto.discountValue > 10_000)
+      throw new BadRequestException('O desconto percentual não pode passar de 100%.');
+    const gross = dto.grossAmountCents;
+    const discountCents =
+      dto.discountType === 'PERCENT'
+        ? Math.round((gross * dto.discountValue) / 10_000)
+        : dto.discountValue;
+    if (discountCents > gross)
+      throw new BadRequestException('Desconto não pode ser maior que o valor cheio.');
+    if (dto.amountCents !== gross - discountCents)
+      throw new BadRequestException('O valor líquido não confere com o desconto.');
+    return { discountCents, grossAmountCents: gross };
   }
   async fromAppointment(event: Omit<AppointmentCompleted, 'name'>,existingTx?:Prisma.TransactionClient) {
     return this.cash.transaction(async tx=>{
