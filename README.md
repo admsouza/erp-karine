@@ -4,9 +4,11 @@ Sistema de gestão da clínica: clientes, agenda, assinaturas, financeiro, proto
 recomendações de exames.
 
 > **Antes de mexer no código, leia:** [`PROJECT.md`](PROJECT.md) (o que o sistema é e faz),
-> [`ARCHITECTURE.md`](ARCHITECTURE.md) (decisões técnicas), [`TASKS.md`](TASKS.md) (o que vem
-> agora) e [`CHANGELOG.md`](CHANGELOG.md) (o que já foi feito). O repositório é a fonte da
-> verdade — não confie na memória da conversa.
+> [`ARCHITECTURE.md`](ARCHITECTURE.md) (arquitetura, camadas e regras de dependência),
+> [`MODULES.md`](MODULES.md) (contrato de cada módulo — consulte antes de criar ou alterar
+> um módulo), [`TASKS.md`](TASKS.md) (o que vem agora) e [`CHANGELOG.md`](CHANGELOG.md)
+> (o que já foi feito). O repositório é a fonte da verdade — não confie na memória da
+> conversa.
 
 ## Stack
 
@@ -61,6 +63,13 @@ cd ../backend && npm run build && npm run start:prod
 | frontend  | `npm run dev`         | Vite com HMR                              |
 | frontend  | `npm run build`       | type-check + build de produção            |
 | frontend  | `npm run lint`        | oxlint                                    |
+
+## Arquitetura em uma frase
+
+Monólito modular: cada domínio é um módulo independente (`backend/src/modules/<dominio>` +
+`frontend/src/features/<dominio>`) que encapsula suas regras e o acesso às suas tabelas e
+expõe apenas um contrato público. Um módulo **nunca** lê dados de outro módulo diretamente —
+usa o serviço público do dono (ou reage a um evento de domínio).
 
 ## Convenções que não devem ser quebradas
 

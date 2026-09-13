@@ -1,112 +1,144 @@
 # PROJECT.md — ERP Clínica
 
-> **Este arquivo é a fonte da verdade do projeto.** Leia-o antes de qualquer tarefa,
-> junto com `ARCHITECTURE.md`, `TASKS.md` e `CHANGELOG.md`, e confira `git status` e o código
-> atual. Nunca assuma que o histórico da conversa está correto — o repositório manda.
+> **Fonte da verdade do projeto.** Antes de qualquer tarefa, leia este arquivo junto com
+> `ARCHITECTURE.md`, `MODULES.md`, `TASKS.md` e `CHANGELOG.md`, rode `git status`, examine o
+> módulo que será alterado e verifique os testes existentes. O repositório manda — a memória
+> da conversa não.
 
 - **Repositório:** https://github.com/admsouza/erp-karine
-- **App CapRover:** `erp-estetica`
-- **Cliente:** clínica de estética (Dra. Karine)
-- **Estado atual:** Fase 1 concluída (estrutura, banco, layout inicial). Ver `TASKS.md`.
+- **App CapRover:** `erp-estetica` (ainda não criado/confirmado)
+- **Cliente:** clínica de estética
+- **Estado atual:** Fase 1 concluída (estrutura, arquitetura modular, banco, layout e
+  documentação). Próxima: Fase 2 — módulo `clients`.
 
 ---
 
-## 1. Objetivo do sistema
+## 1. Objetivo
 
-Aplicação de gestão para uma clínica, com foco em uso simples no dia a dia, código limpo e
-manutenção barata. Cobre cadastro de clientes, agenda de atendimentos, planos de assinatura,
-controle financeiro, fichas de protocolo clínico e recomendações de exames, com um dashboard
-inicial resumindo a operação.
+Sistema de gestão para uma clínica, nascendo **simples** mas com arquitetura que permite
+crescimento contínuo sem quebrar o que já funciona. Módulos: clientes, procedimentos,
+agendamentos, planos de assinatura, faturamento, protocolos de atendimento, recomendações
+de exames e dashboard.
+
+Prioridade técnica: **baixo acoplamento + alta coesão + separação clara de
+responsabilidades**. Cada módulo evolui com o mínimo de impacto nos demais.
 
 ## 2. Stack
 
-| Camada  | Tecnologias                                                             |
-| ------- | ----------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Axios    |
+| Camada   | Tecnologias                                                            |
+| -------- | ---------------------------------------------------------------------- |
+| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Axios     |
 | Backend  | NestJS 12, TypeScript, REST, Swagger (OpenAPI), class-validator         |
 | Dados    | SQLite + Prisma ORM 7 (driver adapter libSQL)                           |
-| Testes   | Vitest (e2e no backend)                                                 |
+| Testes   | Vitest                                                                  |
 
-## 3. Funcionalidades existentes (implementadas e verificadas)
+Tecnologia só é substituída com necessidade real e decisão registrada em `ARCHITECTURE.md`.
 
-- **Fase 1 — fundação**
-  - Monorepo `backend/` + `frontend/`, banco SQLite com schema completo e migração aplicada.
-  - `GET /api/health` — status da API e do banco.
-  - Swagger publicado em `/api/docs` (JSON em `/api/docs-json`).
-  - Envelope de erro padronizado em toda a API, inclusive 404 de rota inexistente.
-  - Build do frontend servido pelo backend (SPA com fallback de rota).
-  - Layout administrativo: menu lateral (Dashboard, Clientes, Agenda, Assinaturas, Financeiro,
-    Protocolos, Exames), barra superior com status da conexão, responsivo (gaveta no mobile).
-  - Páginas de cada módulo criadas como estrutura visual, com estado vazio explicativo.
+## 3. Como executar
 
-Nada de regra de negócio foi implementado além da fundação — os módulos começam na Fase 2.
+Requisito: Node.js 22 ou superior.
 
-## 4. Regras de negócio
+```bash
+# Backend (API em 3001, docs em /api/docs)
+cd backend
+cp .env.example .env      # primeira vez
+npm install               # o postinstall roda `prisma generate`
+npm run db:migrate        # cria/atualiza o SQLite de desenvolvimento
+npm run start:dev
 
-### 4.1 Client (cliente)
+# Frontend (5173, com proxy de /api para o backend)
+cd frontend
+npm install
+npm run dev
+```
 
-- Cliente **não é excluído**: inativação via `isActive = false` + `inactivatedAt`.
-- CPF é único quando informado (campo opcional, mas não pode repetir).
-- A página individual do cliente centraliza: dados pessoais, agendamentos, assinaturas,
-  protocolos, recomendações de exames e histórico financeiro.
+Produção (um único app: o backend serve o build do frontend):
 
-### 4.2 Appointment (agendamento)
+```bash
+cd frontend && npm run build
+cd ../backend && npm run build && npm run start:prod
+```
 
-- Campos: cliente, data/hora, procedimento, profissional, valor, observações.
+Scripts: backend `start:dev`, `build`, `test:e2e`, `db:migrate`, `db:generate`, `db:studio`,
+`db:reset`, `lint`; frontend `dev`, `build`, `lint`.
+
+## 4. Configuração
+
+| Onde | Variável | Para quê |
+| ---- | -------- | -------- |
+| `backend/.env` | `DATABASE_URL` | caminho do SQLite (`file:./dev.db`) |
+| `backend/.env` | `PORT` | porta da API (3001) |
+| `backend/.env` | `CORS_ORIGINS` | origens liberadas em desenvolvimento |
+| `backend/.env` | `FRONTEND_DIST` | caminho alternativo do build do SPA (opcional) |
+| `frontend/.env` | `VITE_API_URL` | base da API (padrão `/api`) |
+
+## 5. Funcionalidades existentes
+
+- `GET /api/health` — status da API e do banco.
+- `GET /api/docs` e `/api/docs-json` — documentação Swagger.
+- Envelope de erro padronizado em toda a API, inclusive 404 de rota inexistente.
+- Layout administrativo (menu lateral com os 7 módulos, barra superior com status da
+  conexão, responsivo com gaveta no mobile) e páginas base de cada módulo com estado vazio.
+- Build do frontend servido pelo backend quando `frontend/dist` existe.
+- Estrutura modular dos 8 domínios criada (controllers, services, dto, repositories,
+  entities) — **sem regra de negócio ainda**: cada módulo é implementado na sua fase.
+
+## 6. Regras de negócio
+
+### Clientes
+- Cliente não é excluído: inativação (`active = false`, `deactivatedAt`).
+- CPF único quando informado. Busca por nome, CPF, telefone e WhatsApp.
+- Página do cliente agrega dados de outros módulos **via serviço público**, sem duplicar
+  regra de negócio.
+
+### Procedimentos
+- Nome, descrição, duração aproximada, valor padrão, ativo.
+- Outros módulos referenciam por **id**; onde o dado precisa sobreviver a mudanças de
+  cadastro, guarda-se *snapshot* (caso de `Appointment.procedureName`).
+
+### Agendamentos
+- Cliente, procedimento, profissional, data, horário, valor, observação.
 - Status: `AGENDADO`, `CONFIRMADO`, `REALIZADO`, `CANCELADO`, `FALTOU`.
-- Guarda *snapshot* do nome do procedimento (`procedureName`) para não reescrever histórico
-  quando o cadastro de procedimento mudar de nome/valor.
+- Agenda diária, semanal, por período, por cliente e por status. Não se exclui: cancela.
 
-### 4.3 SubscriptionPlan / ClientSubscription / SubscriptionPayment
+### Assinaturas
+- Plano: nome, descrição, valor, periodicidade, quantidade de sessões, ativo.
+- Assinatura: cliente, plano, início, fim, valor contratado, forma de pagamento, status
+  (`ATIVA`, `CANCELADA`, `ENCERRADA`, `INADIMPLENTE`).
+- Pagamentos da assinatura são registrados e podem gerar lançamento financeiro.
 
-- Plano: nome, descrição, valor, periodicidade, sessões por período, ativo/inativo.
-- Assinatura: cliente, plano, data inicial, data final, valor contratado, forma de pagamento,
-  status (`ATIVA`, `CANCELADA`, `ENCERRADA`, `INADIMPLENTE`).
-- Pagamentos da assinatura são registrados em `SubscriptionPayment`.
+### Financeiro
+- `FinancialTransaction`: cliente, descrição, categoria, valor, data, forma de pagamento,
+  origem (`APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`), referência externa opcional.
+- Formas: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`, `OUTRO`.
+- **Impede lançamento duplicado** para o mesmo atendimento/pagamento (vínculos únicos).
+- Regra financeira vive no backend, nunca no frontend.
 
-### 4.4 FinancialTransaction (financeiro)
+### Protocolos
+- Cliente pode ter vários protocolos; cada um com várias sessões.
+- **Histórico clínico nunca é sobrescrito**: sessões são acrescentadas em ordem cronológica.
 
-- Receita com: cliente, descrição, categoria, valor, data, forma de pagamento e origem.
-- Origem: `ATENDIMENTO`, `ASSINATURA`, `MANUAL`.
-- Formas de pagamento: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`,
-  `OUTRO`.
-- **Regra anti-duplicidade:** um lançamento originado de atendimento guarda `appointmentId`
-  (único) e um originado de pagamento de assinatura guarda `subscriptionPaymentId` (único).
-  O mesmo atendimento/pagamento não pode gerar dois lançamentos. A regra é aplicada no
-  **backend**, não no frontend.
+### Recomendações de exames
+- Recomendação com vários itens; status `RECOMENDADO`, `REALIZADO`, `CANCELADO`.
+- **Só registra** a recomendação profissional: sem diagnóstico automático, sem interpretação
+  de resultado. Visualização limpa, preparada para impressão/PDF.
 
-### 4.5 Protocol / ProtocolSession (ficha clínica)
+### Dashboard
+- Apenas consulta e agregação: faturamento do mês, clientes cadastrados, atendimentos do
+  dia, atendimentos do mês, assinaturas ativas, próximos atendimentos.
+- Consulta os módulos donos dos dados; nenhuma regra de negócio própria.
 
-- Um cliente pode ter várias fichas de protocolo, cada uma com várias sessões.
-- Ficha: data, título, queixa principal, avaliação, objetivo, protocolo proposto, produtos
-  utilizados, orientações, evolução, observações.
-- Sessão: data, procedimento realizado, produtos utilizados, parâmetros, observações, evolução.
-- **Histórico é cronológico e não se sobrescreve**: sessões são registradas por acréscimo
-  (append). Correção de ficha existente é permitida apenas para dados administrativos.
+### Dinheiro
+- Sempre em **centavos (inteiro)** no banco, na API e no estado do frontend. Conversão para
+  exibição apenas na borda da interface.
 
-### 4.6 ExamRecommendation / ExamRecommendationItem
-
-- Recomendação: cliente, data, justificativa, observação, status
-  (`RECOMENDADO`, `REALIZADO`, `CANCELADO`).
-- Vários exames por recomendação (itens).
-- O sistema **apenas registra** uma recomendação profissional. Não há diagnóstico automático.
-- A visualização deve ser limpa e servir de base para impressão/PDF no futuro.
-
-### 4.7 Dinheiro
-
-- Todo valor é armazenado e trafegado em **centavos (inteiro)**. Nada de `Float`.
-  Conversão para exibição só na borda da interface (`formatCentsToBRL` / `parseBRLToCents`).
-
-## 5. Entidades
+## 7. Entidades e relacionamentos
 
 `Client`, `Procedure`, `Appointment`, `SubscriptionPlan`, `ClientSubscription`,
 `SubscriptionPayment`, `FinancialTransaction`, `Protocol`, `ProtocolSession`,
-`ExamRecommendation`, `ExamRecommendationItem`.
-
-Todas com `id` UUID, `createdAt` e `updatedAt`, e enums de status onde faz sentido
-(detalhes dos campos em `backend/prisma/schema.prisma`).
-
-## 6. Relacionamentos
+`ExamRecommendation`, `ExamRecommendationItem` — todas com UUID, `createdAt`, `updatedAt` e
+soft delete conforme a entidade. O dono de cada entidade está em `MODULES.md`; o schema é
+`backend/prisma/schema.prisma`.
 
 ```
 Client 1─N Appointment            Appointment N─1 Procedure (opcional)
@@ -118,49 +150,23 @@ Client 1─N Protocol               Protocol 1─N ProtocolSession
 Client 1─N ExamRecommendation     ExamRecommendation 1─N ExamRecommendationItem
 ```
 
-## 7. Endpoints principais
-
-| Método | Rota             | Descrição                                  |
-| ------ | ---------------- | ------------------------------------------ |
-| GET    | `/api/health`    | Status da API e do banco                   |
-| GET    | `/api/docs`      | Swagger UI                                 |
-| GET    | `/api/docs-json` | Contrato OpenAPI                           |
-| —      | `/api/*` (404)   | Envelope de erro padronizado               |
-
-Endpoints de domínio (`/api/clients`, `/api/appointments`, `/api/subscriptions`,
-`/api/financial`, `/api/protocols`, `/api/exams`, `/api/dashboard`) entram nas fases 2 a 9,
-sempre com validação de DTO no backend.
-
 ## 8. Estrutura de pastas
 
 ```
 erp-karine/
-├── PROJECT.md  ARCHITECTURE.md  TASKS.md  CHANGELOG.md  README.md
-├── backend/
-│   ├── prisma/schema.prisma, prisma/migrations/
-│   ├── prisma.config.ts          # URL do banco (Prisma 7)
-│   ├── .env / .env.example
-│   ├── src/
-│   │   ├── main.ts, app.module.ts, app.setup.ts
-│   │   ├── common/               # prisma/, filters/, not-found.module.ts
-│   │   ├── health/
-│   │   ├── clients/ procedures/ appointments/ subscriptions/
-│   │   ├── financial/ protocols/ exams/ dashboard/
-│   │   └── generated/prisma/     # cliente Prisma gerado (não versionado)
-│   └── test/app.e2e-spec.ts
-└── frontend/
-    ├── vite.config.ts
-    ├── src/
-    │   ├── api/ components/ hooks/ layouts/ pages/ types/ utils/
-    │   ├── App.tsx, main.tsx, index.css
+├── PROJECT.md  ARCHITECTURE.md  MODULES.md  TASKS.md  CHANGELOG.md  README.md
+├── backend/src/{main.ts, app.module.ts, app.setup.ts, modules/, common/, generated/}
+├── backend/{prisma/, prisma.config.ts, test/, .env.example}
+└── frontend/src/{app/, features/, shared/, main.tsx, index.css}
 ```
+
+Detalhamento das camadas e das regras de dependência: `ARCHITECTURE.md` (seção 2 e 3).
 
 ## 9. Funcionalidades pendentes
 
-Tudo que ainda não está implementado, em ordem de execução, está em **`TASKS.md`**.
-Resumo: Fase 2 (clientes) → 3 (procedimentos) → 4 (agendamentos) → 5 (assinaturas) →
-6 (financeiro) → 7 (protocolos) → 8 (exames) → 9 (dashboard) → 10 (revisão de UX,
-validações, testes e documentação final).
+Ordem de execução em `TASKS.md`: Fase 2 `clients` → 3 `procedures` → 4 `appointments` →
+5 `subscriptions` → 6 `financial` → 7 `protocols` → 8 `exams` → 9 `dashboard` → 10 revisão
+arquitetural, UX, validações, testes e documentação final.
 
-Decisões ainda em aberto: autenticação de acesso ao sistema (não existe) e empacotamento
-de deploy no CapRover (Dockerfile + volume persistente para o SQLite).
+Decisões ainda abertas: autenticação de acesso (não existe) e empacotamento de deploy no
+CapRover (Dockerfile + volume persistente para o SQLite).

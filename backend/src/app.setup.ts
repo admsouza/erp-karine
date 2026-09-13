@@ -1,6 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
+import { ApiExceptionFilter } from './common/exceptions/api-exception.filter.js';
 
 /**
  * Configuração compartilhada entre o bootstrap da aplicação (main.ts)

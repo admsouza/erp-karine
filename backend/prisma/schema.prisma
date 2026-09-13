@@ -1,9 +1,14 @@
 // Schema Prisma — ERP Clínica (erp-karine)
-// Convenções gerais:
-//  - Identificadores: UUID (String @id @default(uuid()))
-//  - Dinheiro: sempre em CENTAVOS (Int), nunca Float/Decimal (SQLite não tem tipo decimal exato)
-//  - Histórico: inativação/soft delete (isActive/isArchived), nunca delete físico de dado clínico
-//  - Enums: declarados aqui; o conector SQLite os materializa como texto com validação do Prisma Client
+//
+// Convenções gerais (ver ARCHITECTURE.md):
+//  - Identificadores: UUID (`String @id @default(uuid())`)
+//  - Dinheiro: sempre em CENTAVOS (`Int`) — SQLite não tem tipo decimal exato
+//  - Histórico: inativação/soft delete (`active`, `deletedAt`, `status`), nunca DELETE físico
+//  - Enums declarados aqui; o conector SQLite os materializa como TEXT (sem CHECK),
+//    então a validação real acontece no DTO (class-validator) e no Prisma Client
+//
+// Cada entidade pertence a um único módulo (ver MODULES.md). Nenhum módulo deve
+// consultar tabelas de outro módulo diretamente — usa o serviço público do dono.
 
 generator client {
   provider = "prisma-client"
@@ -51,8 +56,8 @@ enum PaymentMethod {
 }
 
 enum TransactionOrigin {
-  ATENDIMENTO
-  ASSINATURA
+  APPOINTMENT
+  SUBSCRIPTION
   MANUAL
 }
 
@@ -63,7 +68,7 @@ enum ExamStatus {
 }
 
 // ---------------------------------------------------------------------------
-// Clientes
+// Módulo: clients
 // ---------------------------------------------------------------------------
 
 model Client {
@@ -76,8 +81,9 @@ model Client {
   email         String?
   address       String?
   notes         String?
-  isActive      Boolean   @default(true)
-  inactivatedAt DateTime?
+  active        Boolean   @default(true)
+  deactivatedAt DateTime?
+  deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -88,11 +94,11 @@ model Client {
   examRecommendations ExamRecommendation[]
 
   @@index([fullName])
-  @@index([isActive])
+  @@index([active])
 }
 
 // ---------------------------------------------------------------------------
-// Procedimentos
+// Módulo: procedures
 // ---------------------------------------------------------------------------
 
 model Procedure {
@@ -101,17 +107,18 @@ model Procedure {
   description       String?
   defaultValueCents Int      @default(0)
   durationMinutes   Int?
-  isActive          Boolean  @default(true)
+  active            Boolean  @default(true)
+  deletedAt         DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   appointments Appointment[]
 
-  @@index([isActive])
+  @@index([active])
 }
 
 // ---------------------------------------------------------------------------
-// Agendamentos
+// Módulo: appointments
 // ---------------------------------------------------------------------------
 
 model Appointment {
@@ -123,7 +130,7 @@ model Appointment {
   valueCents    Int               @default(0)
   status        AppointmentStatus @default(AGENDADO)
   notes         String?
-  // Snapshots: preservam o histórico mesmo se o cadastro de procedimento mudar
+  // Snapshot do nome do procedimento: preserva o histórico se o cadastro mudar
   procedureName String?
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -138,23 +145,24 @@ model Appointment {
 }
 
 // ---------------------------------------------------------------------------
-// Planos e assinaturas
+// Módulo: subscriptions
 // ---------------------------------------------------------------------------
 
 model SubscriptionPlan {
-  id              String      @id @default(uuid())
-  name            String      @unique
-  description     String?
-  priceCents      Int         @default(0)
-  periodicity     Periodicity @default(MENSAL)
+  id                String      @id @default(uuid())
+  name              String      @unique
+  description       String?
+  priceCents        Int         @default(0)
+  periodicity       Periodicity @default(MENSAL)
   sessionsPerPeriod Int?
-  isActive        Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  active            Boolean     @default(true)
+  deletedAt         DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   subscriptions ClientSubscription[]
 
-  @@index([isActive])
+  @@index([active])
 }
 
 model ClientSubscription {
@@ -170,7 +178,7 @@ model ClientSubscription {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
-  client Client @relation(fields: [clientId], references: [id])
+  client Client           @relation(fields: [clientId], references: [id])
   plan   SubscriptionPlan @relation(fields: [planId], references: [id])
 
   payments     SubscriptionPayment[]
@@ -199,7 +207,7 @@ model SubscriptionPayment {
 }
 
 // ---------------------------------------------------------------------------
-// Financeiro
+// Módulo: financial
 // ---------------------------------------------------------------------------
 
 model FinancialTransaction {
@@ -211,10 +219,13 @@ model FinancialTransaction {
   date                  DateTime
   paymentMethod         PaymentMethod     @default(PIX)
   origin                TransactionOrigin @default(MANUAL)
-  // Vínculos únicos por origem: impedem faturamento duplicado do mesmo atendimento/pagamento
+  // Vínculos tipados por origem (únicos): impedem faturar o mesmo atendimento
+  // ou o mesmo pagamento de assinatura duas vezes.
   appointmentId         String?           @unique
   subscriptionId        String?
   subscriptionPaymentId String?           @unique
+  // Referência externa livre (ex.: id do sistema de origem, conciliação manual)
+  externalReference     String?
   notes                 String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
@@ -230,11 +241,11 @@ model FinancialTransaction {
 }
 
 // ---------------------------------------------------------------------------
-// Protocolos (fichas clínicas)
+// Módulo: protocols
 // ---------------------------------------------------------------------------
 
 model Protocol {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   clientId         String
   date             DateTime
   title            String
@@ -246,9 +257,10 @@ model Protocol {
   guidelines       String?
   evolution        String?
   notes            String?
-  isArchived       Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  active           Boolean   @default(true)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   client   Client            @relation(fields: [clientId], references: [id])
   sessions ProtocolSession[]
@@ -276,7 +288,7 @@ model ProtocolSession {
 }
 
 // ---------------------------------------------------------------------------
-// Recomendações de exames
+// Módulo: exams
 // ---------------------------------------------------------------------------
 
 model ExamRecommendation {

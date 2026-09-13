@@ -1,105 +1,114 @@
 # TASKS.md — ERP Clínica
 
 Legenda: `[ ]` pendente · `[~]` em andamento · `[x]` concluído.
-**Nunca iniciar várias funcionalidades grandes ao mesmo tempo.**
+**Somente uma funcionalidade importante em andamento por vez.** Concluir e testar uma fase
+antes de começar a próxima.
 
 ---
 
-## Fase 1 — Estrutura do projeto `[x]`
+## Fase 1 — Estrutura, arquitetura modular e documentação `[x]`
 
-- [x] Monorepo `backend/` + `frontend/` + `git init`
-- [x] Backend NestJS 12 + TypeScript (ESM) + build validado
-- [x] Frontend React 19 + TypeScript + Vite 8 + Tailwind 4 + React Router
-- [x] Prisma 7 + SQLite: `prisma.config.ts`, schema inicial, migração `init` aplicada
-- [x] 11 entidades + 6 enums (UUID, createdAt/updatedAt, soft delete)
-- [x] Validação global (`ValidationPipe`) + filtro de erro padronizado + 404 de API
-- [x] Swagger em `/api/docs`
-- [x] `GET /api/health` (API + banco)
-- [x] Layout administrativo (menu lateral, barra superior, responsivo)
-- [x] Páginas base dos 7 módulos + 404 do frontend
-- [x] Arquivos de continuidade: `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, `CHANGELOG.md`
-- [x] Testes e2e do backend (3 casos) passando
-- [x] Backend e frontend executando e verificados por HTTP
+- [x] Monorepo `backend/` + `frontend/`, repositório git publicado
+- [x] Backend NestJS 12 + TypeScript (ESM), Swagger, `ValidationPipe` global, erro padronizado
+- [x] Frontend React 19 + TypeScript + Vite 8 + Tailwind 4 + React Router 7 + Axios
+- [x] Prisma 7 + SQLite com driver adapter libSQL e migração `init` aplicada
+- [x] Estrutura modular do backend: `modules/<dominio>/{controllers,services,dto,repositories,entities}`
+- [x] `common/` com database, exceptions, health, pagination (+ pastas reservadas)
+- [x] Estrutura modular do frontend: `app/`, `features/<dominio>/`, `shared/`
+- [x] Schema inicial com 11 entidades e 6 enums (UUID, createdAt/updatedAt, soft delete)
+- [x] Layout administrativo (menu lateral, barra superior, responsivo) + páginas base
+- [x] `GET /api/health` + Swagger em `/api/docs`
+- [x] Documentação persistente: `PROJECT.md`, `ARCHITECTURE.md`, `MODULES.md`, `TASKS.md`, `CHANGELOG.md`
+- [x] Verificação: lint, typecheck, testes e2e (3/3) e build nos dois projetos
 
-## Fase 2 — Clientes `[ ]`  ← **próxima tarefa**
+## Fase 2 — Módulo `clients` `[ ]`  ← **próxima tarefa**
 
-- [ ] Habilitar `ClientsModule` (controller + service + DTOs)
-- [ ] `POST /api/clients` — criar cliente (validação de CPF único, e-mail, telefone)
-- [ ] `GET /api/clients` — listar com busca por nome/CPF/telefone e filtro ativo/inativo
-- [ ] `GET /api/clients/:id` — detalhe
-- [ ] `PATCH /api/clients/:id` — editar
-- [ ] `PATCH /api/clients/:id/inactivate` — inativar (sem delete físico)
-- [ ] `PATCH /api/clients/:id/reactivate` — reativar
-- [ ] Frontend: listagem com busca, formulário de cadastro/edição e página individual do cliente
-- [ ] Página do cliente com abas/seções: dados, agendamentos, assinaturas, protocolos, exames,
-      histórico financeiro (vazias até as fases correspondentes)
-- [ ] Testes e2e do módulo de clientes + atualizar os 4 arquivos de continuidade
+- [ ] `ClientRepository` (único lugar com Prisma no módulo)
+- [ ] DTOs: `CreateClientDto`, `UpdateClientDto`, `ListClientsQueryDto` (busca + paginação)
+- [ ] `ClientService`: criar, editar, inativar, reativar (CPF único; sem delete físico)
+- [ ] `ClientQueryService`: buscar por id, listar/pesquisar, existência (contrato público)
+- [ ] `ClientsController` + Swagger de todos os endpoints
+- [ ] Unit tests do service (regras: CPF duplicado, inativação, reativação)
+- [ ] e2e do módulo: criar → listar → editar → inativar → filtrar inativos
+- [ ] Frontend `features/clients/`: `types`, `api`, lista com busca, formulário e página do cliente
+- [ ] Página do cliente com seções de outros módulos (vazias até suas fases)
+- [ ] Atualizar `MODULES.md` (contrato final), `TASKS.md`, `PROJECT.md` e `CHANGELOG.md`
 
-## Fase 3 — Procedimentos `[ ]`
+## Fase 3 — Módulo `procedures` `[ ]`
 
-- [ ] CRUD de procedimentos (nome, descrição, valor padrão, duração, ativo/inativo)
-- [ ] Frontend: cadastro simples com listagem e inativação
+- [ ] CRUD + inativação (nome, descrição, duração, valor padrão, ativo)
+- [ ] `ProcedureQueryService` como contrato para appointments/financial
+- [ ] Frontend: `features/procedures/` (listagem + formulário)
+- [ ] Testes do módulo
 
-## Fase 4 — Agendamentos `[ ]`
+## Fase 4 — Módulo `appointments` `[ ]`
 
-- [ ] CRUD de atendimentos (cliente, data/hora, procedimento, profissional, valor, observações)
+- [ ] Entidade e repositório; dependências por serviço público (clients, procedures)
 - [ ] Transições de status (AGENDADO → CONFIRMADO → REALIZADO / CANCELADO / FALTOU)
-- [ ] Agenda diária, agenda semanal, listagem por período, filtro por cliente e por status
-- [ ] Frontend: calendário/lista do dia, formulário rápido, ações de status
+- [ ] Consultas: agenda diária, agenda semanal, por período, por cliente, por status
+- [ ] `AppointmentQueryService` (contrato para financial e dashboard)
+- [ ] Frontend: `features/appointments/` (agenda do dia/semana, filtros, formulário)
+- [ ] Testes do módulo
 
-## Fase 5 — Planos e assinaturas `[ ]`
+## Fase 5 — Módulo `subscriptions` `[ ]`
 
-- [ ] CRUD de planos (`SubscriptionPlan`)
-- [ ] Assinatura do cliente (`ClientSubscription`) com status e vigência
-- [ ] Registro de `SubscriptionPayment`
-- [ ] Frontend: planos, assinaturas por cliente, pagamentos
+- [ ] Planos, assinaturas e pagamentos (repositórios + services por caso de uso)
+- [ ] Status da assinatura e periodicidade
+- [ ] `SubscriptionQueryService` (contrato para financial e dashboard)
+- [ ] Frontend: `features/subscriptions/`
+- [ ] Testes do módulo
 
-## Fase 6 — Financeiro `[ ]`
+## Fase 6 — Módulo `financial` `[ ]`
 
-- [ ] CRUD de `FinancialTransaction` (com origem ATENDIMENTO / ASSINATURA / MANUAL)
-- [ ] Geração automática do lançamento a partir de atendimento e de pagamento de assinatura
-- [ ] Trava anti-duplicidade no service (usar os vínculos `@unique`)
-- [ ] Indicadores: faturamento do mês, por período, por procedimento, por assinatura,
-      quantidade de recebimentos
-- [ ] Frontend: lançamentos, filtros de período e painel financeiro
+- [ ] `FinancialTransactionService` com anti-duplicidade (appointmentId/subscriptionPaymentId únicos)
+- [ ] Geração de lançamento a partir de `AppointmentCompleted` e `SubscriptionPaymentReceived`
+- [ ] `FinancialQueryService`: faturamento do mês, por período, por procedimento, por assinatura
+- [ ] Frontend: `features/financial/` (lançamentos + indicadores)
+- [ ] Testes do módulo
 
-## Fase 7 — Protocolos `[ ]`
+## Fase 7 — Módulo `protocols` `[ ]`
 
-- [ ] CRUD de `Protocol` por cliente
-- [ ] Sessões (`ProtocolSession`) por acréscimo, em ordem cronológica, sem sobrescrever
-- [ ] Frontend: ficha de protocolo, timeline de sessões, impressão
+- [ ] Fichas + sessões (sessão somente por acréscimo — nunca sobrescrever)
+- [ ] Histórico cronológico e visualização para impressão
+- [ ] Frontend: `features/protocols/`
+- [ ] Testes do módulo
 
-## Fase 8 — Recomendações de exames `[ ]`
+## Fase 8 — Módulo `exams` `[ ]`
 
-- [ ] CRUD de `ExamRecommendation` com vários `ExamRecommendationItem`
-- [ ] Status RECOMENDADO / REALIZADO / CANCELADO
-- [ ] Visualização limpa, preparada para impressão/PDF
-- [ ] Nenhum diagnóstico automático — apenas registro profissional
+- [ ] Recomendação com vários itens; status RECOMENDADO / REALIZADO / CANCELADO
+- [ ] Visualização limpa preparada para PDF
+- [ ] Frontend: `features/exams/`
+- [ ] Testes do módulo
 
-## Fase 9 — Dashboard `[ ]`
+## Fase 9 — Módulo `dashboard` `[ ]`
 
-- [ ] `GET /api/dashboard/summary`: faturamento do mês, clientes, agendamentos do dia,
-      agendamentos do mês, assinaturas ativas, próximos atendimentos
-- [ ] Frontend: substituir os valores "—" pelos números reais
+- [ ] `DashboardService` agregando apenas via serviços públicos (sem regra de negócio)
+- [ ] `GET /api/dashboard/summary`
+- [ ] Frontend: substituir os "—" da tela inicial pelos números reais
+- [ ] Teste de integração do endpoint
 
-## Fase 10 — Revisão final `[ ]`
+## Fase 10 — Revisão final `[~]` (contínua, conclui no fim)
 
+- [ ] Revisão arquitetural (contratos entre módulos, sem violação de dependência)
 - [ ] Revisão de UX (desktop, tablet, celular)
-- [ ] Auditoria de validações e mensagens de erro
+- [ ] Auditoria de validações, mensagens de erro e tratamento de falhas
 - [ ] Cobertura de testes dos fluxos principais
-- [ ] Documentação final (README, PROJECT, ARCHITECTURE atualizados)
+- [ ] Documentação final revisada
 
 ---
 
-## Infra / deploy (não bloqueia as fases, mas precisa antes de ir ao ar)
+## Infraestrutura / deploy (não bloqueia fases, mas precede o uso real)
 
 - [ ] `Dockerfile` + `captain-definition` para o app CapRover `erp-estetica`
-- [ ] Volume persistente do CapRover para o arquivo SQLite (`<app>-data`) + `prisma migrate deploy`
-- [ ] Autenticação de acesso (hoje o sistema é aberto) — decidir abordagem com o usuário
-- [ ] Definir seed inicial (procedimentos e planos reais da clínica)
+- [ ] Volume persistente do CapRover para o SQLite + `prisma migrate deploy` no boot
+- [ ] Autenticação de acesso (hoje o sistema é aberto) — decidir abordagem com o cliente
+- [ ] Seed inicial (procedimentos e planos reais da clínica)
 
-## Pendências conhecidas / dívidas técnicas
+## Dívidas técnicas registradas
 
 - [ ] `vitest.config.e2e.ts` usa `vite-tsconfig-paths`, que o Vite 8 já substitui por
-      `resolve.tsconfigPaths` (apenas aviso, sem impacto).
-- [ ] `volumes: []` no CapRover apaga o SQLite em todo deploy — resolver junto com o Dockerfile.
+      `resolve.tsconfigPaths` (apenas aviso; remover na Fase 10).
+- [ ] `oxlint` do backend não exclui `src/generated` — hoje passa, mas convém restringir
+      quando as regras ficarem mais rígidas.
+- [ ] Sem volume persistente no CapRover, o SQLite é recriado a cada deploy (resolver junto
+      com o Dockerfile).

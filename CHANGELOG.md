@@ -1,65 +1,80 @@
 # CHANGELOG.md — ERP Clínica
 
-Registro resumido das alterações relevantes. Mais recente no topo.
+Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
-## 2026-09-13 — Fase 1: fundação do projeto
+---
 
-**Estrutura**
+## 2026-09-13 · arquitetura (global) · realinhamento à arquitetura modular
 
-- Criado o monorepo `erp-karine/` com `backend/` (NestJS) e `frontend/` (React + Vite).
-- Adicionados `.gitignore` (node_modules, `*.db`, `.env`, dist, cliente Prisma gerado) e `README.md`.
-- Criados os arquivos de continuidade: `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`, `CHANGELOG.md`.
+**Alteração**
 
-**Backend**
+- Backend reorganizado como monólito modular: domínios movidos de `src/<dominio>/` para
+  `src/modules/<dominio>/{controllers,services,dto,repositories,entities}` e `src/common/`
+  reduzido ao que é genérico (`database`, `exceptions`, `health`, `pagination`, e as pastas
+  reservadas `guards`, `interceptors`, `decorators`, `utils`).
+- `common/prisma` → `common/database` (`PrismaService` + `DatabaseModule`); `common/filters`
+  → `common/exceptions` (filtro padronizado + `NotFoundModule`); `src/health` →
+  `common/health`. Removidos dois filtros mortos da iteração anterior.
+- Frontend reorganizado em `app/` (router, providers, layout), `features/<dominio>/`
+  (`api`, `components`, `hooks`, `pages`, `types`) e `shared/` (api, components, hooks,
+  types, utils). Tipos de status saíram do arquivo único `src/types/index.ts` para
+  `features/<modulo>/types`.
+- Schema Prisma ajustado: enum `TransactionOrigin` agora `APPOINTMENT | SUBSCRIPTION | MANUAL`;
+  `isActive` → `active` (Client, Procedure, SubscriptionPlan, Protocol); `inactivatedAt` →
+  `deactivatedAt`; adicionados `deletedAt` (Client, Procedure, SubscriptionPlan, Protocol) e
+  `externalReference` (FinancialTransaction). Migração `init` recriada do zero.
+- Criado `MODULES.md` (obrigatório): responsabilidade, entidades, serviços públicos, eventos
+  emitidos/consumidos, dependências permitidas, endpoints e regras de cada módulo.
+- `ARCHITECTURE.md` reescrito com regras de dependência entre módulos, responsabilidade das
+  camadas, proibições de importação no frontend e decisões 7.12 a 7.14.
 
-- NestJS 12 + TypeScript em ESM, build (`nest build`) validado.
-- Prisma 7 + SQLite: `prisma.config.ts`, `prisma/schema.prisma` com 11 entidades e 6 enums;
-  migração `20260913011236_init` criada e aplicada (`backend/dev.db`).
+**Impacto**
+
+- Nenhum endpoint público foi quebrado (`/api/health`, `/api/docs` seguem iguais).
+- **Banco de desenvolvimento recriado** (não havia dado real) — quem tiver `dev.db` antigo
+  precisa rodar `npm run db:migrate` novamente.
+- O padrão de onde colocar código mudou: implementar módulo novo agora segue
+  `modules/<dominio>/` no backend e `features/<dominio>/` no frontend.
+- Verificação repetida após a mudança: typecheck, lint, e2e (3/3) e build passando nos dois
+  projetos; backend e frontend subindo e respondendo.
+
+---
+
+## 2026-09-13 · projeto · Fase 1 (fundação)
+
+**Alteração**
+
+- Criado o monorepo `erp-karine/` com `backend/` (NestJS 12, ESM) e `frontend/` (React 19 +
+  Vite 8 + Tailwind 4 + React Router + Axios), `.gitignore` e `README.md`.
+- Prisma 7 + SQLite com driver adapter libSQL; 11 entidades e 6 enums; migração `init`.
 - Valores monetários definidos em centavos (`Int`).
-- `PrismaService` global usando driver adapter **libSQL** (trocado de `better-sqlite3`, que
-  quebrava com `ERR_DLOPEN_FAILED` por causa das duas versões de Node da máquina).
-- `app.setup.ts` com prefixo global `/api`, `ValidationPipe` (whitelist, forbidNonWhitelisted,
-  transform), CORS configurável e Swagger.
-- Filtro global `ApiExceptionFilter` com envelope único
-  `{ statusCode, error, message, path, timestamp }`; `NotFoundModule` garante 404 padronizado
-  em `/api/*` (importado por último — ordem importa).
-- `GET /api/health` informando status da API e do banco.
-- Módulos de domínio criados como estrutura: clients, procedures, appointments, subscriptions,
-  financial, protocols, exams, dashboard.
-- `ServeStaticModule` condicional: o backend serve o build do frontend quando `frontend/dist` existe.
-- Testes e2e (Vitest) cobrindo `/api/health`, `/api/docs-json` e o 404 padronizado: 3/3 passando.
+- `app.setup.ts` com prefixo `/api`, `ValidationPipe` global, CORS e Swagger; filtro global
+  de erro com envelope `{ statusCode, error, message, path, timestamp }`.
+- `GET /api/health` (API + banco). `ServeStaticModule` condicional para servir o SPA no
+  mesmo app em produção.
+- Layout administrativo com menu lateral, barra superior com status da conexão e layout
+  responsivo; páginas base dos 7 módulos e página 404.
+- Documentação persistente criada: `PROJECT.md`, `ARCHITECTURE.md`, `TASKS.md`,
+  `CHANGELOG.md` (e, no realinhamento, `MODULES.md`).
+- Testes e2e do backend (Vitest): `/api/health`, contrato OpenAPI e 404 padronizado.
 
-**Frontend**
+**Impacto**
 
-- React 19 + TypeScript + Vite 8 + Tailwind CSS 4 (CSS-first) + React Router 7 + Axios.
-- Estrutura `api/ components/ hooks/ layouts/ pages/ types/ utils/`.
-- Layout administrativo com menu lateral (Dashboard, Clientes, Agenda, Assinaturas, Financeiro,
-  Protocolos, Exames), barra superior com indicador de conexão com a API e rodapé; menu em
-  gaveta no mobile.
-- Componentes reutilizáveis: `Card`, `StatCard`, `PageHeader`, ícones SVG inline.
-- Páginas dos 7 módulos com estado vazio explicativo + página 404 própria.
-- Cliente HTTP único (`api/client.ts`) com tradução padronizada dos erros da API; utilitários de
-  formatação de moeda (centavos→BRL) e data em pt-BR.
-- Proxy de `/api` para `http://localhost:3001` no Vite; build de produção validado
-  (`tsc -b && vite build` sem erros).
+- Base do projeto disponível: `npm run start:dev` no backend (3001) e `npm run dev` no
+  frontend (5173). Nenhuma regra de negócio implementada ainda — os módulos começam na Fase 2.
+- Código publicado em https://github.com/admsouza/erp-karine (branch `main`).
 
-**Verificações executadas**
+---
 
-- `npm run build` no backend e no frontend: exit 0.
-- `prisma migrate dev --name init`: migração aplicada.
-- `npm run test:e2e`: 3 testes passando.
-- HTTP: `/api/health` 200 (`database: up`), `/api/docs` 200, 404 de API em JSON,
-  SPA servida em `/` e em `/clientes` (fallback de rota), assets do build servidos.
-- Vite dev em `5173`: HTML 200, proxy `/api/health` 200, transform de TSX e CSS do Tailwind OK.
+## 2026-09-13 · infra · publicação do repositório
 
-**Repositório**
+**Alteração**
 
-- Código publicado em https://github.com/admsouza/erp-karine (branch `main`, primeiro commit
-  `9b031fd`, 75 arquivos). Confirmado que `.env`, `dev.db`, `node_modules` e o cliente Prisma
-  gerado não entram no versionamento.
+- Primeiro push para `https://github.com/admsouza/erp-karine` (branch `main`).
 
-**Pendências**
+**Impacto**
 
-- Deploy no CapRover ainda não configurado (Dockerfile, volume persistente, `migrate deploy`).
-- Autenticação de acesso ainda não existe.
-- Próxima fase: **Fase 2 — Clientes** (ver `TASKS.md`).
+- Confirmado que `.env`, `dev.db`, `node_modules` e o cliente Prisma gerado **não** entram no
+  versionamento (75 arquivos versionados).
+- O token de acesso precisa da permissão **Contents: Read and write** para push — sem ela o
+  git responde 403 mesmo com o repositório legível.
