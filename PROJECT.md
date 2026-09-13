@@ -12,7 +12,7 @@
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fases 1 a 7 concluídas: fundação, clientes, autenticação, procedimentos, agenda, assinaturas, financeiro e protocolos.
+- **Estado atual:** Fases 1 a 7 concluídas: fundação, clientes, autenticação, procedimentos, agenda, assinaturas, financeiro (+ caixa, contas a receber/pagar e conciliação) e protocolos.
   Próxima: Fase 8 — módulo `exams`.
 
 ---
@@ -106,6 +106,11 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
   formulário em modal e página do cliente com as seções dos módulos futuros.
 - Estrutura modular dos 8 domínios criada; `clients`, `procedures`, `appointments` e
   `subscriptions` já têm backend, frontend e testes completos. Os demais entram em suas fases.
+- **Financeiro ampliado (Fase 6.1)**: além dos lançamentos e relatórios, a tela tem as abas
+  **Caixa** (abertura mensal com transporte de saldos, movimentação por local, fechamento com saldo
+  esperado/apurado/divergência), **Contas a receber**, **Contas a pagar** (vencimento, situação,
+  baixa parcial/total) e **Conciliação** (confronto sistema × valores efetivos, com registro da
+  divergência). Fechamento bloqueia edição; correção entra como ajuste auditado.
 
 ## 6. Regras de negócio
 
@@ -152,13 +157,37 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 
 ### Financeiro
 - `FinancialTransaction`: cliente, descrição, categoria, valor, data, forma de pagamento,
-  origem (`APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`), referência externa opcional.
+  origem (`APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`), referência externa opcional e **local do recurso**
+  (`resourceAccountId`).
 - Formas: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`, `OUTRO`.
 - **Impede lançamento duplicado** para o mesmo atendimento/pagamento (vínculos únicos).
 - Regra financeira vive no backend, nunca no frontend.
 - Implementado: receitas e despesas manuais, geração automática idempotente por eventos,
   cancelamento lógico, filtros, indicadores e relatórios por snapshots históricos.
 - `FinancialQueryService` é o contrato público para o dashboard.
+
+#### Caixa
+- Um caixa por mês (`CashPeriod`, `month` único). A abertura carrega **automaticamente** o saldo
+  apurado de cada local do último período fechado — digitar saldo inicial é recusado.
+- Locais do recurso (`ResourceAccount`): **espécie** (`CASH`), **banco** (`BANK`) e
+  **maquineta** (`CARD`), com cadastro próprio (mais de uma conta/maquineta é permitido).
+- Movimentação por local; lançamento sem local é contabilizado em aberto e **impede o fechamento**.
+- **Fechamento** mostra saldo inicial, entradas, saídas, **saldo esperado**, **saldo apurado** e
+  **divergência** por local, com motivo.
+- Depois de fechado, os lançamentos do período **não são editados nem cancelados**: correção entra como
+  **ajuste** (lançamento novo vinculado, idempotente, com motivo) — tudo registrado na auditoria.
+
+#### Contas a receber / Contas a pagar
+- Vencimento, valor, descrição, contraparte e situação derivada: `PENDENTE`, `PARCIAL`, `PAGO`,
+  `CANCELADO` (+ marca de vencido).
+- **Recebimento/pagamento parcial ou total** com local do destino e forma de pagamento; cada baixa
+  gera **um** lançamento financeiro e é idempotente (chave por baixa) — sem duplicidade.
+- Sem exclusão física; cancelamento só para conta sem baixas.
+
+#### Conciliação
+- Confere, por período e por local, o **saldo do sistema** contra o **saldo efetivo** (gaveta, banco,
+  maquineta) e **registra a divergência sem alterar lançamentos**.
+- O registro é histórico (append-only), com motivo/referência e trilha de auditoria.
 
 ### Protocolos
 - Cliente pode ter vários protocolos; cada um com várias sessões.
@@ -185,9 +214,11 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 ## 7. Entidades e relacionamentos
 
 `Client`, `Procedure`, `Appointment`, `SubscriptionPlan`, `ClientSubscription`,
-`SubscriptionPayment`, `FinancialTransaction`, `Protocol`, `ProtocolSession`,
+`SubscriptionPayment`, `FinancialTransaction`, `ResourceAccount`, `CashPeriod`, `CashBalance`,
+`FinancialTitle`, `FinancialSettlement`, `FinancialReconciliation`, `Protocol`, `ProtocolSession`,
 `ExamRecommendation`, `ExamRecommendationItem`, `AuditEvent` — todas com UUID, `createdAt`,
-`updatedAt` e soft delete conforme a entidade (`AuditEvent` é append-only). O dono de cada entidade
+`updatedAt` e soft delete conforme a entidade (`AuditEvent`, `FinancialSettlement` e
+`FinancialReconciliation` são append-only). O dono de cada entidade
 está em `MODULES.md`; o schema é `backend/prisma/schema.prisma`.
 
 ```
@@ -196,6 +227,11 @@ Client 1─N ClientSubscription     ClientSubscription N─1 SubscriptionPlan
 ClientSubscription 1─N SubscriptionPayment
 Client 1─N FinancialTransaction   FinancialTransaction N─1 Appointment (opcional, único)
                                   FinancialTransaction N─1 SubscriptionPayment (opcional, único)
+                                  FinancialTransaction N─1 ResourceAccount (local do recurso)
+                                  FinancialTransaction 1─N FinancialTransaction (ajuste)
+CashPeriod 1─N CashBalance        CashBalance N─1 ResourceAccount
+CashPeriod 1─N FinancialReconciliation  FinancialReconciliation N─1 ResourceAccount
+FinancialTitle 1─N FinancialSettlement  FinancialSettlement 1─1 FinancialTransaction (único)
 Client 1─N Protocol               Protocol 1─N ProtocolSession
 Client 1─N ExamRecommendation     ExamRecommendation 1─N ExamRecommendationItem
 AuditEvent: trilha polimórfica (module/entityType/entityId), sem FK de domínio

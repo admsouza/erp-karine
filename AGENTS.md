@@ -16,8 +16,8 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 7 publicadas e verificadas (autenticação, agenda, assinaturas, financeiro, protocolos) **+ seção `Sistema`** com **Auditoria**, **Gestão de usuários** e **Integração** (tela preparada, sem agente ainda).
-  **Próxima: Fase 8 — `exams`.**
+- **Estado:** Fases 1 a 7 publicadas e verificadas (autenticação, agenda, assinaturas, financeiro, protocolos) **+ seção `Sistema`** com **Auditoria**, **Gestão de usuários** e **Integração** (tela preparada, sem agente ainda) **+ Fase 6.1 do financeiro** (caixa mensal, contas a receber/pagar e conciliação) — **implementada e testada nesta branch, ainda NÃO publicada**.
+  **Próxima: Fase 8 — `exams`** (depois de publicar a 6.1).
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
 
@@ -186,6 +186,16 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   menu e `RequireRole` protege a rota. Só a auditoria usa isso hoje — ampliar é decisão de negócio.
 - **Financeiro:** receitas/despesas, lançamentos manuais e automáticos por eventos, idempotência por
   vínculos únicos, cancelamento lógico, filtros, indicadores e relatórios históricos.
+- **Financeiro — Fase 6.1 (nesta branch):** **locais do recurso** (`ResourceAccount`: `CASH`/`BANK`/`CARD`)
+  como cadastro; **caixa mensal** (`CashPeriod`/`CashBalance`) com abertura que **transporta o saldo
+  apurado** do último período fechado (abertura duplicada = 409, saldo inicial digitado = 400);
+  **fechamento** com inicial/entradas/saídas/esperado/apurado/divergência por local e motivo;
+  período fechado **bloqueia edição e cancelamento** (409) e ajuste entra como lançamento novo vinculado;
+  **contas a receber/pagar** (`FinancialTitle`/`FinancialSettlement`) com baixa parcial/total idempotente
+  que gera **um** lançamento; **conciliação** registra divergência **sem alterar lançamento**;
+  eventos de domínio agora são publicados **dentro da transação** (`publish(evento, tx)`) — decisão 7.47.
+  Endpoints em `MODULES.md` (seção `financial`). Migrações `...190000_cash_accounts`,
+  `...191000_financial_titles`, `...192000_financial_reconciliation` (aditivas, aplicadas em dev).
 - **Protocolos:** fichas clínicas com status, snapshots de cliente/procedimento, vínculo opcional a
   atendimento realizado e sessões imutáveis acrescentadas em histórico cronológico; impressão pela UI.
 - **Procedimentos:** catálogo com **unidade de medida** (`ProcedureUnit`: SESSAO/APLICACAO/REGIAO/ML/
@@ -205,6 +215,11 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
 
 ## 8. Próximos passos (em ordem)
 
+0. **Publicar a Fase 6.1 (financeiro)**: revisar o PR, fazer o merge e rodar o deploy. Depois do deploy,
+   conferir em produção as abas **Caixa**, **Contas a receber**, **Contas a pagar** e **Conciliação** e
+   cadastrar os locais do recurso da clínica (espécie, banco e maquineta) — **sem local cadastrado não é
+   possível abrir o caixa**. O mês de abertura deve ser o mês seguinte ao último período fechado; o
+   primeiro caixa (histórico) nasce sem transporte de saldo.
 1. **Ajuste do cliente nos 6 procedimentos** (unidade + valor vigente). Ele pode pedir para aplicar
    em lote: nesse caso use `PATCH /api/procedures/:id` (unidade) e
    `PATCH /api/procedures/:id/prices/:priceId` (valor vigente) — nunca crie vigência nova para corrigir

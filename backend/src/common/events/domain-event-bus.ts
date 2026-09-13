@@ -1,7 +1,8 @@
+import type { Prisma } from '../../generated/prisma/client.js';
 import { Injectable } from '@nestjs/common';
 
 export interface DomainEvent { name: string }
-type Handler<T extends DomainEvent> = (event: T) => Promise<void> | void;
+type Handler<T extends DomainEvent> = (event: T, tx?: Prisma.TransactionClient) => Promise<void> | void;
 
 @Injectable()
 export class DomainEventBus {
@@ -13,7 +14,7 @@ export class DomainEventBus {
     this.handlers.set(name, handlers);
   }
 
-  async publish<T extends DomainEvent>(event: T) {
-    await Promise.all((this.handlers.get(event.name) ?? []).map((handler) => handler(event)));
+  async publish<T extends DomainEvent>(event: T, tx?: Prisma.TransactionClient) {
+    for (const handler of this.handlers.get(event.name) ?? []) await handler(event, tx);
   }
 }

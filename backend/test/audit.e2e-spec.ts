@@ -25,6 +25,7 @@ describe('Auditoria do sistema (e2e)', () => {
   let admin: TestSession; let comum: TestSession;
   let outraAtorId = '';
   const criados: string[] = [];
+  const fixtureEntityId = crypto.randomUUID();
 
   async function registrarEvento(dados: { actorUserId: string; actorName: string; reason: string; createdAt: Date; action?: string; module?: string; entityType?: string }) {
     const evento = await prisma.auditEvent.create({
@@ -34,7 +35,7 @@ describe('Auditoria do sistema (e2e)', () => {
         actorEmail: `${dados.actorName.toLowerCase()}@teste.local`,
         module: dados.module ?? 'subscriptions',
         entityType: dados.entityType ?? 'SubscriptionPayment',
-        entityId: '00000000-0000-0000-0000-0000000000aa',
+        entityId: fixtureEntityId,
         action: dados.action ?? 'UPDATED',
         reason: dados.reason,
         changes: [{ field: 'amountCents', before: 1000, after: 2000 }],
@@ -69,7 +70,10 @@ describe('Auditoria do sistema (e2e)', () => {
     const resposta = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ page: 1, pageSize: 50 }).expect(200);
     expect(resposta.body).toMatchObject({ page: 1, pageSize: 50 });
     expect(resposta.body.total).toBeGreaterThanOrEqual(2);
-    const motivo = resposta.body.items.find((item: { reason: string }) => item.reason === 'Correção de valor');
+    // Outras suítes rodam em paralelo no mesmo banco e alimentam a trilha, então o evento desta
+    // execução pode não caber na primeira página: localize-o pelo motivo único.
+    const filtrada = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ page: 1, pageSize: 50, search: 'Correção de valor' }).expect(200);
+    const motivo = filtrada.body.items.find((item: { reason: string }) => item.reason === 'Correção de valor');
     expect(motivo).toMatchObject({ actorName: 'Admin Auditoria', action: 'UPDATED', entityType: 'SubscriptionPayment' });
     expect(motivo.changes).toEqual([{ field: 'amountCents', before: 1000, after: 2000 }]);
   });
@@ -89,11 +93,11 @@ describe('Auditoria do sistema (e2e)', () => {
 
   it('filtra por período no fuso da clínica (America/Recife)', async () => {
     // 2026-09-13T02:00Z é 12/09 às 23h em Recife: fica fora do dia 13 e dentro do dia 12.
-    const dia13 = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ from: '2026-09-13', to: '2026-09-13' }).expect(200);
+    const dia13 = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ search: fixtureEntityId, from: '2026-09-13', to: '2026-09-13' }).expect(200);
     expect(dia13.body.total).toBe(1);
     expect(dia13.body.items[0].actorName).toBe('Usuário Comum');
 
-    const dia12 = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ from: '2026-09-12', to: '2026-09-12' }).expect(200);
+    const dia12 = await request(app.getHttpServer()).get('/api/audit/events').set('Cookie', admin.cookie).query({ search: fixtureEntityId, from: '2026-09-12', to: '2026-09-12' }).expect(200);
     expect(dia12.body.total).toBe(1);
     expect(dia12.body.items[0].actorName).toBe('Admin Auditoria');
   });

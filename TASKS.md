@@ -91,6 +91,36 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend mobile-first: indicadores, lançamentos, filtros, lançamento manual e estados de tela
 - [x] Testes unitários/e2e, smoke HTTP, auditoria e verificação em navegador real
 
+## Fase 6.1 — Financeiro: caixa, contas a receber/pagar e conciliação `[x]`
+
+Submódulos pedidos pelo cliente dentro do `financial` (sem novo padrão, sem refatorar fora do escopo).
+Invariantes cobertos por unitários **e** e2e, cada fatia implementada com teste vermelho antes do código.
+
+- [x] Locais do recurso (`ResourceAccount`: `CASH`, `BANK`, `CARD`) como cadastro do módulo financeiro —
+  substituem os campos fixos de espécie/banco/maquineta
+- [x] Abertura mensal do caixa (`CashPeriod`) com **transporte automático** dos saldos apurados do último
+  período fechado e **recusa de abertura duplicada** (409) e de período fora de sequência
+- [x] Saldo inicial informado à mão é recusado (400): o transporte é a regra
+- [x] Movimentação por local; lançamento sem local bloqueia o fechamento até ser classificado
+  (`PATCH /api/financial/transactions/:id/resource`)
+- [x] Fechamento com saldo inicial, entradas, saídas, saldo esperado, saldo apurado e divergência por local,
+  com motivo obrigatório
+- [x] Período fechado **não aceita edição nem cancelamento** de lançamento (409); ajuste só como lançamento
+  novo vinculado (`adjustmentOfId` + chave de idempotência), rastreável na auditoria
+- [x] Contas a receber e a pagar (`FinancialTitle`) com vencimento, valor, situação derivada
+  (`PENDENTE`/`PARCIAL`/`PAGO`/`CANCELADO` + vencido), baixa **parcial ou total** e local de destino
+- [x] Baixa gera **um** lançamento financeiro sem duplicidade (`transactionId` único) e é idempotente por chave
+- [x] Conciliação registra divergência entre saldo esperado e saldo efetivo **sem alterar lançamentos**
+  (`FinancialReconciliation`, append-only)
+- [x] Propagação **transacional** de evento de domínio (`publish(evento, tx)`) — o lançamento financeiro do
+  atendimento/assinatura entra na mesma transação do caso de uso dono
+- [x] Migrações aditivas `20260913190000_cash_accounts`, `20260913191000_financial_titles` e
+  `20260913192000_financial_reconciliation`
+- [x] Frontend mobile-first na tela Financeiro: abas de Caixa, Contas a receber, Contas a pagar e Conciliação
+- [x] Verificação em navegador real (390px e 1440px): abertura por 3 locais, movimentação, baixa
+  parcial/total a receber, pagamento, conciliação com divergência, fechamento e **transporte para o mês
+  seguinte**, sem erro de tela nem estouro horizontal
+
 ## Fase 7 — Módulo `protocols` `[x]`
 
 - [x] Fichas + sessões (sessão somente por acréscimo — nunca sobrescrever)

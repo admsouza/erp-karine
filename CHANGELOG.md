@@ -2,6 +2,69 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` · Caixa, contas a receber/pagar e conciliação (Fase 6.1)
+
+**Alteração**
+
+- **Locais do recurso** (`ResourceAccount`: `CASH`, `BANK`, `CARD`) passaram a ser cadastro do módulo
+  financeiro (`GET/POST /api/financial/accounts`) — antes o local era um conjunto fixo de formas de
+  pagamento. É a base do saldo por origem e da conciliação.
+- **Caixa mensal** (`CashPeriod` + `CashBalance`): `POST /api/financial/cash-periods` abre o mês
+  **transportando automaticamente** o saldo apurado (`countedCents`) de cada local do último período
+  fechado; `POST /api/financial/cash-periods/:id/close` fecha com saldo inicial, entradas, saídas,
+  **saldo esperado**, **saldo apurado** e **divergência** por local, com motivo obrigatório.
+- Abertura duplicada do mesmo mês, período fora de sequência, saldo inicial digitado à mão
+  (400 — o transporte é a regra) e fechamento com lançamento **sem local definido** são recusados.
+- Lançamento pode receber local depois (`PATCH /api/financial/transactions/:id/resource`).
+- **Período fechado não aceita edição nem cancelamento** de lançamento (409). Ajuste é lançamento
+  **novo** vinculado ao original (`adjustmentOfId`) e idempotente por chave
+  (`POST /api/financial/transactions/:id/adjustments`, motivo obrigatório).
+- **Contas a receber e a pagar** (`FinancialTitle` + `FinancialSettlement`): vencimento, valor,
+  descrição, contraparte; situação derivada das baixas (`PENDENTE`, `PARCIAL`, `PAGO`, `CANCELADO` +
+  marca de vencido); baixa parcial ou total com **local de destino** e forma de pagamento; a baixa
+  gera **um** lançamento financeiro (`transactionId` único) e é idempotente por `idempotencyKey`.
+- **Conciliação** (`FinancialReconciliation`): confere por período e por local o saldo esperado contra o
+  saldo efetivo e **registra a divergência sem alterar lançamentos**; motivo/referência obrigatórios.
+- **Consistência transacional**: o evento de domínio passou a ser publicado **dentro da transação** do
+  caso de uso dono (`DomainEventBus.publish(evento, tx)`, entrega sequencial), então o lançamento
+  financeiro de atendimento realizado e de pagamento de assinatura entra na mesma transação — falha de
+  auditoria/lançamento desfaz a operação inteira, sem duplicar.
+- Toda operação de caixa, baixa, ajuste e conciliação grava `AuditEvent` pelo caso de uso (autor,
+  motivo, antes → depois, `requestId`).
+- Frontend: a tela Financeiro ganhou as abas **Caixa**, **Contas a receber**, **Contas a pagar** e
+  **Conciliação**, com formulários em modal e estado de erro/vazio, seguindo o padrão existente.
+- Migrações **aditivas**: `20260913190000_cash_accounts`, `20260913191000_financial_titles`,
+  `20260913192000_financial_reconciliation`.
+
+**Impacto**
+
+- Nenhum endpoint existente foi quebrado: `POST/PATCH /api/financial/transactions*`, `/summary` e
+  `/reports` mantêm contrato e resposta; o que mudou foi o corpo passar a aceitar `resourceAccountId`
+  e o lançamento manual/automático a registrar auditoria.
+- Nada é obrigatório para continuar funcionando: os módulos existentes seguem lançando como antes,
+  porém lançamento **sem local** agora conta para o fechamento do caixa e precisa ser classificado
+  antes de fechar o mês (`PATCH /transactions/:id/resource`).
+- **Passa a existir bloqueio após o fechamento**: cancelar/editar lançamento de mês fechado devolve 409.
+  Antes disso, nenhum mês estará fechado — quem publicar primeiro não sente diferença.
+- `FinancialTitle`/`FinancialSettlement` **não substituem** `FinancialTransaction`: a baixa cria o
+  lançamento. Os relatórios e indicadores continuam lendo `FinancialTransaction`.
+- Banco de desenvolvimento recebeu as três migrações (`prisma migrate status`: *up to date*).
+
+**Verificação**
+
+- **80 unitários** (19 arquivos) e **84 e2e** (11 arquivos) passando, incluindo o e2e novo
+  `test/cash-period.e2e-spec.ts` com 12 casos: abertura duplicada, transporte de saldos, lançamento sem
+  local bloqueando o fechamento, fechamento com divergência, bloqueio pós-fechamento, ajuste idempotente,
+  baixa parcial/total, baixa em mês fechado, conciliação sem mutação e falha de auditoria/lançamento
+  revertendo a operação.
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real** (Chromium via CDP, 390×844 e 1440×1000): abertura do caixa por três locais,
+  movimentação por formulário, baixa parcial e total de conta a receber, pagamento, conciliação com
+  divergência, fechamento com saldo apurado e **transporte dos saldos para o mês seguinte** — sem erro
+  de tela (`role=alert`) nem estouro horizontal.
+
+---
+
 ## 2026-09-13 · `auth` + `Sistema` · Seção Sistema e gestão de usuários
 
 **Alteração**

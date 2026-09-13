@@ -329,6 +329,14 @@ model SubscriptionPayment {
 // ---------------------------------------------------------------------------
 
 model FinancialTransaction {
+  adjustmentOfId String?
+  adjustmentOf FinancialTransaction? @relation("FinancialAdjustments", fields:[adjustmentOfId], references:[id])
+  adjustments FinancialTransaction[] @relation("FinancialAdjustments")
+  idempotencyKey String? @unique
+  settlement FinancialSettlement?
+  resourceAccountId String?
+  resourceAccount ResourceAccount? @relation(fields:[resourceAccountId], references:[id])
+  @@index([resourceAccountId, date])
   id                    String            @id @default(uuid())
   clientId              String?
   description           String
@@ -462,4 +470,89 @@ model ExamRecommendationItem {
   recommendation ExamRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
 
   @@index([recommendationId])
+}
+
+// Financeiro: locais de recurso, fechamento mensal e títulos.
+enum ResourceAccountKind {
+  CASH
+  BANK
+  CARD
+}
+
+model ResourceAccount {
+  id String @id @default(uuid())
+  name String @unique
+  kind ResourceAccountKind
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transactions FinancialTransaction[]
+  balances CashBalance[]
+}
+
+model CashPeriod {
+  id String @id @default(uuid())
+  month String @unique
+  closedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  balances CashBalance[]
+}
+
+model CashBalance {
+  id String @id @default(uuid())
+  periodId String
+  accountId String
+  openingCents Int @default(0)
+  incomingCents Int @default(0)
+  outgoingCents Int @default(0)
+  expectedCents Int @default(0)
+  countedCents Int?
+  differenceCents Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  period CashPeriod @relation(fields:[periodId], references:[id])
+  account ResourceAccount @relation(fields:[accountId], references:[id])
+  @@unique([periodId,accountId])
+}
+
+model FinancialTitle {
+ id String @id @default(uuid())
+ type FinancialTransactionType
+ description String
+ counterparty String?
+ dueDate DateTime @db.Date
+ amountCents Int
+ cancelledAt DateTime?
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ settlements FinancialSettlement[]
+ @@index([type,dueDate])
+}
+
+model FinancialSettlement {
+ id String @id @default(uuid())
+ titleId String
+ transactionId String @unique
+ idempotencyKey String @unique
+ resourceAccountId String
+ amountCents Int
+ date DateTime
+ paymentMethod PaymentMethod
+ createdAt DateTime @default(now())
+ title FinancialTitle @relation(fields:[titleId], references:[id])
+ transaction FinancialTransaction @relation(fields:[transactionId], references:[id])
+ @@index([titleId])
+}
+
+model FinancialReconciliation {
+ id String @id @default(uuid())
+ periodId String
+ accountId String
+ expectedCents Int
+ countedCents Int
+ differenceCents Int
+ reason String
+ createdAt DateTime @default(now())
+ @@index([periodId,accountId,createdAt])
 }

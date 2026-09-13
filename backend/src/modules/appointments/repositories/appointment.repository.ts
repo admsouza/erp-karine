@@ -19,6 +19,7 @@ export class AppointmentRepository {
     return this.prisma.appointment.update({ where: { id }, data });
   }
 
+  updateInTransaction(id:string,data:Prisma.AppointmentUncheckedUpdateInput,work:(item:Awaited<ReturnType<Prisma.TransactionClient['appointment']['update']>>,tx:Prisma.TransactionClient)=>Promise<void>){return this.prisma.$transaction(async tx=>{const item=await tx.appointment.update({where:{id},data});await work(item,tx);return item;});}
   findMany(filters: AppointmentFilters) {
     return this.prisma.appointment.findMany({
       where: {
