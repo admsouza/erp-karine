@@ -15,6 +15,11 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - CLI `node dist/scripts/create-user.js` para criar/atualizar usuários.
 - Testes: 8 unitários do `AuthService` e 9 e2e do módulo; os e2e existentes passaram a autenticar de verdade.
 
+**Publicação**
+
+- Mesclado em `main` (`ec730c6`) e publicado: `db` migrado no boot do container (`auth_users_sessions` aplicada), usuário `mkarineon@gmail.com` (ADMIN) criado com senha escolhida pelo cliente e sem troca obrigatória.
+- Verificado em produção: `/api/health` 200 público; `/api/clients` e `/api/docs-json` 401 sem sessão; login 200 com cookie `httpOnly`+`Secure`; com sessão, `/api/clients` 200 (registro do cliente preservado); logout invalida a sessão.
+
 **Impacto**
 
 - Sem sessão, nenhuma rota de domínio responde — o dado de paciente deixa de ficar exposto na URL pública.

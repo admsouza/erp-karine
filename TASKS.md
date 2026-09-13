@@ -47,7 +47,7 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] CLI `node dist/scripts/create-user.js` para criar o primeiro usuário
 - [x] Frontend: `/login`, `/trocar-senha` (obrigatória com senha temporária) e menu do usuário na topbar
 - [x] Testes: 8 unitários do `AuthService`, 9 e2e do módulo de auth, 16 e2e no total
-- [ ] Criar o usuário de produção e conferir o bloqueio em produção (feito no deploy desta fase)
+- [x] Usuário de produção criado (`mkarineon@gmail.com`, perfil ADMIN) e bloqueio conferido em produção: `/api/clients` e `/api/docs-json` respondem 401 sem sessão
 - [ ] Autorização por perfil (ADMIN/USER) e recuperação de senha pelo sistema — não implementados
 
 ---
