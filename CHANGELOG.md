@@ -67,6 +67,18 @@ estado vazio, que era genérico e não dizia o que fazer.
   perfil comum) e navegador real conferindo contagem no seletor, estado vazio com o caminho de cadastro
   e o "Limpar filtros" voltando a listar.
 
+**Publicação da correção (2026-09-13)**
+
+- PR **#23** aprovado e integrado em `main` (merge `f204031`); deploy no CapRover **concluído**, sem migração.
+- Produção: `/api/health` → `database: up`; bundle `index-KTU8gOAx.js`; `GET /api/maintenance/summary`
+  devolveu `{"RESOURCE_ACCOUNT":0,"CLIENT":2,"PROCEDURE":10,"SUBSCRIPTION_PLAN":1}` (401 sem sessão).
+- **Navegador real (390px)**: o seletor mostrou `Locais do recurso (0) · Clientes (2) · Procedimentos (10)
+  · Planos de assinatura (1)`; abrindo em locais do recurso aparece o estado vazio específico com
+  **"Cadastrar em Locais do recurso"**; em Procedimentos a lista mostrou os cadastros reais com
+  **Editar**/**Inativar**; sem erro de tela.
+- **Nada gravado em produção** (0 eventos de trilha do hub; nenhum cadastro criado ou alterado) e o
+  usuário temporário de verificação foi excluído com suas sessões.
+
 **Publicação (2026-09-13)**
 
 - PR **#22** aprovado e integrado em `main` (merge `c4f0be0`); deploy no CapRover **concluído**,
