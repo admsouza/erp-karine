@@ -2,6 +2,29 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` (tela) · Cadastro do local por seleção e rótulo "Identificação do local"
+
+**Alteração**
+
+- O cadastro do **local do recurso** deixou de ser texto livre: o campo **"Identificação do local"** é uma
+  **seleção** com sugestões por tipo (`Espécie` → "Dinheiro (gaveta)"; `Banco` → "Banco principal"/"Banco
+  secundário"; `Conta de maquineta` → "Maquineta principal"/"Maquineta 2") e a opção **"Outro (digitar)"**,
+  que libera o nome próprio para quem tem mais de uma conta ou maquineta.
+- O tipo (`Espécie`/`Banco`/`Conta de maquineta`) continua sendo seleção e passa a **filtrar** as sugestões.
+- Texto de apoio explica para que serve cada tipo e que o local, depois de cadastrado, é apenas
+  **selecionado** nos lançamentos, nas baixas e na conciliação.
+- **Sem migração e sem mudança de backend**: o nome continua livre no banco — mudou só a tela.
+- Terminologia **não** alterada para "Origem" de propósito: `origem` já significa de onde veio o lançamento
+  (`Atendimento`, `Assinatura`, `Manual`) e duas "origens" com sentidos diferentes no mesmo módulo
+  confundiriam relatórios e conferências depois.
+
+**Impacto**
+
+- Nada muda nos dados já cadastrados: locais existentes continuam valendo com o nome que têm.
+- Quem tem um local de cada tipo cadastra em dois toques; quem tem vários usa "Outro (digitar)".
+- `tsc`, `oxlint` e build do frontend aprovados; fluxo conferido em navegador real (390px): sugestões por
+  tipo, "Outro (digitar)" abrindo o nome próprio e os três cadastros aparecendo na lista, sem erro de tela.
+
 ## 2026-09-13 · `financial` · Caixa, contas a receber/pagar e conciliação (Fase 6.1)
 
 **Alteração**
