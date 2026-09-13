@@ -161,6 +161,13 @@ módulo. Não tem tabela nem regra própria: consulta e delega aos módulos dono
 - [x] `GET /api/maintenance/summary` com a contagem por tipo (o seletor mostra onde há cadastro)
 - [x] Estado vazio acionável: "Cadastrar em …" quando o tipo está vazio e "Limpar filtros" quando é filtro
 - [x] Testes: 8 unitários + e2e dedicado (6 casos) e verificação em navegador real
+- [x] Identificação do local em **lista única** também na manutenção (com o tipo derivado; campo de tipo
+  só no "Outro (digitar)") e catálogo compartilhado em `shared/data/locais-recurso.ts` (decisão 7.50)
+- [x] `loading` derivado de token nas listas do hub (decisão 7.51) — corrige "Carregando…" preso quando a
+  ação não muda filtro, e recarrega a lista após editar/inativar/reativar
+- [ ] **Dívida conhecida:** o hook `useUsers` (tela Usuários) tem o mesmo defeito do `loading` preso —
+  "Limpar filtros" com os filtros já vazios não re-dispara o efeito e deixa a tela em "Carregando…".
+  Correção é a mesma (token nas dependências + `loading` derivado).
 - [ ] Novos cadastros entram sob demanda (ex.: procedimentos com valor — hoje o valor tem vigência
   própria e fica na tela do procedimento)
 

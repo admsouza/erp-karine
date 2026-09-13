@@ -39,11 +39,6 @@ export interface MaintenanceField {
   moeda?: boolean;
 }
 
-const TIPO_LOCAL = [
-  { value: 'CASH', label: 'Espécie' },
-  { value: 'BANK', label: 'Banco' },
-  { value: 'CARD', label: 'Conta de maquineta' },
-];
 const UNIDADE = [
   { value: 'SESSAO', label: 'Sessão' },
   { value: 'APLICACAO', label: 'Aplicação' },
@@ -63,10 +58,8 @@ export const MAINTENANCE_HOME: Record<MaintenanceType, string> = {
 };
 
 export const MAINTENANCE_FIELDS: Record<MaintenanceType, MaintenanceField[]> = {
-  RESOURCE_ACCOUNT: [
-    { key: 'name', label: 'Identificação do local' },
-    { key: 'kind', label: 'Tipo de local', options: TIPO_LOCAL },
-  ],
+  // O local do recurso tem formulário próprio no modal (lista única de identificação).
+  RESOURCE_ACCOUNT: [],
   CLIENT: [
     { key: 'name', label: 'Nome do cliente' },
     { key: 'phone', label: 'Telefone' },

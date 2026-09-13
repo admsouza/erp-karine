@@ -410,7 +410,8 @@ tem tabela nem regra de domínio próprias** — é um hub que consulta e delega
 
 - Tipos cobertos: `RESOURCE_ACCOUNT` (local do recurso), `CLIENT`, `PROCEDURE` e `SUBSCRIPTION_PLAN`.
   Tipo desconhecido devolve **400**.
-- Campos editáveis por tipo (o resto continua na tela do módulo dono): local → identificação e tipo;
+- Campos editáveis por tipo (o resto continua na tela do módulo dono): local → **identificação pela
+  mesma lista do cadastro** (o tipo vem junto e só é perguntado no "Outro (digitar)");
   cliente → nome e telefone; procedimento → nome e unidade (o **valor unitário tem vigência própria** e
   não é editado aqui); plano → nome e valor.
 - **A validação é sempre do módulo dono** — o hub só monta o payload e repassa. Erros de domínio

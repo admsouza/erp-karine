@@ -35,32 +35,6 @@ export interface CashPeriod {
   totals: CashTotals;
   unassignedCount?: number;
 }
-export const RESOURCE_KINDS = {
-  CASH: 'Espécie',
-  BANK: 'Banco',
-  CARD: 'Conta de maquineta',
-};
-/** Valor do seletor que libera o campo de nome próprio (mais de um banco/maquineta). */
-export const OUTRO_LOCAL = '__outro__';
-/**
- * Identificações sugeridas de local, com o tipo junto. A lista é única (sem passo
- * intermediário): o tipo é derivado da escolha e continua editável para o caso
- * "Outro (digitar)". Ordem prática: espécie, bancos, maquinetas.
- */
-export const IDENTIFICACOES_LOCAL: {
-  name: string;
-  kind: keyof typeof RESOURCE_KINDS;
-}[] = [
-  { name: 'Dinheiro (gaveta)', kind: 'CASH' },
-  { name: 'Banco do Brasil', kind: 'BANK' },
-  { name: 'Caixa Econômica', kind: 'BANK' },
-  { name: 'Itaú', kind: 'BANK' },
-  { name: 'Nubank', kind: 'BANK' },
-  { name: 'Santander', kind: 'BANK' },
-  { name: 'Mercado Pago', kind: 'BANK' },
-  { name: 'Maquineta principal', kind: 'CARD' },
-  { name: 'Maquineta 2', kind: 'CARD' },
-];
 export interface FinancialReconciliation {
   id: string;
   periodId: string;

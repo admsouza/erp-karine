@@ -20,13 +20,12 @@ import {
 } from '../api/cash-api';
 import { EditResourceAccountModal } from './EditResourceAccountModal';
 import {
-  IDENTIFICACOES_LOCAL,
   OUTRO_LOCAL,
   RESOURCE_KINDS,
-  locaisAtivos,
-  type CashPeriod,
-  type ResourceAccount,
-} from '../types/cash';
+  identificacaoEscolhida,
+  identificacoesOpcoes,
+} from '../../../shared/data/locais-recurso';
+import { locaisAtivos, type CashPeriod, type ResourceAccount } from '../types/cash';
 export function CashPanel() {
   const [accounts, setAccounts] = useState<ResourceAccount[]>([]);
   const [periods, setPeriods] = useState<CashPeriod[]>([]);
@@ -41,8 +40,7 @@ export function CashPanel() {
   const selectedName =
     idLocal === OUTRO_LOCAL
       ? customName.trim()
-      : (IDENTIFICACOES_LOCAL.find((x) => `${x.kind}:${x.name}` === idLocal)
-          ?.name ?? '');
+      : (identificacaoEscolhida(idLocal)?.name ?? '');
   const [month, setMonth] = useState(
     new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' })
       .format(new Date())
@@ -135,33 +133,26 @@ export function CashPanel() {
                 label="Identificação do local"
                 value={idLocal}
                 onChange={(e) => {
-                  const escolhido = IDENTIFICACOES_LOCAL.find(
-                    (x) => `${x.kind}:${x.name}` === e.target.value,
-                  );
+                  const escolhido = identificacaoEscolhida(e.target.value);
                   setIdLocal(e.target.value);
                   if (escolhido) setKind(escolhido.kind);
                 }}
                 options={[
                   { value: '', label: 'Selecione…' },
-                  ...IDENTIFICACOES_LOCAL.map((x) => ({
-                    value: `${x.kind}:${x.name}`,
-                    label: `${x.name} · ${RESOURCE_KINDS[x.kind]}`,
-                  })),
-                  { value: OUTRO_LOCAL, label: 'Outro (digitar)' },
+                  ...identificacoesOpcoes(),
                 ]}
               />
-              <Select
-                label="Tipo de local"
-                value={kind}
-                onChange={(e) => {
-                  setKind(e.target.value);
-                  setIdLocal('');
-                  setCustomName('');
-                }}
-                options={Object.entries(RESOURCE_KINDS).map(
-                  ([value, label]) => ({ value, label }),
-                )}
-              />
+              {/* O tipo só é perguntado quando o nome é próprio: na lista sugerida ele já vem junto. */}
+              {idLocal === OUTRO_LOCAL ? (
+                <Select
+                  label="Tipo de local"
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value)}
+                  options={Object.entries(RESOURCE_KINDS).map(
+                    ([value, label]) => ({ value, label }),
+                  )}
+                />
+              ) : null}
               <Button disabled={busy || !selectedName} type="submit">
                 Adicionar local
               </Button>
