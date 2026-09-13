@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsDateString, IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/pagination/pagination-query.dto.js';
 import { PaymentMethod, Periodicity, SubscriptionStatus } from '../../../generated/prisma/client.js';
 const trim = ({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value;
 export class CreatePlanDto {
@@ -31,7 +32,4 @@ export class CreatePaymentDto {
 export class UpdatePaymentDto extends CreatePaymentDto {
  @ApiProperty() @Transform(trim) @IsString() @IsNotEmpty() @MinLength(3) @MaxLength(500) reason: string;
 }
-export class PaymentTimelineQueryDto {
- @ApiPropertyOptional({ default: 1 }) @IsOptional() @IsInt() @Min(1) page = 1;
- @ApiPropertyOptional({ default: 20 }) @IsOptional() @IsInt() @Min(1) @Max(100) pageSize = 20;
-}
+export class PaymentTimelineQueryDto extends PaginationQueryDto {}

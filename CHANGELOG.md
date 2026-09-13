@@ -2,6 +2,23 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `subscriptions` · Correção da paginação da linha do tempo (achada em navegador real)
+
+**Alteração**
+
+- `PaymentTimelineQueryDto` passa a estender o `PaginationQueryDto` compartilhado, que já traz `@Type(() => Number)`.
+
+**Impacto**
+
+- Antes, `GET .../timeline?page=1&pageSize=50` devolvia **400** (`page must not be less than 1…`), porque na query string os números chegam como texto: sem `@Type(() => Number)` o `@IsInt()` reprova. Só o caminho **sem** parâmetros funcionava — foi por isso que e2e e smoke passaram e o defeito apareceu apenas dirigindo a tela real.
+- Frontend não mudou (já enviava `page`/`pageSize`); a timeline voltou a renderizar na UI.
+
+**Verificação**
+
+- e2e passou a cobrir o caminho feliz **com** paginação explícita (além do caso inválido), para o defeito não voltar: 56 unitários e 58 e2e.
+
+---
+
 ## 2026-09-13 · `audit` + `subscriptions` · Trilha de alterações e correção de pagamento
 
 **Alteração**

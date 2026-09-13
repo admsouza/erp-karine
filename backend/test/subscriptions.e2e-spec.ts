@@ -69,7 +69,7 @@ describe('Módulo de assinaturas (e2e)', () => {
     expect(sincronizado).toHaveLength(1);
     expect(sincronizado[0]).toMatchObject({ amountCents: 10900, paymentMethod: 'PIX', status: 'PAGO' });
 
-    const timeline = await request(app.getHttpServer()).get(`${url}/timeline`).set('Cookie', session.cookie).expect(200);
+    const timeline = await request(app.getHttpServer()).get(`${url}/timeline`).set('Cookie', session.cookie).query({ page: 1, pageSize: 50 }).expect(200);
     expect(timeline.body.total).toBe(1);
     expect(timeline.body.items[0]).toMatchObject({
       actorUserId: session.userId, actorName: 'Usuário de teste', actorEmail: session.email,
@@ -89,6 +89,10 @@ describe('Módulo de assinaturas (e2e)', () => {
     await request(app.getHttpServer()).get(`${url}/timeline`).expect(401);
     await request(app.getHttpServer()).patch(url).send({ amountCents: 1, paidAt: '2026-09-13', paymentMethod: 'PIX', reason: 'Sem sessão' }).expect(401);
     await request(app.getHttpServer()).get(`${url}/timeline`).set('Cookie', session.cookie).query({ page: 0 }).expect(400);
+    // Paginação explícita via query string precisa funcionar: `?page=1&pageSize=50` chega como texto e
+    // o DTO precisa converter com `@Type(() => Number)` (foi o que quebrou a timeline na UI real).
+    const paginada = await request(app.getHttpServer()).get(`${url}/timeline`).set('Cookie', session.cookie).query({ page: 1, pageSize: 50 }).expect(200);
+    expect(paginada.body).toMatchObject({ page: 1, pageSize: 50 });
   });
 
   it('controla inadimplência, retorno à ativa e encerramento sem exclusão', async () => {
