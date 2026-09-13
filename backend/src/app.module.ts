@@ -18,6 +18,7 @@ import { ClientsModule } from './modules/clients/clients.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { ExamsModule } from './modules/exams/exams.module.js';
 import { FinancialModule } from './modules/financial/financial.module.js';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
 import { ProceduresModule } from './modules/procedures/procedures.module.js';
 import { ProtocolsModule } from './modules/protocols/protocols.module.js';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module.js';
@@ -59,6 +60,7 @@ function staticFilesImports(): DynamicModule[] {
     ProtocolsModule,
     ExamsModule,
     DashboardModule,
+    MaintenanceModule,
     // Deve permanecer como ÚLTIMO import: o curinga de 404 da API só pode ser
     // avaliado depois de todas as rotas reais estarem registradas.
     NotFoundModule,

@@ -97,8 +97,9 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
 - `GET /api/health` — status da API e do banco.
 - `GET /api/docs` e `/api/docs-json` — documentação Swagger.
 - Envelope de erro padronizado em toda a API, inclusive 404 de rota inexistente.
-- Layout administrativo (menu lateral com os 7 módulos, barra superior com status da
-  conexão, responsivo com gaveta no mobile) e páginas base de cada módulo com estado vazio.
+- Layout administrativo (menu lateral com os 7 módulos de operação + seção **Sistema**, barra superior
+  com status da conexão, responsivo com gaveta no mobile) e páginas base de cada módulo com estado vazio.
+- **Seção Sistema**: Auditoria, Usuários, **Manutenção de cadastros** e Integração (todas ADMIN).
 - Build do frontend servido pelo backend quando `frontend/dist` existe.
 - **Módulo `clients` implementado (Fase 2)**: CRUD sem exclusão física, busca paginada,
   inativação/reativação, CPF validado e único, Swagger completo, 6 testes unitários e
@@ -210,6 +211,14 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 - Recomendação com vários itens; status `RECOMENDADO`, `REALIZADO`, `CANCELADO`.
 - **Só registra** a recomendação profissional: sem diagnóstico automático, sem interpretação
   de resultado. Visualização limpa, preparada para impressão/PDF.
+
+### Manutenção de cadastros (Sistema)
+- Hub para **corrigir** e **inativar/reativar** cadastros básicos: locais do recurso, clientes,
+  procedimentos e planos de assinatura, com busca e filtro de situação.
+- **Não cria, não exclui** e não tem regra própria: delega ao módulo dono, que valida. Inativar preserva
+  o histórico (meses fechados do caixa, atendimentos antigos etc.).
+- Campos editáveis são poucos de propósito (identificação + dado principal); o resto continua na tela do
+  módulo. O valor unitário de procedimento **não** é editado aqui (tem vigência própria).
 
 ### Dashboard
 - Apenas consulta e agregação: faturamento do mês, clientes cadastrados, atendimentos do

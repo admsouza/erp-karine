@@ -148,6 +148,20 @@ organizada para o sistema inteiro (módulo transversal, não remendo na tela).
 - [x] **Autorização por perfil** finalmente implementada para esta área: `RolesGuard` global + `@Roles('ADMIN')`, falhando fechado (403); o item de menu é escondido para outros perfis
 - [ ] Adoção gradual da trilha nos demais módulos (clientes, procedimentos, agenda, protocolos) — o padrão está definido; a adoção é incremental e não reescreve histórico passado
 
+## Transversal — Manutenção de cadastros `[x]`
+
+Hub na seção **Sistema** para corrigir e inativar/reativar cadastros básicos sem caçar a tela de cada
+módulo. Não tem tabela nem regra própria: consulta e delega aos módulos donos (decisão 7.49).
+
+- [x] Módulo `maintenance` com `GET /api/maintenance/registrations` (tipo, busca, situação, paginação)
+- [x] `PATCH .../:type/:id` (editar), `.../inactivate` e `.../reactivate`, todos `@Roles('ADMIN')`
+- [x] Tipos cobertos: locais do recurso, clientes, procedimentos e planos de assinatura
+- [x] Trilha de auditoria sem duplicar o evento do módulo dono
+- [x] Tela mobile-first em `/sistema/manutencao` + item no menu da seção Sistema
+- [x] Testes: 7 unitários + e2e dedicado (5 casos) e verificação em navegador real
+- [ ] Novos cadastros entram sob demanda (ex.: procedimentos com valor — hoje o valor tem vigência
+  própria e fica na tela do procedimento)
+
 ## Transversal — Seção `Sistema`: auditoria, usuários e integração `[~]`
 
 O menu ganhou a seção **Sistema** (administração do próprio sistema, hoje toda de ADMIN). O módulo de

@@ -16,6 +16,7 @@ import { ProtocolDetailPage } from '../../features/protocols/pages/ProtocolDetai
 import { ExamsPage } from '../../features/exams/pages/ExamsPage';
 import { AuditPage } from '../../features/audit/pages/AuditPage';
 import { UsersPage } from '../../features/users/pages/UsersPage';
+import { MaintenancePage } from '../../features/maintenance/pages/MaintenancePage';
 import { IntegrationsPage } from '../../features/integrations/pages/IntegrationsPage';
 import { RequireRole } from '../../features/auth/components/RequireRole';
 import { NotFoundPage } from './NotFoundPage';
@@ -49,6 +50,7 @@ export function AppRouter() {
           {/* Seção Sistema — hoje toda restrita ao ADMIN (o backend também bloqueia). */}
           <Route path="/sistema/auditoria" element={<RequireRole role="ADMIN"><AuditPage /></RequireRole>} />
           <Route path="/sistema/usuarios" element={<RequireRole role="ADMIN"><UsersPage /></RequireRole>} />
+          <Route path="/sistema/manutencao" element={<RequireRole role="ADMIN"><MaintenancePage /></RequireRole>} />
           <Route path="/sistema/integracoes" element={<RequireRole role="ADMIN"><IntegrationsPage /></RequireRole>} />
           <Route path="/auditoria" element={<Navigate to="/sistema/auditoria" replace />} />
           <Route path="/404" element={<NotFoundPage />} />

@@ -14,6 +14,6 @@ import { ClientService } from './services/client.service.js';
 @Module({
   controllers: [ClientsController],
   providers: [ClientRepository, ClientService, ClientQueryService],
-  exports: [ClientQueryService],
+  exports: [ClientQueryService, ClientService],
 })
 export class ClientsModule {}

@@ -24,6 +24,6 @@ import { ProcedurePriceRepository } from './repositories/procedure-price.reposit
     ProcedureQueryService,
     ProcedurePriceService,
   ],
-  exports: [ProcedureQueryService],
+  exports: [ProcedureQueryService, ProcedureService],
 })
 export class ProceduresModule {}
