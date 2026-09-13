@@ -2,6 +2,22 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` (tela) · Sugestões de banco pelo nome real
+
+**Alteração**
+
+- As sugestões de **Banco** na "Identificação do local" passaram a ser os bancos que a clínica usa, pelo
+  nome real: **Banco do Brasil, Caixa Econômica, Itaú, Nubank, Santander e Mercado Pago** (a opção
+  "Outro (digitar)" continua existindo para qualquer outra conta).
+- `Espécie` → "Dinheiro (gaveta)" e `Conta de maquineta` → "Maquineta principal"/"Maquineta 2" seguem iguais.
+
+**Impacto**
+
+- Só a lista de sugestões do frontend mudou: **sem migração, sem backend e sem efeito nos locais já
+  cadastrados** (o nome continua livre no banco).
+- A ordem é alfabética por nome, e não por "principal/secundário": com mais de uma conta, cada uma é
+  cadastrada pelo nome do banco (duas contas do mesmo banco usam "Outro (digitar)").
+
 ## 2026-09-13 · `financial` (tela) · Cadastro do local por seleção e rótulo "Identificação do local"
 
 **Alteração**
@@ -24,6 +40,18 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - Quem tem um local de cada tipo cadastra em dois toques; quem tem vários usa "Outro (digitar)".
 - `tsc`, `oxlint` e build do frontend aprovados; fluxo conferido em navegador real (390px): sugestões por
   tipo, "Outro (digitar)" abrindo o nome próprio e os três cadastros aparecendo na lista, sem erro de tela.
+
+**Publicação (2026-09-13)**
+
+- PR **#17** aprovado e integrado em `main` (merge `62c8df3`); deploy no CapRover **concluído**
+  (`erp-estetica`) — **sem migração** (a mudança é só de tela).
+- Verificação em produção com sessão temporária (removida em seguida): `/api/health` → `database: up`;
+  a tela Financeiro → aba **Caixa** mostra **"Identificação do local"** com as sugestões corretas por tipo
+  (`Conta de maquineta` → Maquineta principal/Maquineta 2; `Banco` → Banco principal/Banco secundário;
+  `Espécie` → Dinheiro (gaveta)), a opção **"Outro (digitar)"** libera o nome próprio e não há erro de tela.
+- **Nada foi gravado no banco de produção**: nenhum local cadastrado, nenhum caixa aberto e o usuário
+  temporário de verificação foi excluído (confirmado por consulta: 0 usuários de verificação,
+  0 locais, 0 caixas).
 
 ## 2026-09-13 · `financial` · Caixa, contas a receber/pagar e conciliação (Fase 6.1)
 
