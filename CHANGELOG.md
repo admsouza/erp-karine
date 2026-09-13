@@ -15,6 +15,11 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - Testes: 7 unitários do `ProcedureService`, 5 e2e do módulo (21 unitários e 23 e2e no total).
 - **Correção no `OriginGuard`** (da fase anterior): a comparação entre `Origin` e `Host` recusava o login legítimo quando um proxy troca o `Host` (proxy do Vite em desenvolvimento). O guard agora considera `X-Forwarded-Host` e a lista `CORS_ORIGINS`, aceitando mesmo hostname em porta diferente; o caso positivo passou a ter teste (antes só o caso negativo era testado — foi assim que o bug escapou).
 
+**Publicação**
+
+- Mesclado em `main` (`194758e`) e publicado no CapRover. Sem migração: a tabela `Procedure` já existia desde a Fase 1.
+- Verificado em produção por API e em **navegador real**: login da Dra. Karine, menu com os 8 itens, `/procedimentos` renderizando o catálogo vazio, Swagger com as 4 rotas, `/api/clients` 401 sem sessão (com o dado real preservado: 1 cliente).
+
 **Impacto**
 
 - Nenhuma migração de banco: a tabela `Procedure` já existia desde a Fase 1.
