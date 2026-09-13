@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { useApiHealth } from '../../shared/hooks/useApiHealth';
-import { NAV_ITEMS } from './navigation';
+import { navItemsPara } from './navigation';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
@@ -10,8 +11,9 @@ export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const apiState = useApiHealth();
+  const { user } = useAuth();
 
-  const current = NAV_ITEMS.find((item) => item.to === location.pathname);
+  const current = navItemsPara(user?.role).find((item) => item.to === location.pathname);
 
   return (
     <div className="flex min-h-screen bg-slate-100">

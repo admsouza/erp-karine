@@ -9,6 +9,7 @@ import { DomainEventsModule } from './common/events/domain-events.module.js';
 import { NotFoundModule } from './common/exceptions/not-found.module.js';
 import { HealthModule } from './common/health/health.module.js';
 import { OriginGuard } from './common/guards/origin.guard.js';
+import { RolesGuard } from './common/guards/roles.guard.js';
 import { AppointmentsModule } from './modules/appointments/appointments.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -67,6 +68,8 @@ function staticFilesImports(): DynamicModule[] {
     // origem das requisições de escrita (defesa de CSRF).
     { provide: APP_GUARD, useClass: SessionAuthGuard },
     { provide: APP_GUARD, useClass: OriginGuard },
+    // Autorização por perfil roda depois da sessão: o perfil vem do usuário autenticado.
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

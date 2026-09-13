@@ -2,6 +2,29 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `audit` · Tela de auditoria do sistema (ADMIN) e autorização por perfil
+
+**Alteração**
+
+- Nova tela **Auditoria** no menu (`/auditoria`), **exclusiva do ADMIN**: filtros por usuário, módulo, tipo de registro, ação, período e busca livre (motivo, autor ou id), paginação e o antes → depois com rótulos de negócio.
+- `GET /api/audit/events` e `GET /api/audit/filters` (opções vindas do que já foi registrado, não de lista fixa).
+- `RolesGuard` + `@Roles(...)`: **autorização por perfil** entra no sistema (era dívida aberta). O guard é global e só age em rota marcada — rota sem `@Roles` continua como antes, sem quebrar os módulos publicados.
+- Filtro de período é dia inteiro em `America/Recife` (00:00 → 23:59:59 UTC-3).
+- A trilha segue **sem** rota de edição/exclusão (e2e verifica que `PATCH`/`DELETE` devolvem 404).
+
+**Impacto**
+
+- Menu passa a ter **9 itens**, e o item "Auditoria" só aparece para ADMIN (escondido no frontend, bloqueado com 403 no backend).
+- Nenhuma migração: a tabela `AuditEvent` já existia.
+- Sem autorização por perfil nos outros módulos — é decisão incremental, não automática.
+
+**Verificação**
+
+- **60 unitários** e **65 e2e**: filtros por autor/módulo/tipo/ação, busca livre, período com o caso de fronteira de fuso (evento das 23h de Recife), opções de filtro, 403 para perfil `USER`, 401 sem sessão, 400 de validação e 404 para edição/exclusão.
+- typecheck, lint e builds dos dois projetos aprovados.
+
+---
+
 ## 2026-09-13 · `subscriptions` · Correção da paginação da linha do tempo (achada em navegador real)
 
 **Alteração**

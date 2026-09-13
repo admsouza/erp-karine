@@ -1,4 +1,5 @@
 import {
+  AuditIcon,
   CalendarIcon,
   ClientsIcon,
   DashboardIcon,
@@ -13,6 +14,8 @@ export interface NavItem {
   label: string;
   to: string;
   icon: typeof DashboardIcon;
+  /** Perfis que enxergam o item; ausente = todos. */
+  roles?: ('ADMIN' | 'USER')[];
 }
 
 /** Itens do menu lateral administrativo. */
@@ -25,4 +28,10 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Financeiro', to: '/financeiro', icon: FinancialIcon },
   { label: 'Protocolos', to: '/protocolos', icon: ProtocolIcon },
   { label: 'Exames', to: '/exames', icon: ExamIcon },
+  { label: 'Auditoria', to: '/auditoria', icon: AuditIcon, roles: ['ADMIN'] },
 ];
+
+/** Itens visíveis para o perfil informado (regra também aplicada no backend). */
+export function navItemsPara(role: 'ADMIN' | 'USER' | undefined): NavItem[] {
+  return NAV_ITEMS.filter((item) => !item.roles || (role ? item.roles.includes(role) : false));
+}
