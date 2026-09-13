@@ -71,6 +71,44 @@ enum ExamStatus {
 // Módulo: clients
 // ---------------------------------------------------------------------------
 
+/// Usuário do sistema (equipe da clínica). Roles reservadas para uso futuro.
+model User {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  passwordHash       String
+  role               Role      @default(ADMIN)
+  active             Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  sessions           Session[]
+
+  @@index([active])
+}
+
+/// Sessão de login. O token vai ao cliente em cookie httpOnly; aqui fica só o hash.
+model Session {
+  id         String   @id @default(uuid())
+  userId     String
+  tokenHash  String   @unique
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
 model Client {
   id            String    @id @default(uuid())
   fullName      String

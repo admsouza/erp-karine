@@ -62,6 +62,18 @@ cd ../backend && npm run build && npm run start:prod
 Scripts: backend `start:dev`, `build`, `test:e2e`, `db:migrate`, `db:generate`, `db:studio`,
 `db:reset`, `lint`; frontend `dev`, `build`, `lint`.
 
+### Primeiro acesso (autenticação)
+
+O sistema exige login. O primeiro usuário é criado por CLI (não há tela de cadastro):
+
+```bash
+cd backend
+node dist/scripts/create-user.js --email voce@clinica.com.br --password "SenhaForte123" --name "Seu Nome"
+```
+
+A senha informada é **temporária**: o sistema obriga a troca no primeiro acesso.
+A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
+
 ## 4. Configuração
 
 | Onde | Variável | Para quê |

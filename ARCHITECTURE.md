@@ -182,6 +182,12 @@ Convenções obrigatórias:
 | 7.16 | Banco **fora do container** (`srv-captain--postgresql`), sem volume de dados na imagem | O dado é do serviço de banco, não do app: deploy/restart não apaga nada e a capacidade de backup é a do Postgres (`pg_dump`). O diretório persistente `erp-estetica-data` continua registrado no CapRover, hoje sem uso. |
 | 7.17 | `prisma migrate deploy` no entrypoint, com o CLI do Prisma em `dependencies` (não em devDependencies) | O container precisa aplicar migração no boot; deixar o CLI só em dev quebraria o start em produção. |
 | 7.18 | `containerHttpPort = 3001` no CapRover (a API escuta 3001, não 80) | Evita depender de porta privilegiada dentro do container. |
+| 7.19 | Cookie httpOnly não é acessível ao JavaScript (imune a roubo de token por XSS); a sessão pode ser revogada no servidor na hora (logout, troca de senha) — o que JWT stateless não permite sem lista de revogação. Sem Redis porque uma dependência a mais não se paga com uma clínica. |
+| 7.20 | `bcrypt` nativo é compilado por `NODE_MODULE_VERSION` e quebra entre as duas versões de Node desta máquina (mesmo motivo do adapter libSQL). |
+| 7.21 | O padrão seguro vira o default: esquecer o guard protege, esquecer o `@Public` só bloqueia. |
+| 7.22 | Defesa de CSRF sem token em storage: o navegador sempre manda `Origin` em requisição não-GET, e requisição sem `Origin` (curl, teste) só passa porque não é navegador. |
+| 7.23 | A senha inicial é combinada por fora do sistema (chat); obrigar a troca elimina o risco de credencial compartilhada circular para sempre. |
+| 7.24 | O `SwaggerModule` registra handlers direto no Express e não passa pelo pipeline de guards do Nest; o middleware é registrado **antes** do Swagger porque no Express quem casa primeiro é quem foi registrado primeiro. |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 
@@ -222,6 +228,28 @@ Convenções obrigatórias:
   As dependências são instaladas dentro do build (`npm ci`), nunca enviadas do host.
 - **Pré-requisito de release:** `npm ci` precisa aceitar os `package-lock.json` (o build usa
   `npm ci`, que falha se o lock estiver fora de sincronia com o `package.json`).
+
+## 8.2 Segurança (autenticação e sessão)
+
+- **Modelo:** sessão com estado no Postgres. O cliente guarda apenas um cookie
+  `httpOnly` (`erp_session`); o banco guarda o **hash sha256** do token, nunca o
+  token. Sessão de 7 dias, renovada a cada requisição autenticada.
+- **Padrão fechado:** o `SessionAuthGuard` é global; só o que está marcado com
+  `@Public()` passa sem sessão (`GET /api/health` e `POST /api/auth/login`).
+  Rota inexistente sob `/api` responde 401 sem sessão — não vaza quais rotas existem.
+- **CSRF:** cookie `SameSite=Lax` + `OriginGuard` (403 quando o `Origin` de uma
+  requisição de escrita não é o mesmo host da API).
+- **Força bruta:** 5 falhas por par (IP, e-mail) bloqueiam 15 minutos (429).
+  O contador é em memória — com uma instância é suficiente; ao escalar, mover para
+  o banco/Redis e registrar a decisão.
+- **Senhas:** bcrypt custo 10; mínimo 8 caracteres com letras e números; não pode
+  ser igual ao e-mail; troca exige a senha atual e revoga as outras sessões.
+- **Swagger:** exige sessão (ver 7.22).
+- **Acesso inicial:** não há tela de cadastro. O primeiro usuário é criado por CLI
+  (`node dist/scripts/create-user.js`), com senha temporária e troca obrigatória.
+- **Ainda em aberto:** perfis (ADMIN/USER) já existem no modelo mas **não há
+  autorização por perfil** — todo usuário logado tem acesso total; e não há
+  recuperação de senha por e-mail (reset é feito pela CLI).
 
 ## 9. Ambiente e execução
 

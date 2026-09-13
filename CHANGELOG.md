@@ -4,6 +4,25 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · módulo `auth` · autenticação e sessão (Fase 2.5)
+
+**Alteração**
+
+- Novo módulo `auth`: `User` e `Session` no schema (migração `auth_users_sessions`), `AuthService`, `SessionService`, `SessionAuthGuard` global, `OriginGuard`, bloqueio por tentativas (429) e troca de senha obrigatória no primeiro acesso.
+- Sessão em Postgres com cookie `httpOnly` (`erp_session`), token guardado hasheado (sha256), validade de 7 dias com renovação; bcryptjs (JS puro) para senha.
+- Todas as rotas de `/api` passam a exigir sessão, exceto `GET /api/health` e `POST /api/auth/login`; a documentação Swagger também exige sessão.
+- Frontend: `AuthProvider`, tela `/login`, tela `/trocar-senha` (bloqueante com senha temporária), menu do usuário na topbar (alterar senha / sair) e redirecionamento automático em 401.
+- CLI `node dist/scripts/create-user.js` para criar/atualizar usuários.
+- Testes: 8 unitários do `AuthService` e 9 e2e do módulo; os e2e existentes passaram a autenticar de verdade.
+
+**Impacto**
+
+- Sem sessão, nenhuma rota de domínio responde — o dado de paciente deixa de ficar exposto na URL pública.
+- Deploy passa a exigir a criação do usuário inicial (senão ninguém entra).
+- Perfil (ADMIN/USER) existe no modelo mas **não há autorização por perfil**; e não há reset de senha por e-mail (a CLI faz isso).
+
+---
+
 ## 2026-09-13 · módulo `clients` · Fase 2 implementada e publicada
 
 **Alteração**

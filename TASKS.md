@@ -34,6 +34,24 @@ antes de começar a próxima.
 - [x] Página do cliente com seções de outros módulos (vazias até suas fases)
 - [x] Atualizar `MODULES.md` (contrato final), `TASKS.md`, `PROJECT.md` e `CHANGELOG.md`
 
+## Fase 2.5 — Autenticação `[x]`
+
+Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em app público).
+
+- [x] `User` + `Session` no schema Prisma (migração `auth_users_sessions`)
+- [x] `AuthService` (login, logout, troca de senha, `me`) e `SessionService` (emitir/resolver/revogar)
+- [x] `SessionAuthGuard` global + decorator `@Public()` (health e login)
+- [x] `OriginGuard` (CSRF) e bloqueio por tentativas de login (429)
+- [x] Cookie `httpOnly`/`SameSite=Lax`/`Secure`; token de sessão hasheado no banco
+- [x] Documentação Swagger exigindo sessão
+- [x] CLI `node dist/scripts/create-user.js` para criar o primeiro usuário
+- [x] Frontend: `/login`, `/trocar-senha` (obrigatória com senha temporária) e menu do usuário na topbar
+- [x] Testes: 8 unitários do `AuthService`, 9 e2e do módulo de auth, 16 e2e no total
+- [ ] Criar o usuário de produção e conferir o bloqueio em produção (feito no deploy desta fase)
+- [ ] Autorização por perfil (ADMIN/USER) e recuperação de senha pelo sistema — não implementados
+
+---
+
 ## Fase 3 — Módulo `procedures` `[ ]`
 
 - [ ] CRUD + inativação (nome, descrição, duração, valor padrão, ativo)
