@@ -27,6 +27,17 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   aparecem de uma vez, e cada escolha grava com o tipo derivado (Banco do Brasil · Banco,
   Maquineta 2 · Conta de maquineta, Dinheiro (gaveta) · Espécie), sem erro de tela.
 
+**Publicação (2026-09-13)**
+
+- PR **#20** aprovado e integrado em `main` (merge `de44389`); deploy no CapRover **concluído**,
+  **sem migração**.
+- Produção: `/api/health` → `database: up`; bundle servido `index-DTnPPX-z.js` (o novo). Verificação em
+  navegador real **só de leitura**: a lista de identificações mostra de uma vez Dinheiro (gaveta),
+  Banco do Brasil, Caixa Econômica, Itaú, Nubank, Santander, Mercado Pago, Maquineta principal,
+  Maquineta 2 e "Outro (digitar)", e escolher a identificação define o tipo corretamente — **nenhum
+  local foi cadastrado em produção** (o botão "Adicionar local" não foi acionado), e o usuário temporário
+  de verificação foi excluído com suas sessões (0 usuários de verificação, 0 locais, 0 caixas).
+
 ## 2026-09-13 · `financial` · Saldo total do caixa = soma dos locais (consolidado)
 
 **Alteração**
