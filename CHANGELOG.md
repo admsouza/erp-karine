@@ -51,6 +51,21 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   cliente pelo modal renomeia, **Inativar** e **Reativar** funcionam pela lista e os quatro tipos
   carregam sem erro de tela.
 
+**Publicação (2026-09-13)**
+
+- PR **#22** aprovado e integrado em `main` (merge `c4f0be0`); deploy no CapRover **concluído**,
+  **sem migração**.
+- Produção: `/api/health` → `database: up`; bundle novo (`index-J3auE-Nt.js`). Com sessão ADMIN,
+  `GET /api/maintenance/registrations` devolve os cadastros reais por tipo — clientes (1), procedimentos
+  (Botox · R$ 900,00 / Aplicação), planos (Glow e Brilho · R$ 130,00 · Mensal) e locais do recurso
+  (vazio, como esperado: a clínica ainda não cadastrou). Sem sessão → **401**.
+- **Navegador real em produção** (390px, só leitura): a tela abre em `/sistema/manutencao`, o seletor
+  mostra os quatro cadastros, três tipos listam registros reais e o **modal de edição abre com os campos
+  certos** (procedimento → nome e unidade) e fecha sem gravar. Nenhum erro de tela.
+- **Nada foi gravado no banco de produção**: 0 eventos de trilha do hub, nenhum cadastro criado ou
+  alterado (a reserva de gravação ficou para o uso do cliente). Usuário temporário de verificação
+  excluído com suas sessões.
+
 ## 2026-09-13 · `financial` · Corrigir identificação do local e inativar/reativar
 
 **Alteração**
