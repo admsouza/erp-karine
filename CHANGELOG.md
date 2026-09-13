@@ -35,6 +35,21 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   (0 + 50,00 − 15,00 = soma dos locais); após o fechamento com apurado informado por local, o total passa
   a **apurado R$ 50,00 · esperado R$ 35,00 · divergência R$ 15,00**, sem erro de tela.
 
+**Publicação (2026-09-13)**
+
+- PR **#19** aprovado e integrado em `main` (merge `d079548`); deploy no CapRover **concluído**,
+  **sem migração**.
+- Produção: `/api/health` → `database: up`; o bundle servido (`index-D9tovuxa.js`) contém o código novo —
+  conferido por leitura do arquivo publicado ("Saldo total", "composição: soma de", "Composição por
+  local do recurso", "Identificação do local", "Mercado Pago", "Apurado na conferência"). A aba
+  **Caixa** renderiza com as três listas de sugestões corretas e sem erro de tela.
+- O **comportamento** do total (soma dos locais, apurado e divergência) está provado pelos testes
+  (82 unitários + 86 e2e) e pela verificação em navegador no ambiente de desenvolvimento; em produção o
+  bloco aparece assim que a clínica cadastrar os locais e abrir o primeiro caixa — **de propósito, nada
+  de caixa/período de teste foi criado no banco de produção**.
+- Usuário temporário de verificação **excluído** com suas sessões (confirmado: 0 usuários de verificação,
+  0 locais, 0 caixas, 0 contas).
+
 ## 2026-09-13 · `financial` (tela) · Sugestões de banco pelo nome real
 
 **Alteração**
