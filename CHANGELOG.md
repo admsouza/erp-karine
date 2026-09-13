@@ -19,6 +19,13 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 - TDD com RED observado; 53 unitários e 55 e2e, typecheck, lint, builds e `npm audit` zero.
 
+**Publicação**
+
+- PR #12 revisado e mesclado em `main` (`c53001fb`); deploy CapRover concluído.
+- Migração `20260913150000_protocols_module` aplicada; container saudável e tabelas clínicas preservadas sem registros prévios.
+- Produção: health/SPA/deep link 200; protocolos e Swagger 401 sem sessão e 200 autenticados.
+- Chromium real: `/protocolos` exibiu filtros, estado vazio e formulário completo de nova ficha.
+
 ---
 
 ## 2026-09-13 · `financial` · Fase 6 implementada
