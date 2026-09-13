@@ -2,6 +2,31 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `users` (tela) · Correção do "Carregando…" preso em Usuários
+
+**Alteração**
+
+- O hook `useUsers` (tela **Sistema → Usuários**) passou a usar o mesmo padrão da decisão 7.51: o
+  `loading` é **derivado** de um token de busca (`carregadoToken !== token`) e **cada ação** — aplicar
+  filtros, limpar, trocar de página ou recarregar — sobe o token, que está nas dependências do efeito.
+
+**Impacto**
+
+- Corrige um travamento real: **"Limpar" com os filtros já vazios** (e "Filtrar" repetido com o mesmo
+  valor) ligava o `loading` sem que o efeito re-disparasse — a tela ficava presa em "Carregando usuários…"
+  e só saía com recarga da página. O mesmo defeito já havia sido corrigido na tela de Manutenção de
+  cadastros; agora não sobra nenhum hook com o padrão antigo (`grep` por `setLoading(true)` nos hooks).
+- Sem mudança de contrato, sem backend e sem migração: nenhum comportamento de filtro/lista mudou além
+  de parar de travar.
+
+**Verificação**
+
+- `tsc`, `oxlint` e `build` aprovados.
+- **Navegador real (390px)**: lista carrega; **"Limpar" com filtros vazios** mantém a lista na tela (sem
+  "Carregando…"); **"Filtrar" repetido** com o mesmo valor também; busca por nome filtra de verdade
+  (`Usuario Teste 2` aparece e `Usuario Teste 1` não) e limpar depois da busca volta a listar todos; sem
+  erro de tela.
+
 **Publicação (2026-09-13)**
 
 - PR **#24** aprovado e integrado em `main` (merge `2a60dd1`); deploy no CapRover **concluído**, sem migração.

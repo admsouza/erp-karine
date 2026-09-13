@@ -165,9 +165,14 @@ módulo. Não tem tabela nem regra própria: consulta e delega aos módulos dono
   só no "Outro (digitar)") e catálogo compartilhado em `shared/data/locais-recurso.ts` (decisão 7.50)
 - [x] `loading` derivado de token nas listas do hub (decisão 7.51) — corrige "Carregando…" preso quando a
   ação não muda filtro, e recarrega a lista após editar/inativar/reativar
-- [ ] **Dívida conhecida:** o hook `useUsers` (tela Usuários) tem o mesmo defeito do `loading` preso —
-  "Limpar filtros" com os filtros já vazios não re-dispara o efeito e deixa a tela em "Carregando…".
-  Correção é a mesma (token nas dependências + `loading` derivado).
+- [x] **Dívida resolvida:** o hook `useUsers` (tela Usuários) recebeu a mesma correção — `loading` derivado
+  do token de busca e cada ação (aplicar, limpar, trocar de página, recarregar) sobe o token. "Limpar"
+  com filtros vazios e "Filtrar" repetido com o mesmo valor não travam mais em "Carregando…".
+- [x] **Varredura do mesmo padrão:** os outros hooks com `setLoading(true)` no handler foram conferidos
+  (`useProtocols`, `useAgenda`, `useFinancial`, `useProcedure`, `TitlesPanel`, `ReconciliationPanel`).
+  Nenhum tem caminho alcançável com o **mesmo valor** — os filtros só disparam quando o valor muda
+  (input/select), a paginação já é desabilitada durante o carregamento e os `reload` sobem token. Ficam
+  registrados como candidatos à padronização quando forem tocados (decisão 7.51).
 - [ ] Novos cadastros entram sob demanda (ex.: procedimentos com valor — hoje o valor tem vigência
   própria e fica na tela do procedimento)
 
