@@ -28,3 +28,10 @@ export class CreatePaymentDto {
  @ApiProperty({ enum: PaymentMethod }) @IsEnum(PaymentMethod) paymentMethod: PaymentMethod;
  @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(1000) notes?: string;
 }
+export class UpdatePaymentDto extends CreatePaymentDto {
+ @ApiProperty() @Transform(trim) @IsString() @IsNotEmpty() @MinLength(3) @MaxLength(500) reason: string;
+}
+export class PaymentTimelineQueryDto {
+ @ApiPropertyOptional({ default: 1 }) @IsOptional() @IsInt() @Min(1) page = 1;
+ @ApiPropertyOptional({ default: 20 }) @IsOptional() @IsInt() @Min(1) @Max(100) pageSize = 20;
+}

@@ -2,6 +2,28 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `audit` + `subscriptions` · Trilha de alterações e correção de pagamento
+
+**Alteração**
+
+- Módulo transversal `audit`: `AuditEvent` **append-only** + `AuditTrailService` (contrato público, aceita transação Prisma). Registra autor (id + snapshot de nome/e-mail), módulo, entidade, ação, `requestId`, motivo e **apenas os campos alterados** antes → depois.
+- Pagamento de assinatura passa a ser **editável**: `GET` do detalhe, `PATCH` com `reason` obrigatório e `GET .../timeline`. Edição sem mudança efetiva é recusada (400).
+- A correção do pagamento **sincroniza o lançamento financeiro vinculado na mesma transação** (valor, data, forma), sem criar segundo lançamento.
+- Frontend mobile-first: cada pagamento do histórico abre o detalhe, com botão **Editar pagamento** e a **linha do tempo** (autor, data/hora de Recife, motivo e antes → depois com rótulos de negócio).
+
+**Impacto**
+
+- Migração aditiva `20260913160000_audit_payment_history`. **Não há histórico retroativo**: pagamentos lançados antes disso aparecem sem eventos de auditoria.
+- `SubscriptionsModule` passa a depender dos contratos públicos de `audit` e `financial` (nunca de repositories/tabelas alheias).
+- `MODULES.md` ganhou a seção `audit`; `ARCHITECTURE.md` registrou as decisões 7.38 e 7.39.
+
+**Verificação**
+
+- TDD com RED observado; **56 unitários** e **58 e2e**, typecheck, lint, builds e `npm audit` zero nos dois projetos.
+- e2e cobre: motivo obrigatório, recusa de no-op, mudanças exatas na trilha, financeiro sincronizado sem duplicar (1 lançamento), 401 sem sessão e 400 de paginação.
+
+---
+
 ## 2026-09-13 · `protocols` · Fase 7 implementada
 
 **Alteração**

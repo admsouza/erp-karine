@@ -74,6 +74,53 @@ export function formatTime(value: string | Date | null | undefined): string {
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+const RECIFE_DATE_TIME = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Recife',
+});
+
+const RECIFE_DATE_ONLY = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: 'America/Recife',
+});
+
+const RECIFE_TIME_ONLY = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'America/Recife',
+});
+
+/** Data e hora **no fuso da clínica** (trilha de auditoria, histórico de alterações). */
+export function formatDateTimeRecife(value: string | Date | null | undefined): string {
+  if (!value) return '-';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return RECIFE_DATE_TIME.format(date);
+}
+
+/** Data (AAAA-MM-DD) no fuso da clínica — valor pronto para `<input type="date">`. */
+export function recifeDateInputValue(value: string | Date | null | undefined): string {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return RECIFE_DATE_ONLY.format(date);
+}
+
+/** Hora (HH:MM) no fuso da clínica. */
+export function recifeTimeValue(value: string | Date | null | undefined): string {
+  if (!value) return '00:00';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '00:00';
+  return RECIFE_TIME_ONLY.format(date);
+}
+
 /** Rótulos legíveis para os status vindos da API. */
 export function humanizeStatus(status: string): string {
   return status

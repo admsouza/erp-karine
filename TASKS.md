@@ -98,6 +98,20 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend: `features/protocols/` com filtros, detalhes, formulários e estados de tela
 - [x] Testes unitários/e2e, smoke HTTP e navegador real
 
+## Transversal — Auditoria de alterações e edição de pagamentos `[x]`
+
+Pedido do cliente antes da Fase 8: um pagamento lançado precisa poder ser corrigido, mostrando **quem**
+alterou e uma **linha do tempo** dentro do próprio lançamento; e a trilha de auditoria precisa ser
+organizada para o sistema inteiro (módulo transversal, não remendo na tela).
+
+- [x] Módulo `audit` transversal: `AuditEvent` **append-only** + `AuditTrailService` como contrato público
+- [x] Migração aditiva `20260913160000_audit_payment_history` (sem histórico retroativo: a trilha vale a partir daqui)
+- [x] Edição completa do pagamento (`PATCH /subscriptions/:id/payments/:paymentId`) com **motivo obrigatório**, recusa de edição sem mudança efetiva e registro **apenas dos campos alterados**
+- [x] Sincronização do lançamento financeiro vinculado na mesma transação, sem duplicar (`subscriptionPaymentId` continua único)
+- [x] UI mobile-first: cada pagamento abre o detalhe com **Editar pagamento** e a linha do tempo (autor, data/hora de Recife, motivo e antes → depois com rótulos de negócio)
+- [x] Testes: unitários do `AuditTrailService` e da edição + e2e do fluxo completo (motivo, mudanças, financeiro sincronizado, 401/400)
+- [ ] Adoção gradual da trilha nos demais módulos (clientes, procedimentos, agenda, protocolos) — o padrão está definido; a adoção é incremental e não reescreve histórico passado
+
 ## Fase 8 — Módulo `exams` `[ ]`
 
 - [ ] Recomendação com vários itens; status RECOMENDADO / REALIZADO / CANCELADO

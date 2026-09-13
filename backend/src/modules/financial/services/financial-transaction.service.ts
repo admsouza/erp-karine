@@ -4,6 +4,7 @@ import type { SubscriptionPaymentReceived } from '../../subscriptions/events/sub
 import type { CreateManualTransactionDto } from '../dto/financial.dto.js';
 import { toFinancialTransactionEntity } from '../entities/financial-transaction.entity.js';
 import { FinancialTransactionRepository } from '../repositories/financial-transaction.repository.js';
+import type { PaymentMethod, Prisma } from '../../../generated/prisma/client.js';
 @Injectable()
 export class FinancialTransactionService {
   constructor(private readonly repository: FinancialTransactionRepository) {}
@@ -15,6 +16,11 @@ export class FinancialTransactionService {
   async fromSubscriptionPayment(event: Omit<SubscriptionPaymentReceived, 'name'>) {
     const existing = await this.repository.findBySubscriptionPaymentId(event.subscriptionPaymentId); if (existing) return toFinancialTransactionEntity(existing);
     try { return toFinancialTransactionEntity(await this.repository.create({ clientId: event.clientId, description: `Assinatura: ${event.subscriptionName}`, category: 'Assinatura', amountCents: event.amountCents, date: event.paidAt, paymentMethod: event.paymentMethod, origin: 'SUBSCRIPTION', type: 'RECEITA', status: 'PAGO', subscriptionId: event.subscriptionId, subscriptionPaymentId: event.subscriptionPaymentId, subscriptionName: event.subscriptionName })); } catch (error: unknown) { const concurrent = await this.repository.findBySubscriptionPaymentId(event.subscriptionPaymentId); if (concurrent) return toFinancialTransactionEntity(concurrent); throw error; }
+  }
+  async synchronizeSubscriptionPayment(event: { subscriptionPaymentId: string; amountCents: number; paidAt: Date; paymentMethod: PaymentMethod; description?: string }, tx: Prisma.TransactionClient) {
+    const existing = await this.repository.findBySubscriptionPaymentId(event.subscriptionPaymentId, tx);
+    if (!existing) throw new NotFoundException('Lançamento financeiro vinculado não encontrado.');
+    return this.repository.updateWithTransaction(existing.id, { amountCents: event.amountCents, date: event.paidAt, paymentMethod: event.paymentMethod, description: event.description ?? existing.description }, tx);
   }
   async cancel(id: string) { const item = await this.repository.findById(id); if (!item) throw new NotFoundException('Lançamento financeiro não encontrado.'); if (item.status === 'CANCELADO') throw new ConflictException('Lançamento financeiro já está cancelado.'); return toFinancialTransactionEntity(await this.repository.update(id, { status: 'CANCELADO', cancelledAt: new Date() })); }
 }

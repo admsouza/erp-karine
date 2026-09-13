@@ -10,6 +10,7 @@ import { NotFoundModule } from './common/exceptions/not-found.module.js';
 import { HealthModule } from './common/health/health.module.js';
 import { OriginGuard } from './common/guards/origin.guard.js';
 import { AppointmentsModule } from './modules/appointments/appointments.module.js';
+import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionAuthGuard } from './modules/auth/guards/session-auth.guard.js';
 import { ClientsModule } from './modules/clients/clients.module.js';
@@ -48,6 +49,7 @@ function staticFilesImports(): DynamicModule[] {
     HealthModule,
     // Sessão: o guard global abaixo protege todas as rotas de /api.
     AuthModule,
+    AuditModule,
     ClientsModule,
     ProceduresModule,
     AppointmentsModule,
