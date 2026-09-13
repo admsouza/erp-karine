@@ -20,6 +20,13 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 - TDD com RED observado; 48 unitários e 51 e2e, typecheck, lint, builds e `npm audit` zero.
 
+**Publicação**
+
+- PR #11 mesclado em `main` (`56169cb`); deploy CapRover concluído com auditoria remota em zero.
+- Migração `20260913143000_financial_module` aplicada; container saudável e tabela financeira preservada com zero registros anteriores.
+- Produção: health/SPA/deep link 200; financeiro e Swagger 401 sem sessão; login e endpoints financeiros/Swagger 200 autenticados.
+- Chromium real: `/financeiro` exibiu indicadores, filtros, estado vazio, relatórios e modal de lançamento manual.
+
 ---
 
 ## 2026-09-13 · infraestrutura · dependências sem vulnerabilidades conhecidas
