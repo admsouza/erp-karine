@@ -4,14 +4,16 @@ import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 import { describeApiError } from '../../../shared/api/http-client';
 import { formatCentsToBRL, formatDateOnly, todayISO } from '../../../shared/utils/format';
-import { addProcedurePrice } from '../api/procedures-api';
+import { addProcedurePrice, updateProcedurePrice } from '../api/procedures-api';
 import type { ProcedurePrice } from '../types/procedure';
 
-interface NewPriceModalProps {
+interface PriceModalProps {
   open: boolean;
   procedureId: string;
   valorAtualCents: number | null;
   ultimaVigencia: ProcedurePrice | null;
+  /** Quando informado, o modal corrige a vigência atual em vez de criar outra. */
+  price?: ProcedurePrice | null;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -25,21 +27,29 @@ function paraCentavos(valor: string): number | undefined {
   return Math.round(numero * 100);
 }
 
+function paraCampo(cents: number | null | undefined): string {
+  return cents === null || cents === undefined ? '' : (cents / 100).toFixed(2).replace('.', ',');
+}
+
 /**
- * Novo valor do procedimento: cria uma vigência nova e fecha a anterior na data
- * informada, preservando a série histórica.
+ * Dois modos:
+ * - **novo valor** (`price` ausente): cria uma vigência nova e fecha a anterior;
+ * - **correção** (`price` informado): altera o valor/observação da vigência atual,
+ *   usado quando o valor já gravado precisa ser ajustado.
  */
 export function NewPriceModal({
   open,
   procedureId,
   valorAtualCents,
   ultimaVigencia,
+  price = null,
   onClose,
   onSaved,
-}: NewPriceModalProps) {
-  const [valor, setValor] = useState('');
+}: PriceModalProps) {
+  const corrigindo = Boolean(price);
+  const [valor, setValor] = useState(() => (corrigindo ? paraCampo(price?.valueCents) : ''));
   const [validFrom, setValidFrom] = useState(() => todayISO());
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(() => (corrigindo ? (price?.note ?? '') : ''));
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -48,10 +58,10 @@ export function NewPriceModal({
   async function enviar() {
     const valueCents = paraCentavos(valor);
     if (valueCents === undefined) {
-      setErro('Informe o novo valor (ex.: 180,00).');
+      setErro('Informe o valor (ex.: 900,00).');
       return;
     }
-    if (minimo && validFrom <= minimo) {
+    if (!corrigindo && minimo && validFrom <= minimo) {
       setErro(`A vigência precisa começar depois de ${formatDateOnly(minimo)}, que é a mais recente.`);
       return;
     }
@@ -59,7 +69,11 @@ export function NewPriceModal({
     setSalvando(true);
     setErro(null);
     try {
-      await addProcedurePrice(procedureId, { valueCents, validFrom, note: note.trim() || undefined });
+      if (corrigindo && price) {
+        await updateProcedurePrice(procedureId, price.id, { valueCents, note: note.trim() });
+      } else {
+        await addProcedurePrice(procedureId, { valueCents, validFrom, note: note.trim() || undefined });
+      }
       onSaved();
       onClose();
     } catch (falha) {
@@ -73,49 +87,60 @@ export function NewPriceModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Novo valor"
+      title={corrigindo ? 'Alterar valor atual' : 'Novo valor'}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={salvando}>
             Cancelar
           </Button>
           <Button onClick={() => void enviar()} disabled={salvando || !valor.trim()}>
-            {salvando ? 'Salvando…' : 'Aplicar valor'}
+            {salvando ? 'Salvando…' : corrigindo ? 'Salvar correção' : 'Aplicar valor'}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          Valor atual: <strong>{formatCentsToBRL(valorAtualCents)}</strong>. O valor atual será encerrado no
-          dia anterior ao início da nova vigência e continuará no histórico.
+          {corrigindo ? (
+            <>
+              Corrigindo a vigência que começou em{' '}
+              <strong>{formatDateOnly(price?.validFrom)}</strong> (valor atual{' '}
+              {formatCentsToBRL(valorAtualCents)}). Vigências já encerradas não podem ser alteradas.
+            </>
+          ) : (
+            <>
+              Valor atual: <strong>{formatCentsToBRL(valorAtualCents)}</strong>. O valor atual será encerrado no
+              dia anterior ao início da nova vigência e continuará no histórico.
+            </>
+          )}
         </p>
 
         <Input
-          label="Novo valor unitário (R$)"
+          label="Valor unitário (R$)"
           required
           value={valor}
           onChange={(evento) => setValor(evento.target.value)}
-          placeholder="180,00"
+          placeholder="900,00"
         />
 
-        <Input
-          label="A partir de"
-          type="date"
-          required
-          min={minimo ? undefined : undefined}
-          value={validFrom}
-          onChange={(evento) => setValidFrom(evento.target.value)}
-        />
+        {!corrigindo && (
+          <Input
+            label="A partir de"
+            type="date"
+            required
+            value={validFrom}
+            onChange={(evento) => setValidFrom(evento.target.value)}
+          />
+        )}
 
         <Input
           label="Observação"
           value={note}
           onChange={(evento) => setNote(evento.target.value)}
-          placeholder="Reajuste anual, promoção de inverno…"
+          placeholder="Reajuste anual, correção do cadastro…"
         />
 
-        {minimo && (
+        {!corrigindo && minimo && (
           <p className="text-xs text-slate-500">
             A vigência mais recente começa em {formatDateOnly(minimo)}; a nova precisa começar depois dessa data.
           </p>

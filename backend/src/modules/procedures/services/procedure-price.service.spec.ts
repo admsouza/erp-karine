@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcedurePriceService } from './procedure-price.service.js';
 import type { ProcedureQueryService } from './procedure-query.service.js';
@@ -111,6 +111,32 @@ describe('ProcedurePriceService', () => {
   it('recusa vigência de outro procedimento', async () => {
     const { service } = montar(vigencia({ procedureId: 'outro' }), 2);
     await expect(service.remove('proc-1', 'price-1')).rejects.toThrow(NotFoundException);
+  });
+
+  it('corrige o valor da vigência atual', async () => {
+    const { service, repository } = montar(vigencia({ validTo: null }), 2);
+    repository.update = vi.fn().mockImplementation((_id: string, data: Record<string, unknown>) =>
+      Promise.resolve(vigencia({ ...data })),
+    );
+
+    const corrigida = await service.update('proc-1', 'price-1', { valueCents: 22000, note: 'Valor correto' });
+    expect(corrigida.valueCents).toBe(22000);
+    expect(repository.update).toHaveBeenCalledWith('price-1', { valueCents: 22000, note: 'Valor correto' });
+  });
+
+  it('recusa editar vigência já encerrada (histórico não é reescrito)', async () => {
+    const { service } = montar(vigencia({ validTo: new Date('2026-09-20T00:00:00.000Z') }), 2);
+    await expect(service.update('proc-1', 'price-1', { valueCents: 22000 })).rejects.toThrow(ConflictException);
+  });
+
+  it('exige valor ou observação na correção', async () => {
+    const { service } = montar(vigencia({ validTo: null }), 2);
+    await expect(service.update('proc-1', 'price-1', {})).rejects.toThrow(BadRequestException);
+  });
+
+  it('recusa corrigir vigência de outro procedimento', async () => {
+    const { service } = montar(vigencia({ procedureId: 'outro', validTo: null }), 2);
+    await expect(service.update('proc-1', 'price-1', { valueCents: 1000 })).rejects.toThrow(NotFoundException);
   });
 
   it('valueOn devolve o valor da vigência que valia na data', async () => {

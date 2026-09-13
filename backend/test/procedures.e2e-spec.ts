@@ -118,6 +118,60 @@ describe('Módulo de procedimentos (e2e)', () => {
       .expect(400);
   });
 
+  describe('unidade de medida', () => {
+    it('cadastra com unidade e devolve no payload', async () => {
+      const criado = await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('Unidade'), unit: 'REGIAO', initialValueCents: 90000 })
+        .expect(201);
+
+      criados.push(criado.body.id);
+      expect(criado.body.unit).toBe('REGIAO');
+
+      const detalhe = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(detalhe.body.unit).toBe('REGIAO');
+    });
+
+    it('sem unidade informada, assume SESSAO', async () => {
+      const criado = await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('UnidadePadrao') })
+        .expect(201);
+
+      criados.push(criado.body.id);
+      expect(criado.body.unit).toBe('SESSAO');
+    });
+
+    it('permite trocar a unidade pela edição do cadastro', async () => {
+      const criado = await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('UnidadeTroca'), unit: 'ML', initialValueCents: 75000 })
+        .expect(201);
+      criados.push(criado.body.id);
+
+      const editado = await request(app.getHttpServer())
+        .patch(`/api/procedures/${criado.body.id}`)
+        .set('Cookie', sessao.cookie)
+        .send({ unit: 'APLICACAO' })
+        .expect(200);
+      expect(editado.body.unit).toBe('APLICACAO');
+    });
+
+    it('recusa unidade inválida (400)', async () => {
+      await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('UnidadeInvalida'), unit: 'PARALELOGRAMO' })
+        .expect(400);
+    });
+  });
+
   describe('vigências de valor (série histórica)', () => {
     let procedimentoId: string;
 
@@ -171,6 +225,109 @@ describe('Módulo de procedimentos (e2e)', () => {
         .set('Cookie', sessao.cookie)
         .expect(200);
       expect(amanhaValor.body.valueCents).toBe(15000);
+    });
+
+    it('corrige o valor da vigência atual de um procedimento já gravado', async () => {
+      // caso real: valor já cadastrado (vigência começando hoje) precisa ser corrigido
+      const criado = await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('CorrecaoValor'), unit: 'REGIAO', initialValueCents: 20000 })
+        .expect(201);
+      criados.push(criado.body.id);
+      expect(criado.body.currentValueCents).toBe(20000);
+
+      const vigencias = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}/prices`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(vigencias.body).toHaveLength(1);
+
+      const corrigida = await request(app.getHttpServer())
+        .patch(`/api/procedures/${criado.body.id}/prices/${vigencias.body[0].id}`)
+        .set('Cookie', sessao.cookie)
+        .send({ valueCents: 22000, note: 'Valor corrigido' })
+        .expect(200);
+      expect(corrigida.body.valueCents).toBe(22000);
+      expect(corrigida.body.note).toBe('Valor corrigido');
+      expect(corrigida.body.validTo).toBeNull();
+
+      // o valor vigente do procedimento acompanha a correção
+      const procedimento = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(procedimento.body.currentValueCents).toBe(22000);
+
+      // e a consulta por data também
+      const valor = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}/price-on`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(valor.body.valueCents).toBe(22000);
+    });
+
+    it('correção não altera o valor de datas anteriores à vigência', async () => {
+      const criado = await request(app.getHttpServer())
+        .post('/api/procedures')
+        .set('Cookie', sessao.cookie)
+        .send({ name: nome('CorrecaoFutura'), initialValueCents: 30000 })
+        .expect(201);
+      criados.push(criado.body.id);
+
+      const amanha = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+      await request(app.getHttpServer())
+        .post(`/api/procedures/${criado.body.id}/prices`)
+        .set('Cookie', sessao.cookie)
+        .send({ valueCents: 35000, validFrom: amanha })
+        .expect(201);
+
+      const abertas = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}/prices`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      const vigente = abertas.body.find((v: { validTo: null | string }) => v.validTo === null);
+
+      // corrige a vigência que começa amanhã: hoje continua valendo o valor antigo
+      await request(app.getHttpServer())
+        .patch(`/api/procedures/${criado.body.id}/prices/${vigente.id}`)
+        .set('Cookie', sessao.cookie)
+        .send({ valueCents: 40000 })
+        .expect(200);
+
+      const hoje = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}/price-on`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(hoje.body.valueCents).toBe(30000);
+
+      const amanhaValor = await request(app.getHttpServer())
+        .get(`/api/procedures/${criado.body.id}/price-on`)
+        .query({ date: amanha })
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      expect(amanhaValor.body.valueCents).toBe(40000);
+    });
+
+    it('recusa corrigir vigência já encerrada (409) e payload vazio (400)', async () => {
+      const vigencias = await request(app.getHttpServer())
+        .get(`/api/procedures/${procedimentoId}/prices`)
+        .set('Cookie', sessao.cookie)
+        .expect(200);
+      const encerrada = vigencias.body.find((v: { validTo: null | string }) => v.validTo !== null);
+
+      await request(app.getHttpServer())
+        .patch(`/api/procedures/${procedimentoId}/prices/${encerrada.id}`)
+        .set('Cookie', sessao.cookie)
+        .send({ valueCents: 9999 })
+        .expect(409);
+
+      const atual = vigencias.body.find((v: { validTo: null | string }) => v.validTo === null);
+      await request(app.getHttpServer())
+        .patch(`/api/procedures/${procedimentoId}/prices/${atual.id}`)
+        .set('Cookie', sessao.cookie)
+        .send({})
+        .expect(400);
     });
 
     it('recusa vigência que começa antes da mais recente (409)', async () => {

@@ -4,6 +4,25 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · `procedures` · unidade de medida e correção do valor vigente
+
+**Alteração** (pedido do cliente: alterar o valor e definir unidade dos procedimentos já gravados)
+
+- Novo campo **`Procedure.unit`** (`ProcedureUnit`): `SESSAO` (padrão), `APLICACAO`, `REGIAO`, `ML`, `UNIDADE`, `HORA`, `PACOTE`. É a base de cobrança do valor unitário e aparece como "R$ 900,00 / região" na listagem, no histórico e na tela do procedimento.
+- Migração **aditiva** (`procedure_unit`, com `DEFAULT 'SESSAO'`): os 6 procedimentos de produção entram como "Sessão" sem perder nada e a unidade pode ser ajustada na tela.
+- Novo endpoint **`PATCH /api/procedures/:id/prices/:priceId`**: corrige valor e observação da vigência **atual** — é o caminho para ajustar um valor já gravado sem inventar uma vigência nova.
+- Regra: vigência **encerrada não é editável** (409) — o passado é o que foi praticado; payload vazio (400).
+- Frontend: campo "Unidade de medida" no cadastro/edição, ação **Alterar valor** na vigência atual do histórico, e o modal com os dois modos (novo valor / correção).
+- Correção de acessibilidade no caminho: `Input` e `Select` passaram a gerar `id` com `useId`, então o `<label>` está sempre ligado ao campo (sem `name`/`id` o campo ficava sem rótulo associado — percebido ao automatizar a tela).
+- Testes: **35 unitários e 38 e2e** (novos: unidade, correção da vigência atual, recusa de edição de vigência encerrada, correção não altera datas anteriores).
+
+**Impacto**
+
+- Nenhum dado perdido: a unidade é aditiva com padrão. `currentValueCents` continua derivado da vigência atual.
+- Consumidores futuros (agenda/financeiro) devem usar `unit` como base da quantidade e gravar o valor unitário aplicado no próprio registro.
+
+---
+
 ## 2026-09-13 · `procedures` · valor unitário com vigência (série histórica)
 
 **Alteração** (pedido do cliente: valores mudam e precisam manter histórico)

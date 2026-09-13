@@ -5,6 +5,7 @@ import { Button } from '../../../shared/components/Button';
 import { Card, EmptyState } from '../../../shared/components/Card';
 import { PageHeader } from '../../../shared/components/PageHeader';
 import { formatCentsToBRL, formatDate } from '../../../shared/utils/format';
+import { PROCEDURE_UNITS, type ProcedurePrice } from '../types/procedure';
 import { NewPriceModal } from '../components/NewPriceModal';
 import { PriceHistoryTable } from '../components/PriceHistoryTable';
 import { useProcedure } from '../hooks/useProcedure';
@@ -22,6 +23,7 @@ export function ProcedureDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { procedure, prices, loading, erro, erroAcao, reload, removePrice } = useProcedure(id);
   const [modalAberto, setModalAberto] = useState(false);
+  const [corrigindo, setCorrigindo] = useState<ProcedurePrice | null>(null);
   const [removendo, setRemovendo] = useState<string | null>(null);
 
   if (loading) {
@@ -56,20 +58,41 @@ export function ProcedureDetailPage() {
       <PageHeader
         title={procedure.name}
         description={procedure.description ?? 'Sem descrição cadastrada.'}
-        actions={<Button onClick={() => setModalAberto(true)}>Novo valor</Button>}
+        actions={
+          <Button
+            onClick={() => {
+              setCorrigindo(null);
+              setModalAberto(true);
+            }}
+          >
+            Novo valor
+          </Button>
+        }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <p className="text-xs uppercase tracking-wide text-slate-500">Valor unitário vigente</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900">
             {procedure.currentValueCents === null ? '—' : formatCentsToBRL(procedure.currentValueCents)}
+            {procedure.currentValueCents !== null && (
+              <span className="ml-1 text-sm font-normal text-slate-500">
+                / {PROCEDURE_UNITS.find((u) => u.value === procedure.unit)?.singular ?? 'sessão'}
+              </span>
+            )}
           </p>
           <p className="mt-1 text-xs text-slate-500">
             {ultimaVigencia
               ? `Vigência atual desde ${ultimaVigencia.validFrom.slice(0, 10).split('-').reverse().join('/')}`
               : 'Sem valor cadastrado'}
           </p>
+        </Card>
+        <Card>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Unidade de medida</p>
+          <p className="mt-1 text-2xl font-semibold text-slate-900">
+            {PROCEDURE_UNITS.find((u) => u.value === procedure.unit)?.label ?? procedure.unit}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Base de cobrança do valor unitário</p>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-wide text-slate-500">Duração aproximada</p>
@@ -101,7 +124,12 @@ export function ProcedureDetailPage() {
           {prices.length > 0 ? (
             <PriceHistoryTable
               prices={prices}
+              unit={procedure.unit}
               busyId={removendo}
+              onEdit={(price) => {
+                setCorrigindo(price);
+                setModalAberto(true);
+              }}
               onRemove={(price) => void remover(price.id)}
             />
           ) : (
@@ -114,10 +142,12 @@ export function ProcedureDetailPage() {
       </div>
 
       <NewPriceModal
+        key={corrigindo?.id ?? 'novo'}
         open={modalAberto}
         procedureId={procedure.id}
         valorAtualCents={procedure.currentValueCents}
         ultimaVigencia={ultimaVigencia}
+        price={corrigindo}
         onClose={() => setModalAberto(false)}
         onSaved={reload}
       />

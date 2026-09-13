@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
+import { Select } from '../../../shared/components/Select';
 import { describeApiError } from '../../../shared/api/http-client';
 import { createProcedure, updateProcedure } from '../api/procedures-api';
-import type { Procedure, ProcedureInput } from '../types/procedure';
+import { PROCEDURE_UNITS, type Procedure, type ProcedureInput, type ProcedureUnit } from '../types/procedure';
 
 interface ProcedureFormModalProps {
   open: boolean;
@@ -16,17 +17,25 @@ interface ProcedureFormModalProps {
 interface Formulario {
   name: string;
   description: string;
+  unit: ProcedureUnit;
   durationMinutes: string;
   valorReais: string;
 }
 
-const VAZIO: Formulario = { name: '', description: '', durationMinutes: '', valorReais: '' };
+const VAZIO: Formulario = {
+  name: '',
+  description: '',
+  unit: 'SESSAO',
+  durationMinutes: '',
+  valorReais: '',
+};
 
 function paraFormulario(procedure: Procedure | null): Formulario {
   if (!procedure) return VAZIO;
   return {
     name: procedure.name,
     description: procedure.description ?? '',
+    unit: procedure.unit,
     durationMinutes: procedure.durationMinutes ? String(procedure.durationMinutes) : '',
     // O valor só é informado no cadastro; depois disso ele muda por vigência.
     valorReais: '',
@@ -65,6 +74,7 @@ export function ProcedureFormModal({ open, procedure, onClose, onSaved }: Proced
     const payload: ProcedureInput = {
       name: form.name.trim(),
       description: form.description.trim() || undefined,
+      unit: form.unit,
       durationMinutes: minutos,
     };
 
@@ -123,6 +133,12 @@ export function ProcedureFormModal({ open, procedure, onClose, onSaved }: Proced
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <Select
+            label="Unidade de medida"
+            options={PROCEDURE_UNITS.map((u) => ({ value: u.value, label: u.label }))}
+            value={form.unit}
+            onChange={(evento) => setForm((atual) => ({ ...atual, unit: evento.target.value as ProcedureUnit }))}
+          />
           <Input
             label="Duração (minutos)"
             type="number"

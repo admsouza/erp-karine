@@ -1,4 +1,4 @@
-import type { SelectHTMLAttributes } from 'react';
+import { useId, type SelectHTMLAttributes } from 'react';
 
 export interface SelectOption {
   value: string;
@@ -12,7 +12,8 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ label, options, error, id, className = '', ...props }: SelectProps) {
-  const selectId = id ?? props.name;
+  const gerado = useId();
+  const selectId = id ?? props.name ?? gerado;
 
   return (
     <div className={className}>

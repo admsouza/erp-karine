@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -8,7 +8,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /** Campo de texto padrão dos formulários (label + erro + dica). */
 export function Input({ label, error, hint, id, className = '', ...props }: InputProps) {
-  const inputId = id ?? props.name;
+  // useId garante id estável e label ligado ao campo mesmo sem `name`/`id`.
+  const gerado = useId();
+  const inputId = id ?? props.name ?? gerado;
 
   return (
     <div className={className}>
