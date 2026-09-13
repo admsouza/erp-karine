@@ -16,6 +16,11 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - Correção de acessibilidade no caminho: `Input` e `Select` passaram a gerar `id` com `useId`, então o `<label>` está sempre ligado ao campo (sem `name`/`id` o campo ficava sem rótulo associado — percebido ao automatizar a tela).
 - Testes: **35 unitários e 38 e2e** (novos: unidade, correção da vigência atual, recusa de edição de vigência encerrada, correção não altera datas anteriores).
 
+**Publicação**
+
+- Mesclado em `main` (`e6306d4`) e publicado. Migração `procedure_unit` aplicada no boot do container: os **6 procedimentos de produção entraram com unidade `SESSAO`** e valores vigentes intactos (Botox R$ 900,00; Labial e Mento R$ 750,00; Malar, Mandibula e Bigode Chinês R$ 900,00).
+- Verificado em produção por API e em **navegador real** (somente leitura, sem alterar dado): tela do Botox com "R$ 900,00 / sessão", card de unidade, histórico com 1 vigência e as ações **Novo valor** e **Alterar valor** disponíveis; listagem com valor + unidade.
+
 **Impacto**
 
 - Nenhum dado perdido: a unidade é aditiva com padrão. `currentValueCents` continua derivado da vigência atual.
