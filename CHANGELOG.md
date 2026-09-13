@@ -17,6 +17,11 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - **Migração de dados:** a migração `procedure_prices` copia o valor único de cada procedimento para uma vigência aberta antes de remover a coluna. Validada contra uma cópia dos dados reais de produção: **6 procedimentos → 6 vigências, soma R$ 5.100,00 preservada**.
 - Testes: 31 unitários e 31 e2e no total (novos: 10 unitários do serviço de vigência e 6 e2e da série histórica).
 
+**Publicação**
+
+- Mesclado em `main` (`ccf95bd`) e publicado. A migração rodou no boot do container: **6 procedimentos de produção → 6 vigências, soma R$ 5.100,00 preservada** (Botox R$ 900,00; Labial e Mento R$ 750,00; Malar, Mandibular e Bigode Chinês R$ 900,00), todas abertas e com a observação da migração.
+- Verificado por API em produção: listagem com `currentValueCents`, histórico do Botox com 1 vigência, consulta por data, 401 sem sessão.
+
 **Impacto**
 
 - Mudança de contrato no módulo novo: `defaultValueCents` sai, `currentValueCents` entra. Nenhum outro módulo consumia o campo ainda (agenda e financeiro são fases futuras) — por isso a troca é barata agora e cara depois.
