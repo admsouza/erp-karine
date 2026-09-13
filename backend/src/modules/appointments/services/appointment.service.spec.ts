@@ -37,11 +37,11 @@ describe('AppointmentService', () => {
 
   it('publica AppointmentCompleted somente depois de persistir REALIZADO', async () => {
     const completed = { id: 'appt-1', clientId: 'client-1', procedureId: 'procedure-1', procedureName: 'Botox', valueCents: 90000, scheduledAt: new Date(), status: 'REALIZADO' };
-    const appointments = { findById: vi.fn().mockResolvedValue({ ...completed, status: 'CONFIRMADO' }), update: vi.fn().mockResolvedValue(completed) };
+    const appointments = { findById: vi.fn().mockResolvedValue({ ...completed, status: 'CONFIRMADO' }), updateInTransaction: vi.fn(async (_id,_data,work)=>{await work(completed,{});return completed;}) };
     const events = { publish: vi.fn().mockResolvedValue(undefined) };
     const service = new AppointmentService(appointments as never, {} as never, {} as never, events as never);
     await service.changeStatus('appt-1', 'REALIZADO');
-    expect(events.publish).toHaveBeenCalledWith(expect.objectContaining({ name: 'AppointmentCompleted', appointmentId: 'appt-1', valueCents: 90000 }));
-    expect(appointments.update.mock.invocationCallOrder[0]).toBeLessThan(events.publish.mock.invocationCallOrder[0]);
+    expect(events.publish).toHaveBeenCalledWith(expect.objectContaining({ name: 'AppointmentCompleted', appointmentId: 'appt-1', valueCents: 90000 }), expect.anything());
+    expect(appointments.updateInTransaction.mock.invocationCallOrder[0]).toBeLessThan(events.publish.mock.invocationCallOrder[0]);
   });
 });

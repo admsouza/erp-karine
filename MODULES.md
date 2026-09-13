@@ -17,7 +17,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | procedures | `[~]` | 3 |
 | appointments | `[x]` | 4 |
 | subscriptions | `[x]` | 5 |
-| financial | `[x]` | 6 |
+| financial | `[x]` | 6 · 6.1 |
 | protocols | `[x]` | 7 |
 | audit | `[x]` | transversal |
 | exams | `[~]` | 8 |
@@ -290,12 +290,19 @@ vinculado coerente com a correção do pagamento, dentro da mesma transação.
 indicadores de faturamento. **Não** decide se um atendimento existe nem se uma assinatura
 está ativa: pergunta ao módulo dono.
 
-**Entidades:** `FinancialTransaction`.
+**Entidades:** `FinancialTransaction`, `ResourceAccount`, `CashPeriod`, `CashBalance`,
+`FinancialTitle`, `FinancialSettlement`, `FinancialReconciliation`.
 
 **Serviços públicos:**
 - `FinancialTransactionService` — lançar receita/despesa, cancelar lançamento, garantir idempotência.
 - `FinancialQueryService` — faturamento do mês, por período, por procedimento, por
   assinatura, quantidade de recebimentos.
+- `CashPeriodService` / `CashClosingService` — abrir o caixa do mês (transportando os saldos do
+  último período fechado) e fechar o período com o saldo apurado por local.
+- `ResourceAccountService` — cadastro dos locais do recurso (`CASH`, `BANK`, `CARD`).
+- `FinancialTitleService` — contas a receber/pagar e baixas parciais ou totais.
+- `FinancialAdjustmentService` — ajuste rastreável de lançamento de período já fechado.
+- `ReconciliationService` — conferência do período por local e registro das divergências.
 
 **Eventos emitidos:** nenhum (por ora).
 
@@ -305,7 +312,15 @@ está ativa: pergunta ao módulo dono.
 Não importa os módulos donos nem seus serviços/repositories.
 
 **Endpoints:** `POST/GET /api/financial/transactions`, `PATCH /api/financial/transactions/:id/cancel`,
-`GET /api/financial/summary` e `GET /api/financial/reports`.
+`PATCH /api/financial/transactions/:id/resource`, `POST /api/financial/transactions/:id/adjustments`,
+`GET /api/financial/summary`, `GET /api/financial/reports`,
+`GET/POST /api/financial/accounts`,
+`GET/POST /api/financial/cash-periods`, `GET /api/financial/cash-periods/:id`,
+`POST /api/financial/cash-periods/:id/close`,
+`GET /api/financial/cash-periods/:id/reconciliations`,
+`POST /api/financial/reconciliations`,
+`GET/POST /api/financial/titles`, `GET /api/financial/titles/:id`,
+`POST /api/financial/titles/:id/settlements`, `PATCH /api/financial/titles/:id/cancel`.
 
 **Regras principais:**
 - `origin`: `APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`.
@@ -317,6 +332,38 @@ Não importa os módulos donos nem seus serviços/repositories.
 - Tipos `RECEITA`/`DESPESA`; status `PENDENTE`/`PAGO`/`CANCELADO`; cancelamento preserva o registro.
 - Eventos dos módulos donos são consumidos por barramento genérico, sem acesso a repositories/tabelas internas.
 - Snapshots `procedureName`/`subscriptionName` preservam relatórios históricos.
+
+**Caixa (período mensal):**
+- Um `CashPeriod` por mês (`month` único, `YYYY-MM`): abertura duplicada devolve **409**.
+- A abertura só é permitida para o **mês seguinte ao último período**, que precisa estar **fechado**.
+- O saldo inicial de cada local de recurso é **transportado automaticamente** do `countedCents` do
+  último período fechado (saldo apurado); saldo inicial informado manualmente é recusado (400) —
+  o transporte é a regra, não uma opção da tela.
+- Movimentação exige `resourceAccountId`; lançamento sem local entra em contagem e **bloqueia o
+  fechamento** até ser classificado (`PATCH /transactions/:id/resource`).
+- Fechamento apresenta **saldo inicial, entradas, saídas, saldo esperado, saldo apurado e
+  divergência** por local, com motivo obrigatório; exige o saldo apurado de **todos** os locais.
+- Depois de fechado, o período **não aceita edição nem cancelamento** de lançamentos (409). Ajuste
+  entra como **novo lançamento** vinculado (`adjustmentOfId` + `idempotencyKey`), sempre com motivo,
+  e é registrado na trilha.
+- Todas as operações (abertura, fechamento, ajuste, conciliação, baixa) rodam em **uma transação** e
+  gravam `AuditEvent` pelo caso de uso.
+
+**Contas a receber / a pagar (`FinancialTitle`):**
+- Tipo `RECEITA` (a receber) ou `DESPESA` (a pagar), vencimento, valor e descrição; situação
+  derivada das baixas — `PENDENTE`, `PARCIAL`, `PAGO`, `CANCELADO` — com marca de vencido.
+- **Baixa parcial ou total** (`/settlements`): a soma das baixas nunca ultrapassa o valor da conta
+  (409), e a baixa gera **um lançamento financeiro** com o local do recurso, sem duplicar.
+- `idempotencyKey` obrigatória e única: repetir a mesma chave devolve a baixa existente; reutilizá-la
+  com dados diferentes devolve **409**. `transactionId` da baixa é único.
+- Cancelamento só sem baixas; não há exclusão física.
+- Baixa em período já fechado é recusada (409) — o ajuste é o caminho.
+
+**Conciliação:**
+- Confere, por período fechado ou em andamento e por local, o **saldo esperado pelo sistema** contra
+  o **saldo efetivo** informado, e **registra a divergência** (`FinancialReconciliation`, append-only).
+- **Não altera lançamentos**: o registro é histórico e serve para conferência/trilha.
+- Também grava `AuditEvent` com o motivo/referência da conferência.
 
 ---
 

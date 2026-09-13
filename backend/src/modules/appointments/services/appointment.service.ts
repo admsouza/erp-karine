@@ -56,11 +56,12 @@ export class AppointmentService {
       throw new ConflictException('Transição de status não permitida.');
     }
 
-    const updated = toAppointmentEntity(await this.appointments.update(id, { status }));
     if (status === 'REALIZADO' && this.events) {
-      await this.events.publish({ name: 'AppointmentCompleted', appointmentId: updated.id, clientId: updated.clientId, procedureId: updated.procedureId, procedureName: updated.procedureName, valueCents: updated.valueCents, completedAt: new Date() });
+      return toAppointmentEntity(await this.appointments.updateInTransaction(id,{status},async(updated,tx)=>{
+        await this.events!.publish({ name: 'AppointmentCompleted', appointmentId: updated.id, clientId: updated.clientId, procedureId: updated.procedureId, procedureName: updated.procedureName, valueCents: updated.valueCents, completedAt: new Date() },tx);
+      }));
     }
-    return updated;
+    return toAppointmentEntity(await this.appointments.update(id,{status}));
   }
 
   async update(id: string, dto: UpdateAppointmentDto) {

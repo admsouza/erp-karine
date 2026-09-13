@@ -4,6 +4,7 @@ import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, 
 import { FinancialStatus, FinancialTransactionType, PaymentMethod, TransactionOrigin } from '../../../generated/prisma/client.js';
 const trim = ({ value }: { value: unknown }) => typeof value === 'string' ? value.trim() : value;
 export class CreateManualTransactionDto {
+  @ApiPropertyOptional() @IsOptional() @IsUUID() resourceAccountId?: string;
   @ApiProperty() @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(160) description: string;
   @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(80) category?: string;
   @ApiProperty() @IsInt() @Min(1) @Max(100_000_000) amountCents: number;
