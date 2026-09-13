@@ -1,12 +1,16 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Module, type DynamicModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { DatabaseModule } from './common/database/database.module.js';
 import { NotFoundModule } from './common/exceptions/not-found.module.js';
 import { HealthModule } from './common/health/health.module.js';
+import { OriginGuard } from './common/guards/origin.guard.js';
 import { AppointmentsModule } from './modules/appointments/appointments.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { SessionAuthGuard } from './modules/auth/guards/session-auth.guard.js';
 import { ClientsModule } from './modules/clients/clients.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { ExamsModule } from './modules/exams/exams.module.js';
@@ -40,6 +44,8 @@ function staticFilesImports(): DynamicModule[] {
     DatabaseModule,
     ...staticFilesImports(),
     HealthModule,
+    // Sessão: o guard global abaixo protege todas as rotas de /api.
+    AuthModule,
     ClientsModule,
     ProceduresModule,
     AppointmentsModule,
@@ -51,6 +57,12 @@ function staticFilesImports(): DynamicModule[] {
     // Deve permanecer como ÚLTIMO import: o curinga de 404 da API só pode ser
     // avaliado depois de todas as rotas reais estarem registradas.
     NotFoundModule,
+  ],
+  providers: [
+    // Ordem importa: primeiro valida a sessão (a menos que @Public), depois a
+    // origem das requisições de escrita (defesa de CSRF).
+    { provide: APP_GUARD, useClass: SessionAuthGuard },
+    { provide: APP_GUARD, useClass: OriginGuard },
   ],
 })
 export class AppModule {}

@@ -33,6 +33,46 @@ Estado: `[ ]` planejado · `[~]` esqueleto criado · `[x]` implementado
 
 ---
 
+## auth
+
+**Responsabilidade:** autenticação e sessão. Não conhece regra de negócio da clínica.
+
+**Depende de:** nada (usa `common/database`).
+
+**Não depende de:** nenhum módulo de domínio.
+
+**Entidades:** `User` (e-mail único, hash bcrypt, perfil, ativo, `mustChangePassword`), `Session` (hash do token, expiração, revogação, IP/user-agent).
+
+**Serviços públicos:** `AuthService` (login, logout, troca de senha, `me`), `SessionService` (emitir/resolver/revogar sessão).
+
+**Eventos:** nenhum.
+
+**Endpoints:**
+
+| Método | Rota | Descrição | Sessão |
+| ------ | ---- | --------- | ------ |
+| POST | `/api/auth/login` | autentica e abre a sessão | pública |
+| POST | `/api/auth/logout` | encerra a sessão atual | exigida |
+| GET | `/api/auth/me` | usuário da sessão | exigida |
+| POST | `/api/auth/password` | troca a própria senha e derruba as outras sessões | exigida |
+
+**Regras principais:**
+
+- Toda rota de `/api` exige sessão, exceto `@Public()` (`GET /api/health` e o login). Rota inexistente também responde 401 sem sessão, para não vazar existência.
+- Senha nunca é devolvida pela API; hash com bcrypt (custo 10).
+- Token de sessão é aleatório de 32 bytes, guardado **hasheado** (sha256) no banco; o cookie é `httpOnly`, `SameSite=Lax`, `Secure` em produção.
+- Sessão vale 7 dias com renovação a cada uso; logout e troca de senha revogam no servidor.
+- 5 tentativas erradas bloqueiam o par (IP, e-mail) por 15 minutos (429).
+- Requisição de escrita com `Origin` de outro site recebe 403 (defesa de CSRF, via `OriginGuard`).
+- Senha mínima: 8 caracteres, com letras e números; não pode ser igual ao e-mail. Senha temporária obriga troca no primeiro acesso.
+- Documentação Swagger também exige sessão (validada por middleware, porque o Swagger não passa pelos guards do Nest).
+
+**Ao criar usuários em produção:** `node dist/scripts/create-user.js --email <email> --password <senha> --name <nome>` (idempotente por e-mail).
+
+**Criado na:** Fase 2.5 (antes da Fase 3), por segurança do dado de paciente.
+
+---
+
 ## clients
 
 **Responsabilidade:** cadastro e manutenção do cliente da clínica (dados pessoais e

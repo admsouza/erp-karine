@@ -10,7 +10,27 @@ export const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
+  // O cookie de sessão é httpOnly e da mesma origem: o navegador envia sozinho.
+  withCredentials: true,
 });
+
+/**
+ * Rotas em que 401 é resposta esperada e não significa "sessão expirou":
+ * o login (senha errada) e o /auth/me do boot da aplicação.
+ */
+const ROTAS_SEM_REDIRECIONAMENTO = ['/auth/login', '/auth/me'];
+
+http.interceptors.response.use(
+  (resposta) => resposta,
+  (erro: AxiosError) => {
+    const url = erro.config?.url ?? '';
+    const expirou = erro.response?.status === 401 && !ROTAS_SEM_REDIRECIONAMENTO.some((rota) => url.includes(rota));
+    if (expirou) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
+    return Promise.reject(erro);
+  },
+);
 
 /** Converte qualquer falha do axios na mensagem padronizada da API. */
 export function describeApiError(error: unknown): string {
