@@ -12,8 +12,8 @@
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fases 1 a 4 concluídas: fundação, clientes, autenticação, procedimentos e agenda.
-  Próxima: Fase 5 — módulo `subscriptions`.
+- **Estado atual:** Fases 1 a 5 concluídas: fundação, clientes, autenticação, procedimentos, agenda e assinaturas.
+  Próxima: Fase 6 — módulo `financial`.
 
 ---
 
@@ -143,6 +143,8 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 - Assinatura: cliente, plano, início, fim, valor contratado, forma de pagamento, status
   (`ATIVA`, `CANCELADA`, `ENCERRADA`, `INADIMPLENTE`).
 - Pagamentos da assinatura são registrados e podem gerar lançamento financeiro.
+- Implementado: planos com inativação/reativação; contrato com snapshot de nome, periodicidade, sessões e valor do plano; ciclo de status e pagamentos com filtros.
+- Uma assinatura ativa/inadimplente do mesmo plano por cliente; sem exclusão física.
 
 ### Financeiro
 - `FinancialTransaction`: cliente, descrição, categoria, valor, data, forma de pagamento,

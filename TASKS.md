@@ -75,13 +75,13 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend: `features/appointments/` (agenda do dia/semana, filtros, formulário)
 - [x] Testes do módulo, smoke HTTP e verificação por navegador real em produção
 
-## Fase 5 — Módulo `subscriptions` `[ ]`
+## Fase 5 — Módulo `subscriptions` `[x]`
 
-- [ ] Planos, assinaturas e pagamentos (repositórios + services por caso de uso)
-- [ ] Status da assinatura e periodicidade
-- [ ] `SubscriptionQueryService` (contrato para financial e dashboard)
-- [ ] Frontend: `features/subscriptions/`
-- [ ] Testes do módulo
+- [x] Planos, assinaturas e pagamentos (repositórios + services por caso de uso)
+- [x] Status, periodicidade, snapshot comercial e sem exclusão física
+- [x] `SubscriptionQueryService` (contrato para financial e dashboard)
+- [x] Frontend mobile-first com filtros, formulários e estados de tela
+- [x] Unitários/e2e, smoke HTTP e navegador real
 
 ## Fase 6 — Módulo `financial` `[ ]`
 

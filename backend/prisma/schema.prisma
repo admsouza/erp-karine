@@ -241,17 +241,21 @@ model SubscriptionPlan {
 }
 
 model ClientSubscription {
-  id                   String             @id @default(uuid())
-  clientId             String
-  planId               String
-  startDate            DateTime
-  endDate              DateTime?
-  contractedValueCents Int                @default(0)
-  paymentMethod        PaymentMethod      @default(PIX)
-  status               SubscriptionStatus @default(ATIVA)
-  notes                String?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  id                    String             @id @default(uuid())
+  clientId              String
+  planId                String
+  startDate             DateTime
+  endDate               DateTime?
+  contractedValueCents  Int                @default(0)
+  // Snapshot do plano contratado: alterações futuras no catálogo não mudam o histórico.
+  planName              String             @default("")
+  planPeriodicity       Periodicity        @default(MENSAL)
+  planSessionsPerPeriod Int?
+  paymentMethod         PaymentMethod      @default(PIX)
+  status                SubscriptionStatus @default(ATIVA)
+  notes                 String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 
   client Client           @relation(fields: [clientId], references: [id])
   plan   SubscriptionPlan @relation(fields: [planId], references: [id])
