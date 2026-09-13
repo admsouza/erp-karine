@@ -36,6 +36,10 @@ responsabilidades**. Cada módulo evolui com o mínimo de impacto nos demais.
 | Dados    | PostgreSQL + Prisma ORM 7 (driver adapter `pg`)                           |
 | Testes   | Vitest                                                                  |
 
+Segurança das dependências: `npm audit` retorna zero vulnerabilidades nos dois projetos.
+NestJS permanece na linha 12 e Prisma na linha 7; correções transitivas temporárias estão
+registradas em `ARCHITECTURE.md` (decisão 7.34).
+
 Tecnologia só é substituída com necessidade real e decisão registrada em `ARCHITECTURE.md`.
 
 ## 3. Como executar

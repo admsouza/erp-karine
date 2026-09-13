@@ -4,6 +4,24 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · infraestrutura · dependências sem vulnerabilidades conhecidas
+
+**Alteração**
+
+- Mantidos NestJS 12.0.1 e Prisma 7.10.0; rejeitado o downgrade major sugerido pelo `npm audit fix --force`.
+- Overrides transitivos mínimos: `multer` 2.3.0, `deepmerge-ts` 8.0.2 e `mysql2` 3.24.4.
+- Removido `@nestjs/mau`, ferramenta de desenvolvimento não utilizada que introduzia `tmp` e `undici` vulneráveis.
+- Imagem Docker fixa npm 12.0.2 no build e runtime para consumir consistentemente o lockfile npm 12.
+- Locks reinstalados do zero; `npm audit` completo e `npm audit --omit=dev` do backend, além do audit do frontend, retornam zero.
+- Gate aprovado: Prisma generate, typecheck, lint, 42 unitários, 45 e2e e builds backend/frontend; smoke HTTP local aprovado.
+
+**Impacto**
+
+- Imagem de runtime deixa de carregar as 9 vulnerabilidades altas reportadas, sem downgrade de framework/ORM e sem mudança de contrato de aplicação ou banco.
+- Overrides são temporários e devem ser removidos quando NestJS/Prisma passarem a fixar as versões corrigidas.
+
+---
+
 ## 2026-09-13 · `subscriptions` · Fase 5 implementada
 
 **Alteração**

@@ -130,6 +130,8 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Deploy publicado em https://erp-estetica.solucoes.cloud
 - [ ] Rotina de backup do banco (`pg_dump` agendado) + teste de restauração
 - [x] Autenticação por sessão e cookie httpOnly (Fase 2.5)
+- [x] Auditoria de dependências: backend e frontend com `npm audit` em zero; runtime sem
+      vulnerabilidades altas/críticas, mantendo NestJS 12 e Prisma 7
 - [ ] Seed inicial (procedimentos e planos reais da clínica)
 
 ## Dívidas técnicas registradas
