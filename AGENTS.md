@@ -16,7 +16,7 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1, 2 (clientes), 2.5 (autenticação), 3 (procedimentos), 4 (agenda) e 5 (assinaturas) implementadas.
+- **Estado:** Fases 1, 2 (clientes), 2.5 (autenticação), 3 (procedimentos), 4 (agenda) e 5 (assinaturas) publicadas e verificadas.
   **Próxima: Fase 6 — `financial`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas

@@ -21,7 +21,9 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 **Publicação**
 
-- Aguardando merge e deploy desta branch; preencher com PR, commit, migração e verificações de produção.
+- PR #9 revisado, correção de edição de planos aplicada (`7418eb5`) e merge em `main` (`83661f2`).
+- Deploy CapRover concluído; migração `20260913052927_subscription_snapshots` aplicada no boot e container saudável.
+- Produção verificada: health 200; API e Swagger 401 sem sessão; com sessão, planos, assinaturas e Swagger 200; SPA e deep link 200; navegador real exibiu abas, estado vazio e formulário completo.
 
 ---
 

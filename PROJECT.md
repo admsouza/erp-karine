@@ -100,8 +100,8 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
   inativação/reativação, CPF validado e único, Swagger completo, 6 testes unitários e
   e2e do fluxo inteiro. Frontend: lista com busca (debounce), filtro de situação, paginação,
   formulário em modal e página do cliente com as seções dos módulos futuros.
-- Estrutura modular dos 8 domínios criada (controllers, services, dto, repositories,
-  entities) — os outros 7 módulos ainda **sem regra de negócio**: cada um na sua fase.
+- Estrutura modular dos 8 domínios criada; `clients`, `procedures`, `appointments` e
+  `subscriptions` já têm backend, frontend e testes completos. Os demais entram em suas fases.
 
 ## 6. Regras de negócio
 

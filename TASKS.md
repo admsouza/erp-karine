@@ -129,7 +129,7 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] PostgreSQL no CapRover (`srv-captain--postgresql`, bancos `erp_estetica` e `erp_estetica_dev`)
 - [x] Deploy publicado em https://erp-estetica.solucoes.cloud
 - [ ] Rotina de backup do banco (`pg_dump` agendado) + teste de restauração
-- [ ] Autenticação de acesso (hoje o sistema é aberto) — decidir abordagem com o cliente
+- [x] Autenticação por sessão e cookie httpOnly (Fase 2.5)
 - [ ] Seed inicial (procedimentos e planos reais da clínica)
 
 ## Dívidas técnicas registradas
