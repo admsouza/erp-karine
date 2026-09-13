@@ -3,7 +3,7 @@
 > Este arquivo é o **ponto de entrada para qualquer agente que for continuar este projeto**.
 > Leia ele inteiro antes de escrever código. Depois leia `PROJECT.md`, `ARCHITECTURE.md`,
 > `MODULES.md`, `TASKS.md` e `CHANGELOG.md` (a raiz do repo é a fonte da verdade).
-> Última atualização: 2026-09-13, após a Fase 6 (financeiro).
+> Última atualização: 2026-09-13, após a Fase 7 (protocolos).
 
 ---
 
@@ -16,8 +16,8 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 6 publicadas e verificadas (incluindo autenticação, agenda, assinaturas e financeiro).
-  **Próxima: Fase 7 — `protocols`.**
+- **Estado:** Fases 1 a 7 implementadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos).
+  **Próxima: Fase 8 — `exams`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
 
@@ -156,6 +156,8 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   status, pagamentos e filtros. `SubscriptionQueryService` é o contrato público para financeiro/dashboard.
 - **Financeiro:** receitas/despesas, lançamentos manuais e automáticos por eventos, idempotência por
   vínculos únicos, cancelamento lógico, filtros, indicadores e relatórios históricos.
+- **Protocolos:** fichas clínicas com status, snapshots de cliente/procedimento, vínculo opcional a
+  atendimento realizado e sessões imutáveis acrescentadas em histórico cronológico; impressão pela UI.
 - **Procedimentos:** catálogo com **unidade de medida** (`ProcedureUnit`: SESSAO/APLICACAO/REGIAO/ML/
   UNIDADE/HORA/PACOTE) e **valor unitário com vigência** (`ProcedurePrice`):
   - `validFrom`/`validTo` (`DATE`, `validTo` nulo = vigência atual), histórico nunca reescrito;
@@ -177,7 +179,7 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
    em lote: nesse caso use `PATCH /api/procedures/:id` (unidade) e
    `PATCH /api/procedures/:id/prices/:priceId` (valor vigente) — nunca crie vigência nova para corrigir
    valor atual, e nunca edite vigência encerrada.
-2. **Fase 7 — `protocols`**, **8 — `exams`**,
+2. **Fase 8 — `exams`**,
    **9 — `dashboard`**, **10 — revisão final** (ver `TASKS.md`).
 4. **Dívidas conhecidas** (registradas em `TASKS.md`): autorização por perfil, reset de senha por
    e-mail, **backup `pg_dump` agendado + teste de restauração** e aviso de openssl no build.

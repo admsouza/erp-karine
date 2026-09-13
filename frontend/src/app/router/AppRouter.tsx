@@ -12,6 +12,7 @@ import { AgendaPage } from '../../features/appointments/pages/AgendaPage';
 import { SubscriptionsPage } from '../../features/subscriptions/pages/SubscriptionsPage';
 import { FinancialPage } from '../../features/financial/pages/FinancialPage';
 import { ProtocolsPage } from '../../features/protocols/pages/ProtocolsPage';
+import { ProtocolDetailPage } from '../../features/protocols/pages/ProtocolDetailPage';
 import { ExamsPage } from '../../features/exams/pages/ExamsPage';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -39,6 +40,7 @@ export function AppRouter() {
           <Route path="/assinaturas" element={<SubscriptionsPage />} />
           <Route path="/financeiro" element={<FinancialPage />} />
           <Route path="/protocolos" element={<ProtocolsPage />} />
+          <Route path="/protocolos/:id" element={<ProtocolDetailPage />} />
           <Route path="/exames" element={<ExamsPage />} />
           <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<Navigate to="/404" replace />} />

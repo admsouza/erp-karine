@@ -1,18 +1,1 @@
-import { Card, EmptyState } from '../../../shared/components/Card';
-import { PageHeader } from '../../../shared/components/PageHeader';
-
-/** Protocolos — implementado na Fase 7 (ver TASKS.md). */
-export function ProtocolsPage() {
-  return (
-    <>
-      <PageHeader title="Protocolos" description="Fichas de protocolo e evolução por sessão." />
-
-      <Card title="Fichas de protocolo">
-        <EmptyState
-          title="Nenhuma ficha carregada"
-          description="Fichas de protocolo, sessões e histórico cronológico entram na Fase 7."
-        />
-      </Card>
-    </>
-  );
-}
+import { useState } from 'react';import { Link } from 'react-router-dom';import { Badge } from '../../../shared/components/Badge';import { Button } from '../../../shared/components/Button';import { Card,EmptyState } from '../../../shared/components/Card';import { Input } from '../../../shared/components/Input';import { PageHeader } from '../../../shared/components/PageHeader';import { Select } from '../../../shared/components/Select';import { formatDate } from '../../../shared/utils/format';import { ProtocolFormModal } from '../components/ProtocolFormModal';import { useProtocols } from '../hooks/useProtocols';import { PROTOCOL_STATUSES,type ProtocolStatus } from '../types/protocol';const tone={EM_ANDAMENTO:'warning',CONCLUIDO:'success',CANCELADO:'neutral'} as const;export function ProtocolsPage(){const d=useProtocols(),[open,setOpen]=useState(false);return <div className="space-y-5"><PageHeader title="Protocolos" description="Fichas clínicas e evolução cronológica por sessão." actions={<Button onClick={()=>setOpen(true)}>Novo protocolo</Button>}/><Card title="Filtros"><div className="grid gap-3 sm:grid-cols-3"><Input label="Buscar" value={d.search} placeholder="Cliente, título ou procedimento" onChange={e=>d.changeSearch(e.target.value)}/><Select label="Evolução" value={d.status} onChange={e=>d.changeStatus(e.target.value as ProtocolStatus|'')} options={[{value:'',label:'Todas'},...Object.entries(PROTOCOL_STATUSES).map(([value,label])=>({value,label}))]}/><Select label="Situação" value={d.active} onChange={e=>d.changeActive(e.target.value)} options={[{value:'true',label:'Ativos'},{value:'false',label:'Inativos'}]}/></div></Card>{d.loading?<Card><p className="py-10 text-center text-sm text-slate-500">Carregando protocolos…</p></Card>:d.error?<Card><p className="py-10 text-center text-sm text-rose-600">{d.error}</p></Card>:!d.items.length?<Card><EmptyState title="Nenhum protocolo encontrado" description="Crie uma ficha ou ajuste os filtros."/></Card>:<div className="grid gap-3 lg:grid-cols-2">{d.items.map(x=><Link key={x.id} to={`/protocolos/${x.id}`} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300"><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-slate-900">{x.title}</h2><p className="mt-1 text-sm text-slate-600">{x.clientName}</p><p className="text-xs text-slate-500">{x.procedureName||'Sem procedimento principal'} · {formatDate(x.date)}</p></div><Badge tone={tone[x.status]}>{PROTOCOL_STATUSES[x.status]}</Badge></div></Link>)}</div>}<ProtocolFormModal open={open} onClose={()=>setOpen(false)} onSaved={d.reload}/></div>}

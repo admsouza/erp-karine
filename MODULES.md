@@ -18,7 +18,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | appointments | `[x]` | 4 |
 | subscriptions | `[x]` | 5 |
 | financial | `[x]` | 6 |
-| protocols | `[~]` | 7 |
+| protocols | `[x]` | 7 |
 | exams | `[~]` | 8 |
 | dashboard | `[~]` | 9 |
 
@@ -311,24 +311,28 @@ Não importa os módulos donos nem seus serviços/repositories.
 
 **Entidades:** `Protocol`, `ProtocolSession`.
 
-**Serviços públicos (previstos):**
+**Serviços públicos:**
 - `ProtocolService` — abrir ficha, editar dados administrativos, inativar.
 - `ProtocolSessionService` — registrar sessão (somente acréscimo).
 - `ProtocolQueryService` — fichas por cliente, histórico cronológico.
 
 **Eventos:** emite nenhum; consome nenhum.
 
-**Dependências permitidas:** `clients` (serviço público), `procedures` (opcional, ao
-referenciar o procedimento realizado).
+**Dependências permitidas:** `clients`, `procedures` e `appointments`, somente pelos respectivos serviços públicos de consulta.
 
-**Endpoints (previstos):** `/api/protocols`, `/api/protocols/:id/sessions`,
-`GET /api/clients/:id/protocols`.
+**Endpoints:** `POST/GET /api/protocols`, `GET/PATCH /api/protocols/:id`,
+`PATCH /api/protocols/:id/status`, `/inactivate`, `/reactivate`, `POST/GET /api/protocols/:id/sessions`
+e `GET /api/clients/:id/protocols`.
 
 **Regras principais:**
 - **Nunca sobrescrever histórico clínico.** Sessão é acrescentada; correção gera novo
   registro ou anotação, nunca substituição silenciosa.
 - Ficha inativa continua legível (soft delete via `active`/`deletedAt`).
 - Ficha é impressa/exportada como visualização; o módulo não emite diagnóstico.
+- Status: `EM_ANDAMENTO` → `CONCLUIDO` ou `CANCELADO`; estados finais não reabrem.
+- Cliente/procedimento são validados por contratos públicos e têm nome em snapshot. Atendimento opcional
+  precisa pertencer ao cliente, estar realizado e só pode aparecer uma vez no histórico.
+- Só ficha ativa em andamento recebe edição administrativa e novas sessões; não há edição/exclusão de sessão.
 
 ---
 
