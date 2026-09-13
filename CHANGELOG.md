@@ -63,6 +63,21 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   divergência, fechamento com saldo apurado e **transporte dos saldos para o mês seguinte** — sem erro
   de tela (`role=alert`) nem estouro horizontal.
 
+**Publicação (2026-09-13)**
+
+- PR **#16** aprovado e integrado em `main` (merge `486a3f4`); deploy no CapRover **concluído**
+  (`erp-estetica`, container `healthy`).
+- Verificação em produção: `/api/health` → `database: up`; SPA e deep link `/financeiro` → 200; as
+  rotas novas sem sessão devolvem **401** (registradas e protegidas, não 404); `POST /api/financial/cash-periods`
+  com mês inválido devolve **400** com a mensagem do DTO; as três migrações aparecem em
+  `_prisma_migrations` no banco `erp_estetica` e as tabelas foram criadas.
+- **Navegador real em produção** (sessão temporária de verificação, removida em seguida): as abas
+  **Caixa**, **Contas a receber**, **Contas a pagar** e **Conciliação** renderizam em 390px e 1440px,
+  sem erro de tela. Nenhum dado de produção foi criado além do usuário temporário — que foi **excluído**
+  junto com suas sessões ao fim da verificação.
+- **Pendência operacional:** cadastrar os locais do recurso da clínica (espécie, banco, maquineta) na
+  tela Caixa — sem local cadastrado o caixa não abre.
+
 ---
 
 ## 2026-09-13 · `auth` + `Sistema` · Seção Sistema e gestão de usuários
