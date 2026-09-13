@@ -2,6 +2,21 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+**Publicação (2026-09-13)**
+
+- PR **#28** aprovado e integrado em `main` (merge `5d5d6de`); deploy no CapRover **concluído**.
+- **Migração `20260913233805_products_catalog` aplicada no boot** e confirmada em `_prisma_migrations`:
+  tabela `Product` criada e as colunas `productId`/`productName` no lançamento existem no banco `erp_estetica`.
+- Produção: `/api/health` → `database: up`; bundle `index-BBOdGIcn.js`; `GET /api/products` e
+  `/api/products/options` respondem **200** (vazio, como esperado — a clínica ainda não cadastrou produto) e
+  `GET /api/maintenance/summary` passou a trazer `PRODUCT: 0` (com 2 locais, 3 clientes, 10 procedimentos,
+  9 identificações e 1 plano).
+- **Navegador real (390px, só leitura)**: a tela **Produtos** está no menu de operação com estado vazio e
+  botão de cadastro; no **Novo lançamento** convivem os seletores **Procedimento** e **Produto** (um item
+  por venda); sem erro de tela.
+- **Nada foi gravado** na verificação (0 produtos) e o usuário temporário de verificação foi excluído com
+  suas sessões.
+
 ## 2026-09-13 · `products` (novo) · Catálogo de produtos e venda com produto no lançamento (Parte B)
 
 **Alteração**
