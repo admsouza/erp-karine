@@ -1,0 +1,310 @@
+// Schema Prisma — ERP Clínica (erp-karine)
+// Convenções gerais:
+//  - Identificadores: UUID (String @id @default(uuid()))
+//  - Dinheiro: sempre em CENTAVOS (Int), nunca Float/Decimal (SQLite não tem tipo decimal exato)
+//  - Histórico: inativação/soft delete (isActive/isArchived), nunca delete físico de dado clínico
+//  - Enums: declarados aqui; o conector SQLite os materializa como texto com validação do Prisma Client
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum AppointmentStatus {
+  AGENDADO
+  CONFIRMADO
+  REALIZADO
+  CANCELADO
+  FALTOU
+}
+
+enum SubscriptionStatus {
+  ATIVA
+  CANCELADA
+  ENCERRADA
+  INADIMPLENTE
+}
+
+enum Periodicity {
+  MENSAL
+  BIMESTRAL
+  TRIMESTRAL
+  SEMESTRAL
+  ANUAL
+}
+
+enum PaymentMethod {
+  PIX
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  TRANSFERENCIA
+  OUTRO
+}
+
+enum TransactionOrigin {
+  ATENDIMENTO
+  ASSINATURA
+  MANUAL
+}
+
+enum ExamStatus {
+  RECOMENDADO
+  REALIZADO
+  CANCELADO
+}
+
+// ---------------------------------------------------------------------------
+// Clientes
+// ---------------------------------------------------------------------------
+
+model Client {
+  id            String    @id @default(uuid())
+  fullName      String
+  cpf           String?   @unique
+  birthDate     DateTime?
+  phone         String?
+  whatsapp      String?
+  email         String?
+  address       String?
+  notes         String?
+  isActive      Boolean   @default(true)
+  inactivatedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  appointments        Appointment[]
+  subscriptions       ClientSubscription[]
+  transactions        FinancialTransaction[]
+  protocols           Protocol[]
+  examRecommendations ExamRecommendation[]
+
+  @@index([fullName])
+  @@index([isActive])
+}
+
+// ---------------------------------------------------------------------------
+// Procedimentos
+// ---------------------------------------------------------------------------
+
+model Procedure {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  description       String?
+  defaultValueCents Int      @default(0)
+  durationMinutes   Int?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@index([isActive])
+}
+
+// ---------------------------------------------------------------------------
+// Agendamentos
+// ---------------------------------------------------------------------------
+
+model Appointment {
+  id            String            @id @default(uuid())
+  clientId      String
+  procedureId   String?
+  professional  String?
+  scheduledAt   DateTime
+  valueCents    Int               @default(0)
+  status        AppointmentStatus @default(AGENDADO)
+  notes         String?
+  // Snapshots: preservam o histórico mesmo se o cadastro de procedimento mudar
+  procedureName String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  client               Client                @relation(fields: [clientId], references: [id])
+  procedure            Procedure?            @relation(fields: [procedureId], references: [id])
+  financialTransaction FinancialTransaction?
+
+  @@index([clientId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Planos e assinaturas
+// ---------------------------------------------------------------------------
+
+model SubscriptionPlan {
+  id              String      @id @default(uuid())
+  name            String      @unique
+  description     String?
+  priceCents      Int         @default(0)
+  periodicity     Periodicity @default(MENSAL)
+  sessionsPerPeriod Int?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  subscriptions ClientSubscription[]
+
+  @@index([isActive])
+}
+
+model ClientSubscription {
+  id                   String             @id @default(uuid())
+  clientId             String
+  planId               String
+  startDate            DateTime
+  endDate              DateTime?
+  contractedValueCents Int                @default(0)
+  paymentMethod        PaymentMethod      @default(PIX)
+  status               SubscriptionStatus @default(ATIVA)
+  notes                String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id])
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  payments     SubscriptionPayment[]
+  transactions FinancialTransaction[]
+
+  @@index([clientId])
+  @@index([planId])
+  @@index([status])
+}
+
+model SubscriptionPayment {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  amountCents    Int           @default(0)
+  paidAt         DateTime
+  paymentMethod  PaymentMethod @default(PIX)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  subscription         ClientSubscription    @relation(fields: [subscriptionId], references: [id])
+  financialTransaction FinancialTransaction?
+
+  @@index([subscriptionId])
+  @@index([paidAt])
+}
+
+// ---------------------------------------------------------------------------
+// Financeiro
+// ---------------------------------------------------------------------------
+
+model FinancialTransaction {
+  id                    String            @id @default(uuid())
+  clientId              String?
+  description           String
+  category              String?
+  amountCents           Int               @default(0)
+  date                  DateTime
+  paymentMethod         PaymentMethod     @default(PIX)
+  origin                TransactionOrigin @default(MANUAL)
+  // Vínculos únicos por origem: impedem faturamento duplicado do mesmo atendimento/pagamento
+  appointmentId         String?           @unique
+  subscriptionId        String?
+  subscriptionPaymentId String?           @unique
+  notes                 String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  client              Client?              @relation(fields: [clientId], references: [id])
+  appointment         Appointment?         @relation(fields: [appointmentId], references: [id])
+  subscription        ClientSubscription?  @relation(fields: [subscriptionId], references: [id])
+  subscriptionPayment SubscriptionPayment? @relation(fields: [subscriptionPaymentId], references: [id])
+
+  @@index([clientId])
+  @@index([date])
+  @@index([origin])
+}
+
+// ---------------------------------------------------------------------------
+// Protocolos (fichas clínicas)
+// ---------------------------------------------------------------------------
+
+model Protocol {
+  id               String   @id @default(uuid())
+  clientId         String
+  date             DateTime
+  title            String
+  chiefComplaint   String?
+  evaluation       String?
+  objective        String?
+  proposedProtocol String?
+  productsUsed     String?
+  guidelines       String?
+  evolution        String?
+  notes            String?
+  isArchived       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  client   Client            @relation(fields: [clientId], references: [id])
+  sessions ProtocolSession[]
+
+  @@index([clientId])
+  @@index([date])
+}
+
+model ProtocolSession {
+  id                 String   @id @default(uuid())
+  protocolId         String
+  date               DateTime
+  procedurePerformed String
+  productsUsed       String?
+  parameters         String?
+  notes              String?
+  evolution          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  protocol Protocol @relation(fields: [protocolId], references: [id])
+
+  @@index([protocolId])
+  @@index([date])
+}
+
+// ---------------------------------------------------------------------------
+// Recomendações de exames
+// ---------------------------------------------------------------------------
+
+model ExamRecommendation {
+  id            String     @id @default(uuid())
+  clientId      String
+  date          DateTime
+  justification String?
+  notes         String?
+  status        ExamStatus @default(RECOMENDADO)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  client Client                  @relation(fields: [clientId], references: [id])
+  items  ExamRecommendationItem[]
+
+  @@index([clientId])
+  @@index([date])
+  @@index([status])
+}
+
+model ExamRecommendationItem {
+  id               String   @id @default(uuid())
+  recommendationId String
+  examName         String
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  recommendation ExamRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+
+  @@index([recommendationId])
+}

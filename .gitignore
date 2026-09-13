@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+build/
+*.tsbuildinfo
+
+# Cliente Prisma gerado (npm run db:generate)
+backend/src/generated/
+
+# Database (SQLite local)
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+*.db
+prisma/*.db
+prisma/*.db-journal
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# CapRover build artifacts
+deploy.tar.gz
+*.tar.gz
