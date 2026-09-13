@@ -137,6 +137,15 @@ describe('Caixa mensal (e2e)', () => {
         }),
       ]),
     );
+    // Consolidado do período aberto: soma dos três locais cadastrados na suíte.
+    expect(detail.body.totals).toEqual({
+      openingCents: 6000,
+      incomingCents: 0,
+      outgoingCents: 0,
+      expectedCents: 6000,
+      countedCents: null,
+      differenceCents: null,
+    });
   });
   it('movimenta, fecha, bloqueia cancelamento e transporta saldos por local', async () => {
     const movement = await request(app.getHttpServer())
@@ -185,6 +194,15 @@ describe('Caixa mensal (e2e)', () => {
       outgoingCents: 0,
       expectedCents: 1500,
       countedCents: 1400,
+      differenceCents: -100,
+    });
+    // Saldo total é um só: a composição é a soma dos locais (espécie + banco + maquineta).
+    expect(closed.body.totals).toEqual({
+      openingCents: 6000,
+      incomingCents: 500,
+      outgoingCents: 0,
+      expectedCents: 6500,
+      countedCents: 6400,
       differenceCents: -100,
     });
     const next = await request(app.getHttpServer())

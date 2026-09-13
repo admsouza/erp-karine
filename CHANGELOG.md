@@ -2,6 +2,39 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` · Saldo total do caixa = soma dos locais (consolidado)
+
+**Alteração**
+
+- O detalhe do caixa passou a devolver **`totals`**: inicial, entradas, saídas, **saldo esperado**,
+  **saldo apurado** e **divergência** consolidados — o saldo é **um só**, e a composição é a soma dos
+  locais do recurso (espécie + bancos + maquinetas). Vale para período aberto (esperado somado dos
+  movimentos) e fechado (apurado/divergência somados do que foi contado).
+- A tela **Caixa** ganhou o bloco **"Saldo total"** no topo, com a linha de composição
+  ("soma de N locais"), e o detalhe por local ficou abaixo do rótulo **"Composição por local do recurso"**.
+- **Apurado e divergência só consolidam quando todos os locais já foram contados**; antes disso o total
+  mostra o valor **esperado** com a ressalva de "ainda não conferido" — somar parcial daria um total que
+  parece conferido e não está.
+- **Sem migração e sem mudança de dados**: a consolidação é derivada, calculada na leitura.
+
+**Impacto**
+
+- Nada muda nos saldos gravados por local nem no transporte entre meses; o lançamento financeiro segue
+  igual. A novidade é o **total** (que antes só existia implicitamente, somado na cabeça de quem lia a tela).
+- Quem usar a API `GET /api/financial/cash-periods/:id` ganha o campo `totals` (aditivo; nenhum campo
+  existente mudou).
+- Um bug foi encontrado e corrigido pelo próprio teste: no período aberto a divergência ainda não existe,
+  e a soma produzia `NaN`. O consolidado trata ausência (`null`/`undefined`) como "não conferido".
+
+**Verificação**
+
+- Unitários: **82 passando** (2 novos — soma dos locais no período aberto e no fechado).
+- e2e: **86 passando**, com asserção do consolidado no período aberto e no fechado.
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: com 3 locais e movimentos, o bloco mostra **Saldo total R$ 35,00**
+  (0 + 50,00 − 15,00 = soma dos locais); após o fechamento com apurado informado por local, o total passa
+  a **apurado R$ 50,00 · esperado R$ 35,00 · divergência R$ 15,00**, sem erro de tela.
+
 ## 2026-09-13 · `financial` (tela) · Sugestões de banco pelo nome real
 
 **Alteração**

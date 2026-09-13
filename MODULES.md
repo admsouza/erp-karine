@@ -335,6 +335,10 @@ Não importa os módulos donos nem seus serviços/repositories.
 
 **Caixa (período mensal):**
 - Um `CashPeriod` por mês (`month` único, `YYYY-MM`): abertura duplicada devolve **409**.
+- **O saldo é um só:** o **total é a soma dos locais do recurso** (espécie + bancos + maquinetas). O
+  detalhe responde `totals` com inicial, entradas, saídas, esperado, apurado e divergência
+  consolidados, e mantém `balances` por local para a conferência física. Apurado e divergência só
+  consolidam quando **todos** os locais já foram contados — total parcial mentiria sobre estar conferido.
 - A abertura só é permitida para o **mês seguinte ao último período**, que precisa estar **fechado**.
 - O saldo inicial de cada local de recurso é **transportado automaticamente** do `countedCents` do
   último período fechado (saldo apurado); saldo inicial informado manualmente é recusado (400) —

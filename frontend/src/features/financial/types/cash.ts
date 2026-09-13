@@ -14,11 +14,21 @@ export interface CashBalance {
   countedCents: number | null;
   differenceCents: number | null;
 }
+export interface CashTotals {
+  openingCents: number;
+  incomingCents: number;
+  outgoingCents: number;
+  expectedCents: number;
+  countedCents: number | null;
+  differenceCents: number | null;
+}
 export interface CashPeriod {
   id: string;
   month: string;
   closedAt: string | null;
   balances: CashBalance[];
+  /** Saldo consolidado: a soma de todos os locais (o saldo é um só). */
+  totals: CashTotals;
   unassignedCount?: number;
 }
 export const RESOURCE_KINDS = {

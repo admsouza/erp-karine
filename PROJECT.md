@@ -170,7 +170,12 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 - Um caixa por mês (`CashPeriod`, `month` único). A abertura carrega **automaticamente** o saldo
   apurado de cada local do último período fechado — digitar saldo inicial é recusado.
 - Locais do recurso (`ResourceAccount`): **espécie** (`CASH`), **banco** (`BANK`) e
-  **maquineta** (`CARD`), com cadastro próprio (mais de uma conta/maquineta é permitido).
+  **conta de maquineta** (`CARD`), com cadastro próprio (mais de uma conta/maquineta é permitido).
+- **O saldo é um só**: o **saldo total do caixa é a soma de todos os locais**. O detalhe por local
+  existe para a conferência física (gaveta, cada banco, cada maquineta), e a tela mostra o total
+  consolidado (inicial, entradas, saídas, esperado, apurado e divergência) **acima** da composição
+  por local. Do mesmo jeito que se somam as fontes de receita: a composição é por origem, o saldo é
+  o consolidado.
 - Movimentação por local; lançamento sem local é contabilizado em aberto e **impede o fechamento**.
 - **Fechamento** mostra saldo inicial, entradas, saídas, **saldo esperado**, **saldo apurado** e
   **divergência** por local, com motivo.
