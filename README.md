@@ -32,7 +32,7 @@ Backend (porta 3001):
 cd backend
 cp .env.example .env          # na primeira vez
 npm install                   # roda `prisma generate` no postinstall
-npm run db:migrate            # cria/atualiza o SQLite de desenvolvimento
+npm run db:migrate            # cria/atualiza o PostgreSQL de desenvolvimento
 npm run start:dev             # http://localhost:3001/api  (docs em /api/docs)
 ```
 

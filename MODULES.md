@@ -12,7 +12,7 @@ Estado: `[ ]` planejado · `[~]` esqueleto criado · `[x]` implementado
 | health | `[x]` | 1 |
 | clients | `[~]` | 2 |
 | procedures | `[~]` | 3 |
-| appointments | `[~]` | 4 |
+| appointments | `[x]` | 4 |
 | subscriptions | `[~]` | 5 |
 | financial | `[~]` | 6 |
 | protocols | `[~]` | 7 |
@@ -199,7 +199,9 @@ procedimento, por qual valor e em que situação.
 
 **Entidades:** `Appointment` (dona). Referencia `Client` e `Procedure` por id.
 
-**Serviços públicos (previstos):**
+**Estado:** implementado (Fase 4) — backend, frontend e testes.
+
+**Serviços públicos:**
 - `AppointmentService` — agendar, reagendar, confirmar, realizar, cancelar, registrar falta.
 - `AppointmentQueryService` — agenda do dia, agenda da semana, por período, por cliente,
   por status; contagens para o dashboard.
@@ -213,12 +215,16 @@ appointments conheça a implementação financeira).
 
 **Não depende de:** `financial`.
 
-**Endpoints (previstos):** CRUD + `PATCH /api/appointments/:id/status`; consultas
-`/api/appointments/agenda/diaria`, `/agenda/semanal`, `/por-periodo`.
+**Endpoints (implementados):** `POST/GET /api/appointments`, `GET/PATCH /api/appointments/:id`,
+`PATCH /api/appointments/:id/status`, `/api/appointments/agenda/diaria` e `/agenda/semanal`.
+O `GET` geral filtra período (`from`/`to`), cliente e status.
 
 **Regras principais:**
 - Status: `AGENDADO`, `CONFIRMADO`, `REALIZADO`, `CANCELADO`, `FALTOU`.
-- `procedureName` e `valueCents` são *snapshot* no momento do agendamento.
+- `procedureName`, `procedureUnit`, `quantity`, `unitValueCents` e `valueCents` são *snapshot*.
+- Cliente e procedimento precisam existir e estar ativos; deve haver valor vigente na data.
+- `AGENDADO` → `CONFIRMADO`, `CANCELADO` ou `FALTOU`; `CONFIRMADO` → `REALIZADO`, `CANCELADO` ou `FALTOU`.
+- Estados finais não transitam nem podem ser editados.
 - Não existe exclusão: cancelar é mudança de status.
 
 ---

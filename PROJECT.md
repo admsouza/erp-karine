@@ -12,8 +12,8 @@
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fase 1 concluída (estrutura, arquitetura modular, banco PostgreSQL,
-  layout, documentação e deploy no CapRover). Próxima: Fase 2 — módulo `clients`.
+- **Estado atual:** Fases 1 a 4 concluídas: fundação, clientes, autenticação, procedimentos e agenda.
+  Próxima: Fase 5 — módulo `subscriptions`.
 
 ---
 
@@ -135,6 +135,8 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 - Cliente, procedimento, profissional, data, horário, valor, observação.
 - Status: `AGENDADO`, `CONFIRMADO`, `REALIZADO`, `CANCELADO`, `FALTOU`.
 - Agenda diária, semanal, por período, por cliente e por status. Não se exclui: cancela.
+- Snapshot de nome, unidade, quantidade, valor unitário e total preserva o valor contratado.
+- Estados finais são imutáveis; agendado/confirmado podem cancelar ou registrar falta.
 
 ### Assinaturas
 - Plano: nome, descrição, valor, periodicidade, quantidade de sessões, ativo.
@@ -203,7 +205,7 @@ Ordem de execução em `TASKS.md`: Fase 2 `clients` → 3 `procedures` → 4 `ap
 5 `subscriptions` → 6 `financial` → 7 `protocols` → 8 `exams` → 9 `dashboard` → 10 revisão
 arquitetural, UX, validações, testes e documentação final.
 
-Decisões ainda abertas: autenticação de acesso (não existe) e rotina de backup do banco
+Decisões ainda abertas: autorização por perfil/recuperação de senha e rotina de backup do banco
 (`pg_dump` agendado). Deploy já configurado: imagem única no CapRover servindo API + SPA,
 com migração aplicada no boot do container. Infra disponível e ainda não usada: Redis
 (cache/sessão) e MinIO (fotos e fichas digitalizadas).

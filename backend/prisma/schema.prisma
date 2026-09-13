@@ -194,18 +194,21 @@ model ProcedurePrice {
 // ---------------------------------------------------------------------------
 
 model Appointment {
-  id            String            @id @default(uuid())
-  clientId      String
-  procedureId   String?
-  professional  String?
-  scheduledAt   DateTime
-  valueCents    Int               @default(0)
-  status        AppointmentStatus @default(AGENDADO)
-  notes         String?
-  // Snapshot do nome do procedimento: preserva o histórico se o cadastro mudar
-  procedureName String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id             String            @id @default(uuid())
+  clientId       String
+  procedureId    String?
+  professional   String?
+  scheduledAt    DateTime
+  status         AppointmentStatus @default(AGENDADO)
+  notes          String?
+  // Snapshot comercial: nunca recalcular atendimento antigo pelo cadastro atual.
+  procedureName  String?
+  procedureUnit  ProcedureUnit?
+  quantity       Int               @default(1)
+  unitValueCents Int               @default(0)
+  valueCents     Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   client               Client                @relation(fields: [clientId], references: [id])
   procedure            Procedure?            @relation(fields: [procedureId], references: [id])

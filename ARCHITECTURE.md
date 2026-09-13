@@ -193,6 +193,8 @@ Convenções obrigatórias:
 | 7.27 | Consulta de valor por data (`valueOn`) e data "pura" no fuso da clínica | O financeiro precisa do valor **que valia no dia do atendimento**, não do valor de hoje. Como as colunas são `DATE`, o "hoje" é calculado em `America/Recife` (UTC-3), senão a virada do dia cairia às 21h e uma vigência de hoje começaria "amanhã". |
 | 7.28 | Unidade de medida como **enum fixo** (`ProcedureUnit`) no procedimento | O valor unitário só faz sentido com a base de cobrança ("por região", "por ml"). Enum em vez de texto livre porque o financeiro vai multiplicar quantidade × valor unitário: texto livre viraria "região", "Região" e "regioes" em relatórios. Ampliar a lista depois é uma migração pequena. |
 | 7.29 | Só a vigência **em aberto** é editável; encerrada nunca | A vigência encerrada representa o preço praticado em um período — reescrever isso destrói a conferência do que foi cobrado. Corrigir o valor de hoje se faz pela vigência atual; mudar o preço daqui pra frente, por vigência nova. |
+| 7.30 | Agendamento guarda snapshot comercial (`procedureName`, `procedureUnit`, `quantity`, `unitValueCents`, `valueCents`) | Alterações posteriores no catálogo não podem recalcular atendimento histórico; clientes e procedimentos são acessados só pelos serviços públicos dos donos. |
+| 7.31 | Ciclo do agendamento é uma máquina de estados explícita e estados finais são imutáveis | Impede realizar atendimento cancelado ou reabrir falta; cancelamento substitui exclusão física. |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 

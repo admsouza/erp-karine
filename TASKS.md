@@ -66,14 +66,14 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] **Ajuste pós-publicação (pedido do cliente):** valor unitário passa a ter **vigência** (`ProcedurePrice`), com série histórica; campo único removido; migração com backfill validada contra cópia dos dados reais de produção (6 procedimentos, R$ 5.100,00 preservados); tela de histórico em `/procedimentos/:id`
 - [x] **Segundo ajuste:** campo de **unidade de medida** (`ProcedureUnit`) e **correção da vigência atual** (`PATCH .../prices/:priceId`), para ajustar valor e unidade dos procedimentos já gravados; vigência encerrada continua imutável
 
-## Fase 4 — Módulo `appointments` `[ ]`
+## Fase 4 — Módulo `appointments` `[x]`
 
-- [ ] Entidade e repositório; dependências por serviço público (clients, procedures)
-- [ ] Transições de status (AGENDADO → CONFIRMADO → REALIZADO / CANCELADO / FALTOU)
-- [ ] Consultas: agenda diária, agenda semanal, por período, por cliente, por status
-- [ ] `AppointmentQueryService` (contrato para financial e dashboard)
-- [ ] Frontend: `features/appointments/` (agenda do dia/semana, filtros, formulário)
-- [ ] Testes do módulo
+- [x] Entidade e repositório; dependências por serviço público (clients, procedures)
+- [x] Transições de status (AGENDADO → CONFIRMADO → REALIZADO / CANCELADO / FALTOU)
+- [x] Consultas: agenda diária, agenda semanal, por período, por cliente, por status
+- [x] `AppointmentQueryService` (contrato para financial e dashboard)
+- [x] Frontend: `features/appointments/` (agenda do dia/semana, filtros, formulário)
+- [x] Testes do módulo, smoke HTTP e verificação por navegador real em produção
 
 ## Fase 5 — Módulo `subscriptions` `[ ]`
 
