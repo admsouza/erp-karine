@@ -44,6 +44,20 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   "Inativos") → o local inativo **não aparece** nas opções de destino do novo lançamento → **Reativar**
   (volta à lista ativa) — sem erro de tela.
 
+**Publicação (2026-09-13)**
+
+- PR **#21** aprovado e integrado em `main` (merge `e025c34`); deploy no CapRover **concluído**.
+- Migração `20260913204430_resource_account_deactivated_at` aplicada no boot do container e confirmada
+  em `_prisma_migrations`; a coluna `ResourceAccount.deactivatedAt` existe no banco `erp_estetica`.
+- Produção: `/api/health` → `database: up`; bundle `index-uEtLfz0K.js` contém a UI nova ("Editar local do
+  recurso", "Inativar", "Inativos", "Reativar", "Salvar alteração"); as três rotas novas responderam em
+  produção — `PATCH /api/financial/accounts/:id` (e `/inactivate`, `/reactivate`) com id inexistente
+  devolve **404** com a mensagem do serviço e `name` vazio devolve **400** do DTO.
+- **Nada foi gravado no banco de produção**: 0 locais, 0 caixas e 0 eventos de trilha de `ResourceAccount`
+  (a verificação da edição/inativação foi feita por e2e e em navegador no ambiente de desenvolvimento,
+  porque em produção isso exigiria cadastrar um local de teste). Usuário temporário de verificação
+  excluído com suas sessões.
+
 ## 2026-09-13 · `financial` (tela) · Identificação do local em lista única (bancos visíveis de imediato)
 
 **Alteração**
