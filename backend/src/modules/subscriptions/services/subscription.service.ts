@@ -1,0 +1,12 @@
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import type { SubscriptionStatus } from '../../../generated/prisma/client.js';
+import { ClientQueryService } from '../../clients/services/client-query.service.js';
+import type { CreateSubscriptionDto } from '../dto/subscription.dto.js';
+import { toSubscriptionEntity } from '../entities/subscription.entity.js';
+import { SubscriptionRepository } from '../repositories/subscription.repository.js';
+import { SubscriptionPlanQueryService } from './subscription-plan-query.service.js';
+@Injectable() export class SubscriptionService {
+ constructor(private readonly repository:SubscriptionRepository,private readonly clients:ClientQueryService,private readonly plans:SubscriptionPlanQueryService){}
+ async create(dto:CreateSubscriptionDto){const client=await this.clients.getById(dto.clientId);if(!client.active)throw new BadRequestException('Cliente inativo não pode contratar assinatura.');const plan=await this.plans.getById(dto.planId);if(!plan.active)throw new BadRequestException('Plano inativo não pode ser contratado.');if(await this.repository.findActiveByClientAndPlan(dto.clientId,dto.planId))throw new ConflictException('Cliente já possui assinatura ativa deste plano.');const start=new Date(dto.startDate);const end=dto.endDate?new Date(dto.endDate):null;if(end&&end<start)throw new BadRequestException('Data final deve ser posterior à data inicial.');return toSubscriptionEntity(await this.repository.create({clientId:dto.clientId,planId:dto.planId,startDate:start,endDate:end,contractedValueCents:plan.priceCents,planName:plan.name,planPeriodicity:plan.periodicity,planSessionsPerPeriod:plan.sessionsPerPeriod,paymentMethod:dto.paymentMethod,notes:dto.notes||null}));}
+ async changeStatus(id:string,status:SubscriptionStatus){const current=await this.repository.findById(id);if(!current)throw new NotFoundException('Assinatura não encontrada.');const allowed:Partial<Record<SubscriptionStatus,SubscriptionStatus[]>>={ATIVA:['CANCELADA','ENCERRADA','INADIMPLENTE'],INADIMPLENTE:['ATIVA','CANCELADA','ENCERRADA']};if(!allowed[current.status]?.includes(status))throw new ConflictException('Transição de status não permitida.');return toSubscriptionEntity(await this.repository.update(id,{status,endDate:['CANCELADA','ENCERRADA'].includes(status)&&!current.endDate?new Date():undefined}));}
+}

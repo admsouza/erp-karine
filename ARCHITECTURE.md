@@ -195,6 +195,8 @@ Convenções obrigatórias:
 | 7.29 | Só a vigência **em aberto** é editável; encerrada nunca | A vigência encerrada representa o preço praticado em um período — reescrever isso destrói a conferência do que foi cobrado. Corrigir o valor de hoje se faz pela vigência atual; mudar o preço daqui pra frente, por vigência nova. |
 | 7.30 | Agendamento guarda snapshot comercial (`procedureName`, `procedureUnit`, `quantity`, `unitValueCents`, `valueCents`) | Alterações posteriores no catálogo não podem recalcular atendimento histórico; clientes e procedimentos são acessados só pelos serviços públicos dos donos. |
 | 7.31 | Ciclo do agendamento é uma máquina de estados explícita e estados finais são imutáveis | Impede realizar atendimento cancelado ou reabrir falta; cancelamento substitui exclusão física. |
+| 7.32 | Assinatura guarda snapshot comercial do plano | Nome, periodicidade, sessões por período e valor contratado não mudam quando o plano é alterado; pagamentos guardam valor, data e forma praticados. |
+| 7.33 | Uma assinatura ativa ou inadimplente por cliente/plano | Evita contratos concorrentes duplicados; encerrada/cancelada preserva histórico e permite nova contratação. |
 
 ## 8. Decisões que NÃO devem ser alteradas sem justificativa registrada aqui
 

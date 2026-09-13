@@ -4,6 +4,27 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
 ---
 
+## 2026-09-13 · `subscriptions` · Fase 5 implementada
+
+**Alteração**
+
+- Planos, assinaturas e pagamentos com três repositories exclusivos e serviços separados por caso de uso.
+- Snapshot comercial de plano; dinheiro em centavos; ciclo sem exclusão física e bloqueio de contrato ativo duplicado.
+- `SubscriptionQueryService` público para financial/dashboard; dependência de clientes só via `ClientQueryService`.
+- Frontend mobile-first com abas, filtros, formulários, ações de status, pagamentos e estados loading/erro/vazio.
+- Gate aprovado: 42 unitários, 45 e2e, typecheck, lint e builds; smoke HTTP e CDP real aprovados.
+
+**Impacto**
+
+- Migração aditiva `subscription_snapshots`; contratos históricos não serão recalculados quando um plano mudar.
+- Fase 6 pode consultar assinaturas pelo serviço público, sem acessar tabelas internas.
+
+**Publicação**
+
+- Aguardando merge e deploy desta branch; preencher com PR, commit, migração e verificações de produção.
+
+---
+
 ## 2026-09-13 · `appointments` · Fase 4 implementada
 
 **Alteração**

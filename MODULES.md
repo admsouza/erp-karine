@@ -13,7 +13,7 @@ Estado: `[ ]` planejado · `[~]` esqueleto criado · `[x]` implementado
 | clients | `[~]` | 2 |
 | procedures | `[~]` | 3 |
 | appointments | `[x]` | 4 |
-| subscriptions | `[~]` | 5 |
+| subscriptions | `[x]` | 5 |
 | financial | `[~]` | 6 |
 | protocols | `[~]` | 7 |
 | exams | `[~]` | 8 |
@@ -236,7 +236,9 @@ pagamentos dessas assinaturas.
 
 **Entidades:** `SubscriptionPlan`, `ClientSubscription`, `SubscriptionPayment`.
 
-**Serviços públicos (previstos):**
+**Estado:** implementado (Fase 5) — backend, frontend e testes.
+
+**Serviços públicos:**
 - `SubscriptionPlanService` / `SubscriptionPlanQueryService`.
 - `SubscriptionService` — contratar, cancelar, encerrar, marcar inadimplente.
 - `SubscriptionPaymentService` — registrar pagamento.
@@ -250,8 +252,7 @@ pagamentos dessas assinaturas.
 
 **Não depende de:** `financial`.
 
-**Endpoints (previstos):** `/api/subscription-plans`, `/api/subscriptions`,
-`/api/subscriptions/:id/payments`.
+**Endpoints (implementados):** `POST/GET /api/subscription-plans`, `GET/PATCH /api/subscription-plans/:id`, `PATCH /api/subscription-plans/:id/inactivate|reactivate`; `POST/GET /api/subscriptions`, `GET /api/subscriptions/:id`, `PATCH /api/subscriptions/:id/status` e `POST/GET /api/subscriptions/:id/payments`.
 
 **Regras principais:**
 - Status da assinatura: `ATIVA`, `CANCELADA`, `ENCERRADA`, `INADIMPLENTE`.
@@ -259,6 +260,9 @@ pagamentos dessas assinaturas.
 - Plano não é excluído: `active = false`.
 - Pagamento de assinatura é dado do módulo subscriptions; o lançamento em financeiro é
   responsabilidade do módulo financial (reagindo ao evento/contrato).
+- A assinatura preserva snapshot de nome, periodicidade, sessões por período e valor contratado.
+- Não há exclusão física; status finais não reabrem. Um cliente não pode ter duas assinaturas ativas/inadimplentes do mesmo plano.
+- `SubscriptionQueryService` é exportado para financial/dashboard; o módulo só depende de `ClientQueryService`.
 
 ---
 

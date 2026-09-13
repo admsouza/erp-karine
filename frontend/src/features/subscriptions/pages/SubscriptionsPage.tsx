@@ -1,18 +1,34 @@
+import { useState } from 'react';
+import { describeApiError } from '../../../shared/api/http-client';
+import { Badge } from '../../../shared/components/Badge';
+import { Button } from '../../../shared/components/Button';
 import { Card, EmptyState } from '../../../shared/components/Card';
+import { Input } from '../../../shared/components/Input';
 import { PageHeader } from '../../../shared/components/PageHeader';
+import { Select } from '../../../shared/components/Select';
+import { formatCentsToBRL, formatDate } from '../../../shared/utils/format';
+import { changeSubscriptionStatus, listPayments, setPlanActive } from '../api/subscriptions-api';
+import { PaymentModal, PlanModal, SubscriptionModal } from '../components/SubscriptionModals';
+import { useSubscriptions } from '../hooks/useSubscriptions';
+import { PAYMENT_METHODS, PERIODICITIES, SUBSCRIPTION_STATUSES, type Payment, type Subscription, type SubscriptionStatus } from '../types/subscription';
 
-/** Assinaturas — implementado na Fase 5 (ver TASKS.md). */
+const tones = { ATIVA: 'success', INADIMPLENTE: 'danger', CANCELADA: 'neutral', ENCERRADA: 'neutral' } as const;
 export function SubscriptionsPage() {
-  return (
-    <>
-      <PageHeader title="Assinaturas" description="Planos da clínica e assinaturas dos clientes." />
-
-      <Card title="Assinaturas">
-        <EmptyState
-          title="Nenhuma assinatura carregada"
-          description="Cadastro de planos, assinaturas e pagamentos entra na Fase 5."
-        />
-      </Card>
-    </>
-  );
+  const data = useSubscriptions(); const [tab, setTab] = useState<'subscriptions'|'plans'>('subscriptions');
+  const [planModal, setPlanModal] = useState(false); const [subscriptionModal, setSubscriptionModal] = useState(false);
+  const [paymentFor, setPaymentFor] = useState<Subscription|null>(null); const [payments, setPayments] = useState<Record<string,Payment[]>>({});
+  const [busy, setBusy] = useState<string|null>(null); const [actionError, setActionError] = useState<string|null>(null); const [planSearch, setPlanSearch] = useState('');
+  async function action(id:string, work:()=>Promise<unknown>){setBusy(id);setActionError(null);try{await work();data.reload();}catch(e){setActionError(describeApiError(e));}finally{setBusy(null);}}
+  async function togglePayments(item:Subscription){if(payments[item.id]){setPayments(x=>{const n={...x};delete n[item.id];return n;});return;}setBusy(item.id);try{const loaded=await listPayments(item.id);setPayments(x=>({...x,[item.id]:loaded}));}catch(e){setActionError(describeApiError(e));}finally{setBusy(null);}}
+  const visiblePlans=data.plans.filter(x=>x.name.toLocaleLowerCase('pt-BR').includes(planSearch.toLocaleLowerCase('pt-BR')));
+  return <div className="space-y-5">
+    <PageHeader title="Assinaturas" description="Planos, contratos de clientes e pagamentos em um só lugar." actions={<Button onClick={()=>tab==='plans'?setPlanModal(true):setSubscriptionModal(true)}>{tab==='plans'?'Novo plano':'Nova assinatura'}</Button>}/>
+    <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1"><button onClick={()=>setTab('subscriptions')} className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${tab==='subscriptions'?'bg-white text-brand-700 shadow-sm':'text-slate-500'}`}>Assinaturas</button><button onClick={()=>setTab('plans')} className={`rounded-lg px-4 py-2.5 text-sm font-semibold ${tab==='plans'?'bg-white text-brand-700 shadow-sm':'text-slate-500'}`}>Planos</button></div>
+    {actionError&&<p className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700">{actionError}</p>}
+    {tab==='subscriptions'?<>
+      <Card><Select label="Filtrar por status" value={data.status} onChange={e=>data.changeStatus(e.target.value as SubscriptionStatus|'')} options={[{value:'',label:'Todos os status'},...Object.entries(SUBSCRIPTION_STATUSES).map(([value,label])=>({value,label}))]}/></Card>
+      {data.loading?<Card><p className="py-8 text-center text-sm text-slate-500">Carregando assinaturas…</p></Card>:data.error?<Card><p className="py-8 text-center text-sm text-rose-600">{data.error}</p></Card>:data.items.length===0?<Card><EmptyState title="Nenhuma assinatura" description="Contrate um plano para um cliente para começar."/></Card>:<div className="space-y-3">{data.items.map(item=><article key={item.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-slate-900">{item.clientName}</h2><Badge tone={tones[item.status]}>{SUBSCRIPTION_STATUSES[item.status]}</Badge></div><p className="mt-1 text-sm text-slate-600">{item.planName} · {PERIODICITIES[item.planPeriodicity]}</p><p className="text-xs text-slate-400">Desde {formatDate(item.startDate)} · {formatCentsToBRL(item.contractedValueCents)} · {PAYMENT_METHODS[item.paymentMethod]}</p></div><div className="flex flex-wrap gap-2"><Button size="sm" variant="secondary" disabled={busy===item.id} onClick={()=>togglePayments(item)}>Pagamentos</Button>{(item.status==='ATIVA'||item.status==='INADIMPLENTE')&&<Button size="sm" disabled={busy===item.id} onClick={()=>setPaymentFor(item)}>Registrar pagamento</Button>}</div></div><div className="mt-3 flex flex-wrap gap-2">{item.status==='ATIVA'&&<><Button size="sm" variant="secondary" onClick={()=>action(item.id,()=>changeSubscriptionStatus(item.id,'INADIMPLENTE'))}>Marcar inadimplente</Button><Button size="sm" variant="secondary" onClick={()=>action(item.id,()=>changeSubscriptionStatus(item.id,'ENCERRADA'))}>Encerrar</Button><Button size="sm" variant="danger" onClick={()=>action(item.id,()=>changeSubscriptionStatus(item.id,'CANCELADA'))}>Cancelar</Button></>}{item.status==='INADIMPLENTE'&&<Button size="sm" onClick={()=>action(item.id,()=>changeSubscriptionStatus(item.id,'ATIVA'))}>Regularizar</Button>}</div>{payments[item.id]&&<div className="mt-4 border-t border-slate-100 pt-3"><h3 className="text-sm font-semibold text-slate-700">Histórico de pagamentos</h3>{payments[item.id].length===0?<p className="mt-2 text-sm text-slate-500">Nenhum pagamento registrado.</p>:<ul className="mt-2 divide-y divide-slate-100">{payments[item.id].map(p=><li key={p.id} className="flex justify-between py-2 text-sm"><span>{formatDate(p.paidAt)} · {PAYMENT_METHODS[p.paymentMethod]}</span><strong>{formatCentsToBRL(p.amountCents)}</strong></li>)}</ul>}</div>}</article>)}</div>}
+    </>:<><Card><Input label="Buscar plano" placeholder="Nome do plano" value={planSearch} onChange={e=>setPlanSearch(e.target.value)}/></Card>{data.loading?<Card><p className="py-8 text-center text-sm text-slate-500">Carregando planos…</p></Card>:data.error?<Card><p className="py-8 text-center text-sm text-rose-600">{data.error}</p></Card>:visiblePlans.length===0?<Card><EmptyState title="Nenhum plano" description="Cadastre o primeiro plano da clínica."/></Card>:<div className="grid gap-3 md:grid-cols-2">{visiblePlans.map(plan=><Card key={plan.id}><div className="flex items-start justify-between gap-3"><div><h2 className="font-semibold text-slate-900">{plan.name}</h2><p className="mt-1 text-xl font-bold text-brand-700">{formatCentsToBRL(plan.priceCents)}</p><p className="text-sm text-slate-500">{PERIODICITIES[plan.periodicity]}{plan.sessionsPerPeriod?` · ${plan.sessionsPerPeriod} sessões`:''}</p></div><Badge tone={plan.active?'success':'neutral'}>{plan.active?'Ativo':'Inativo'}</Badge></div>{plan.description&&<p className="mt-3 text-sm text-slate-600">{plan.description}</p>}<Button className="mt-4" size="sm" variant={plan.active?'danger':'secondary'} disabled={busy===plan.id} onClick={()=>action(plan.id,()=>setPlanActive(plan.id,!plan.active))}>{plan.active?'Inativar':'Reativar'}</Button></Card>)}</div>}</>}
+    <PlanModal open={planModal} onClose={()=>setPlanModal(false)} onSaved={data.reload}/><SubscriptionModal open={subscriptionModal} onClose={()=>setSubscriptionModal(false)} onSaved={data.reload}/><PaymentModal subscription={paymentFor} onClose={()=>setPaymentFor(null)} onSaved={()=>{data.reload();if(paymentFor)setPayments(x=>{const n={...x};delete n[paymentFor.id];return n;});}}/>
+  </div>;
 }
