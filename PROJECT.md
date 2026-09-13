@@ -113,6 +113,10 @@ Catálogo implementado (Fase 3): cadastro, edição, busca, filtro por situaçã
 duração aproximada; inativação sem excluir. É o catálogo referenciado por agenda,
 protocolos e financeiro.
 
+**Unidade de medida:** cada procedimento declara a base de cobrança (Sessão,
+Aplicação, Região, ml, Unidade, Hora, Pacote/Combo) e o valor é exibido como
+"R$ 900,00 / região". A unidade pode ser trocada a qualquer momento no cadastro.
+
 **Valor unitário com vigência:** o preço não é um campo fixo — cada valor vale a
 partir de uma data (`validFrom`) e o valor anterior é encerrado automaticamente
 quando entra um novo. A tela do procedimento mostra o valor vigente e o histórico

@@ -20,6 +20,7 @@ import { UpdateProcedureDto } from '../dto/update-procedure.dto.js';
 import { ListProceduresQueryDto } from '../dto/list-procedures-query.dto.js';
 import { ProcedureResponseDto } from '../dto/procedure-response.dto.js';
 import { CreateProcedurePriceDto } from '../dto/create-procedure-price.dto.js';
+import { UpdateProcedurePriceDto } from '../dto/update-procedure-price.dto.js';
 import { ProcedurePriceResponseDto } from '../dto/procedure-price-response.dto.js';
 import type { PaginatedResult } from '../../../common/pagination/paginated.js';
 
@@ -97,6 +98,16 @@ export class ProceduresController {
     @Body() dto: CreateProcedurePriceDto,
   ): Promise<ProcedurePriceResponseDto> {
     return ProcedurePriceResponseDto.from(await this.prices.add(id, dto));
+  }
+
+  @Patch(':id/prices/:priceId')
+  @ApiOperation({ summary: 'Corrige o valor/observação da vigência atual (encerrada não é editável)' })
+  async updatePrice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('priceId', ParseUUIDPipe) priceId: string,
+    @Body() dto: UpdateProcedurePriceDto,
+  ): Promise<ProcedurePriceResponseDto> {
+    return ProcedurePriceResponseDto.from(await this.prices.update(id, priceId, dto));
   }
 
   @Delete(':id/prices/:priceId')

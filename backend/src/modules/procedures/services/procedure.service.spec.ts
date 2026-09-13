@@ -11,6 +11,7 @@ function procedimento(overrides: Partial<ProcedureEntity> = {}): ProcedureEntity
     id: 'proc-1',
     name: 'Limpeza de pele',
     description: 'Higienização e extração',
+    unit: 'SESSAO',
     currentValueCents: 18000,
     durationMinutes: 60,
     active: true,

@@ -22,6 +22,7 @@ export class ProcedureService {
       name: dto.name,
       description: dto.description ?? null,
       durationMinutes: dto.durationMinutes ?? null,
+      ...(dto.unit ? { unit: dto.unit } : {}),
     });
 
     // O valor informado no cadastro vira a primeira vigência da série.
@@ -41,6 +42,7 @@ export class ProcedureService {
       data.name = dto.name;
     }
     if (dto.description !== undefined) data.description = dto.description ?? null;
+    if (dto.unit !== undefined) data.unit = dto.unit;
     if (dto.durationMinutes !== undefined) data.durationMinutes = dto.durationMinutes ?? null;
 
     await this.repository.update(id, data);

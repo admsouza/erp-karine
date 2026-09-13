@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { ProcedureUnit } from '../../../generated/prisma/client.js';
 import { Transform } from 'class-transformer';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -19,6 +20,15 @@ export class CreateProcedureDto {
   @MaxLength(1000)
   @Transform(trim)
   description?: string;
+
+  @ApiPropertyOptional({
+    enum: ProcedureUnit,
+    example: ProcedureUnit.SESSAO,
+    description: 'Unidade de medida pela qual o valor unitário é cobrado. Padrão: SESSAO.',
+  })
+  @IsOptional()
+  @IsEnum(ProcedureUnit, { message: 'Unidade de medida inválida.' })
+  unit?: ProcedureUnit;
 
   @ApiPropertyOptional({ example: 60, description: 'Duração aproximada em minutos' })
   @IsOptional()

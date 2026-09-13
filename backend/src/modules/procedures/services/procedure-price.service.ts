@@ -1,8 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ProcedurePriceRepository } from '../repositories/procedure-price.repository.js';
 import { ProcedureQueryService } from './procedure-query.service.js';
 import { toProcedurePriceEntity, type ProcedurePriceEntity } from '../entities/procedure-price.entity.js';
 import type { CreateProcedurePriceDto } from '../dto/create-procedure-price.dto.js';
+import type { UpdateProcedurePriceDto } from '../dto/update-procedure-price.dto.js';
 import { dataDeHoje, formatarData, parseData } from '../utils/date.js';
 
 /**
@@ -52,6 +53,41 @@ export class ProcedurePriceService {
     });
 
     return toProcedurePriceEntity(criada);
+  }
+
+  /**
+   * Corrige a vigência **atual** (valor e/ou observação).
+   *
+   * Só a vigência em aberto é editável: valor de vigência encerrada já foi o
+   * preço praticado em algum período e não pode ser reescrito — para mudar o
+   * preço daqui pra frente, cria-se uma vigência nova.
+   */
+  async update(
+    procedureId: string,
+    priceId: string,
+    dto: UpdateProcedurePriceDto,
+  ): Promise<ProcedurePriceEntity> {
+    await this.procedures.getById(procedureId);
+
+    const vigencia = await this.repository.findById(priceId);
+    if (!vigencia || vigencia.procedureId !== procedureId) {
+      throw new NotFoundException('Vigência não encontrada para este procedimento.');
+    }
+    if (vigencia.validTo !== null) {
+      throw new ConflictException(
+        `Esta vigência já foi encerrada em ${formatarData(vigencia.validTo)} e não pode ser alterada. Crie uma vigência nova para o preço daqui pra frente.`,
+      );
+    }
+    if (dto.valueCents === undefined && dto.note === undefined) {
+      throw new BadRequestException('Informe o novo valor ou a observação.');
+    }
+
+    const atualizada = await this.repository.update(priceId, {
+      ...(dto.valueCents !== undefined ? { valueCents: dto.valueCents } : {}),
+      ...(dto.note !== undefined ? { note: dto.note || null } : {}),
+    });
+
+    return toProcedurePriceEntity(atualizada);
   }
 
   /** Remove uma vigência (correção). Se era a atual, a anterior volta a valer. */

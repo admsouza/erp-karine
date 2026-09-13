@@ -18,6 +18,9 @@ export class ProcedureResponseDto {
   })
   currentValueCents: number | null;
 
+  @ApiProperty({ enum: ['SESSAO', 'APLICACAO', 'REGIAO', 'ML', 'UNIDADE', 'HORA', 'PACOTE'] })
+  unit: string;
+
   @ApiPropertyOptional({ nullable: true, description: 'Duração aproximada em minutos' })
   durationMinutes: number | null;
 

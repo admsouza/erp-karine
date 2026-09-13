@@ -2,6 +2,7 @@ import { http } from '../../../shared/api/http-client';
 import type { PaginatedResult } from '../../../shared/types/api';
 import type {
   NewPriceInput,
+  UpdatePriceInput,
   Procedure,
   ProcedureInput,
   ProcedureListParams,
@@ -49,6 +50,16 @@ export async function addProcedurePrice(id: string, input: NewPriceInput): Promi
 }
 
 /** Remove uma vigência (correção); a anterior volta a valer. */
+/** Corrige o valor/observação da vigência atual. */
+export async function updateProcedurePrice(
+  id: string,
+  priceId: string,
+  input: UpdatePriceInput,
+): Promise<ProcedurePrice> {
+  const { data } = await http.patch<ProcedurePrice>(`${BASE}/${id}/prices/${priceId}`, input);
+  return data;
+}
+
 export async function removeProcedurePrice(id: string, priceId: string): Promise<void> {
   await http.delete(`${BASE}/${id}/prices/${priceId}`);
 }

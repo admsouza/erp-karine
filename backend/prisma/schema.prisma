@@ -139,15 +139,27 @@ model Client {
 // Módulo: procedures
 // ---------------------------------------------------------------------------
 
+/// Unidade de medida do procedimento: é por ela que o valor unitário é cobrado.
+enum ProcedureUnit {
+  SESSAO
+  APLICACAO
+  REGIAO
+  ML
+  UNIDADE
+  HORA
+  PACOTE
+}
+
 model Procedure {
-  id              String    @id @default(uuid())
-  name            String    @unique
+  id              String        @id @default(uuid())
+  name            String        @unique
   description     String?
+  unit            ProcedureUnit @default(SESSAO)
   durationMinutes Int?
-  active          Boolean   @default(true)
+  active          Boolean       @default(true)
   deletedAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   appointments Appointment[]
   prices       ProcedurePrice[]

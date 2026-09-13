@@ -59,6 +59,10 @@ export class ProcedurePriceRepository {
     return this.prisma.procedurePrice.count({ where: { procedureId } });
   }
 
+  update(id: string, data: Prisma.ProcedurePriceUpdateInput): Promise<ProcedurePrice> {
+    return this.prisma.procedurePrice.update({ where: { id }, data });
+  }
+
   delete(id: string): Promise<ProcedurePrice> {
     return this.prisma.procedurePrice.delete({ where: { id } });
   }

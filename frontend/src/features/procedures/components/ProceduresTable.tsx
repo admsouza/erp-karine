@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Badge } from '../../../shared/components/Badge';
 import { Button } from '../../../shared/components/Button';
-import { formatCentsToBRL } from '../../../shared/utils/format';
+import { formatUnitValue } from '../types/procedure';
 import type { Procedure } from '../types/procedure';
 
 interface ProceduresTableProps {
@@ -53,7 +53,7 @@ export function ProceduresTable({ procedures, busyId, onEdit, onToggleActive }: 
                 {procedure.currentValueCents === null ? (
                   <span className="text-slate-400">sem valor</span>
                 ) : (
-                  formatCentsToBRL(procedure.currentValueCents)
+                  formatUnitValue(procedure.currentValueCents, procedure.unit)
                 )}
               </td>
               <td className="px-4 py-3">
