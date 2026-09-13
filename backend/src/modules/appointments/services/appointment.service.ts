@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type { AppointmentStatus } from '../../../generated/prisma/client.js';
+import { DomainEventBus } from '../../../common/events/domain-event-bus.js';
 import { ClientQueryService } from '../../clients/services/client-query.service.js';
 import { ProcedureQueryService } from '../../procedures/services/procedure-query.service.js';
 import type { CreateAppointmentDto } from '../dto/create-appointment.dto.js';
@@ -13,6 +14,7 @@ export class AppointmentService {
     private readonly appointments: AppointmentRepository,
     private readonly clients: ClientQueryService,
     private readonly procedures: ProcedureQueryService,
+    private readonly events?: DomainEventBus,
   ) {}
 
   async create(dto: CreateAppointmentDto) {
@@ -54,7 +56,11 @@ export class AppointmentService {
       throw new ConflictException('Transição de status não permitida.');
     }
 
-    return toAppointmentEntity(await this.appointments.update(id, { status }));
+    const updated = toAppointmentEntity(await this.appointments.update(id, { status }));
+    if (status === 'REALIZADO' && this.events) {
+      await this.events.publish({ name: 'AppointmentCompleted', appointmentId: updated.id, clientId: updated.clientId, procedureId: updated.procedureId, procedureName: updated.procedureName, valueCents: updated.valueCents, completedAt: new Date() });
+    }
+    return updated;
   }
 
   async update(id: string, dto: UpdateAppointmentDto) {

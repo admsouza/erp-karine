@@ -12,8 +12,8 @@
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fases 1 a 5 concluídas: fundação, clientes, autenticação, procedimentos, agenda e assinaturas.
-  Próxima: Fase 6 — módulo `financial`.
+- **Estado atual:** Fases 1 a 6 concluídas: fundação, clientes, autenticação, procedimentos, agenda, assinaturas e financeiro.
+  Próxima: Fase 7 — módulo `protocols`.
 
 ---
 
@@ -156,6 +156,9 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 - Formas: `PIX`, `DINHEIRO`, `CARTAO_CREDITO`, `CARTAO_DEBITO`, `TRANSFERENCIA`, `OUTRO`.
 - **Impede lançamento duplicado** para o mesmo atendimento/pagamento (vínculos únicos).
 - Regra financeira vive no backend, nunca no frontend.
+- Implementado: receitas e despesas manuais, geração automática idempotente por eventos,
+  cancelamento lógico, filtros, indicadores e relatórios por snapshots históricos.
+- `FinancialQueryService` é o contrato público para o dashboard.
 
 ### Protocolos
 - Cliente pode ter vários protocolos; cada um com várias sessões.

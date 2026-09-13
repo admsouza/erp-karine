@@ -17,7 +17,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | procedures | `[~]` | 3 |
 | appointments | `[x]` | 4 |
 | subscriptions | `[x]` | 5 |
-| financial | `[~]` | 6 |
+| financial | `[x]` | 6 |
 | protocols | `[~]` | 7 |
 | exams | `[~]` | 8 |
 | dashboard | `[~]` | 9 |
@@ -277,8 +277,8 @@ está ativa: pergunta ao módulo dono.
 
 **Entidades:** `FinancialTransaction`.
 
-**Serviços públicos (previstos):**
-- `FinancialTransactionService` — lançar receita, cancelar lançamento, garantir idempotência.
+**Serviços públicos:**
+- `FinancialTransactionService` — lançar receita/despesa, cancelar lançamento, garantir idempotência.
 - `FinancialQueryService` — faturamento do mês, por período, por procedimento, por
   assinatura, quantidade de recebimentos.
 
@@ -286,11 +286,11 @@ está ativa: pergunta ao módulo dono.
 
 **Eventos consumidos:** `AppointmentCompleted`, `SubscriptionPaymentReceived`.
 
-**Dependências permitidas:** `appointments` e `subscriptions` **apenas via serviço público
-de consulta** (`AppointmentQueryService`, `SubscriptionQueryService`).
+**Dependências permitidas:** contratos públicos de evento de `appointments` e `subscriptions`.
+Não importa os módulos donos nem seus serviços/repositories.
 
-**Endpoints (previstos):** `POST/GET /api/financial/transactions`,
-`GET /api/financial/summary`.
+**Endpoints:** `POST/GET /api/financial/transactions`, `PATCH /api/financial/transactions/:id/cancel`,
+`GET /api/financial/summary` e `GET /api/financial/reports`.
 
 **Regras principais:**
 - `origin`: `APPOINTMENT`, `SUBSCRIPTION`, `MANUAL`.
@@ -299,6 +299,9 @@ de consulta** (`AppointmentQueryService`, `SubscriptionQueryService`).
   recusa lançamento repetido para a mesma origem/referência.
 - `externalReference` guarda referência externa livre (conciliação).
 - Valores em centavos. Regra financeira nunca no frontend.
+- Tipos `RECEITA`/`DESPESA`; status `PENDENTE`/`PAGO`/`CANCELADO`; cancelamento preserva o registro.
+- Eventos dos módulos donos são consumidos por barramento genérico, sem acesso a repositories/tabelas internas.
+- Snapshots `procedureName`/`subscriptionName` preservam relatórios históricos.
 
 ---
 

@@ -61,6 +61,17 @@ enum TransactionOrigin {
   MANUAL
 }
 
+enum FinancialTransactionType {
+  RECEITA
+  DESPESA
+}
+
+enum FinancialStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
 enum ExamStatus {
   RECOMENDADO
   REALIZADO
@@ -298,14 +309,20 @@ model FinancialTransaction {
   date                  DateTime
   paymentMethod         PaymentMethod     @default(PIX)
   origin                TransactionOrigin @default(MANUAL)
+  type                  FinancialTransactionType @default(RECEITA)
+  status                FinancialStatus @default(PAGO)
   // Vínculos tipados por origem (únicos): impedem faturar o mesmo atendimento
   // ou o mesmo pagamento de assinatura duas vezes.
   appointmentId         String?           @unique
   subscriptionId        String?
   subscriptionPaymentId String?           @unique
+  procedureId           String?
+  procedureName         String?
+  subscriptionName      String?
   // Referência externa livre (ex.: id do sistema de origem, conciliação manual)
   externalReference     String?
   notes                 String?
+  cancelledAt           DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
@@ -317,6 +334,8 @@ model FinancialTransaction {
   @@index([clientId])
   @@index([date])
   @@index([origin])
+  @@index([type])
+  @@index([status])
 }
 
 // ---------------------------------------------------------------------------

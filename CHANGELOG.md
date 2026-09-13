@@ -2,6 +2,24 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` · Fase 6 implementada
+
+**Alteração**
+
+- Receitas/despesas manuais e automáticas, status e cancelamento lógico.
+- Eventos públicos de atendimento concluído e pagamento recebido, sem acesso cruzado a repositories/tabelas.
+- Idempotência por vínculos únicos, indicadores, filtros e relatórios por snapshots históricos.
+- Frontend mobile-first completo com filtros, formulário e estados loading/erro/vazio.
+
+**Impacto**
+
+- Migração aditiva `financial_module`; nenhum lançamento existente é duplicado ou removido.
+- `FinancialQueryService` passa a ser o contrato público para o dashboard.
+
+**Verificação**
+
+- TDD com RED observado; 48 unitários e 51 e2e, typecheck, lint, builds e `npm audit` zero.
+
 ---
 
 ## 2026-09-13 · infraestrutura · dependências sem vulnerabilidades conhecidas
