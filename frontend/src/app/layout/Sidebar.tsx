@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { CloseIcon } from '../../shared/components/Icons';
-import { NAV_ITEMS } from './navigation';
+import { navItemsPara } from './navigation';
 
 interface SidebarProps {
   open: boolean;
@@ -9,6 +10,8 @@ interface SidebarProps {
 
 /** Menu lateral administrativo. Em telas pequenas funciona como gaveta. */
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const { user } = useAuth();
+  const itens = navItemsPara(user?.role);
   return (
     <>
       {open ? (
@@ -41,7 +44,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          {NAV_ITEMS.map(({ label, to, icon: ItemIcon }) => (
+          {itens.map(({ label, to, icon: ItemIcon }) => (
             <NavLink
               key={to}
               to={to}

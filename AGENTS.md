@@ -16,7 +16,7 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 7 publicadas e verificadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos) **+ módulo transversal `audit`** (trilha de alterações e edição de pagamento com motivo).
+- **Estado:** Fases 1 a 7 publicadas e verificadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos) **+ módulo transversal `audit` com tela `/auditoria` (ADMIN)**.
   **Próxima: Fase 8 — `exams`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
@@ -166,6 +166,13 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   campos alterados** (antes → depois). Sem endpoint de edição/exclusão; sem histórico retroativo. A
   adoção é incremental e feita **pelo caso de uso** do módulo dono — **não** existe interceptor genérico
   (perderia o significado de negócio e poderia capturar dado sensível).
+  **Tela própria:** `/auditoria` no menu (**9º item, só para ADMIN**), com filtros por usuário, módulo,
+  tipo de registro, ação, período (dia inteiro em `America/Recife`) e busca livre, além de paginação.
+  Endpoints `GET /api/audit/events` e `GET /api/audit/filters`, ambos com `@Roles('ADMIN')`.
+- **Autorização por perfil:** `RolesGuard` global + decorator `@Roles(...)` (`common/decorators/roles.decorator.ts`).
+  Ele é **opt-in por rota**: sem `@Roles`, qualquer sessão válida passa (é o que mantém os módulos
+  publicados funcionando); com `@Roles`, falha fechado (403). No frontend, `navItemsPara(role)` filtra o
+  menu e `RequireRole` protege a rota. Só a auditoria usa isso hoje — ampliar é decisão de negócio.
 - **Financeiro:** receitas/despesas, lançamentos manuais e automáticos por eventos, idempotência por
   vínculos únicos, cancelamento lógico, filtros, indicadores e relatórios históricos.
 - **Protocolos:** fichas clínicas com status, snapshots de cliente/procedimento, vínculo opcional a

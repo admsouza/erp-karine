@@ -51,7 +51,7 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend: `/login`, `/trocar-senha` (obrigatória com senha temporária) e menu do usuário na topbar
 - [x] Testes: 8 unitários do `AuthService`, 9 e2e do módulo de auth (16 e2e no total na época)
 - [x] Usuário de produção criado (`mkarineon@gmail.com`, perfil ADMIN) e bloqueio conferido em produção: `/api/clients` e `/api/docs-json` respondem 401 sem sessão
-- [ ] Autorização por perfil (ADMIN/USER) e recuperação de senha pelo sistema — não implementados
+- [ ] Autorização por perfil completa (ADMIN/USER) — **parcialmente resolvida**: `RolesGuard` + `@Roles` existem e a tela de auditoria é ADMIN; falta decidir quais outros módulos são restritos. Recuperação de senha pelo sistema segue não implementada.
 
 ---
 
@@ -110,6 +110,8 @@ organizada para o sistema inteiro (módulo transversal, não remendo na tela).
 - [x] Sincronização do lançamento financeiro vinculado na mesma transação, sem duplicar (`subscriptionPaymentId` continua único)
 - [x] UI mobile-first: cada pagamento abre o detalhe com **Editar pagamento** e a linha do tempo (autor, data/hora de Recife, motivo e antes → depois com rótulos de negócio)
 - [x] Testes: unitários do `AuditTrailService` e da edição + e2e do fluxo completo (motivo, mudanças, financeiro sincronizado, 401/400)
+- [x] **Tela "Auditoria" no menu** (`/auditoria`), **exclusiva do ADMIN**: filtros por usuário, módulo, tipo de registro, ação, período e busca livre, com paginação e o antes → depois legível
+- [x] **Autorização por perfil** finalmente implementada para esta área: `RolesGuard` global + `@Roles('ADMIN')`, falhando fechado (403); o item de menu é escondido para outros perfis
 - [ ] Adoção gradual da trilha nos demais módulos (clientes, procedimentos, agenda, protocolos) — o padrão está definido; a adoção é incremental e não reescreve histórico passado
 
 ## Fase 8 — Módulo `exams` `[ ]`

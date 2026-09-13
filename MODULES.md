@@ -358,8 +358,7 @@ com que valores antes/depois. É infraestrutura de domínio: não conhece regra 
 
 **Dependências permitidas:** nenhuma de outros módulos. **Quem depende dele:** `subscriptions` (primeiro consumidor).
 
-**Endpoints (implementados):** nenhum endpoint próprio; a timeline é exposta pelo módulo dono
-(`GET /api/subscriptions/:id/payments/:paymentId/timeline`), sempre autenticado.
+**Endpoints (implementados):** `GET /api/audit/events` (filtros: `actorUserId`, `module`, `entityType`, `action`, `from`, `to`, `search`, `page`, `pageSize`) e `GET /api/audit/filters` (opções dos filtros). **Ambos exigem perfil `ADMIN`** — a autorização usa `RolesGuard` + `@Roles('ADMIN')`, aplicados globalmente depois do guard de sessão. A timeline por registro continua exposta pelo módulo dono (`GET /api/subscriptions/:id/payments/:paymentId/timeline`).
 
 **Regras principais:**
 - `changes` guarda **apenas os campos efetivamente alterados**, com valor anterior e novo.
