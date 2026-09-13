@@ -21,18 +21,18 @@ antes de começar a próxima.
 - [x] Documentação persistente: `PROJECT.md`, `ARCHITECTURE.md`, `MODULES.md`, `TASKS.md`, `CHANGELOG.md`
 - [x] Verificação: lint, typecheck, testes e2e (3/3) e build nos dois projetos
 
-## Fase 2 — Módulo `clients` `[ ]`  ← **próxima tarefa**
+## Fase 2 — Módulo `clients` `[x]`
 
-- [ ] `ClientRepository` (único lugar com Prisma no módulo)
-- [ ] DTOs: `CreateClientDto`, `UpdateClientDto`, `ListClientsQueryDto` (busca + paginação)
-- [ ] `ClientService`: criar, editar, inativar, reativar (CPF único; sem delete físico)
-- [ ] `ClientQueryService`: buscar por id, listar/pesquisar, existência (contrato público)
-- [ ] `ClientsController` + Swagger de todos os endpoints
-- [ ] Unit tests do service (regras: CPF duplicado, inativação, reativação)
-- [ ] e2e do módulo: criar → listar → editar → inativar → filtrar inativos
-- [ ] Frontend `features/clients/`: `types`, `api`, lista com busca, formulário e página do cliente
-- [ ] Página do cliente com seções de outros módulos (vazias até suas fases)
-- [ ] Atualizar `MODULES.md` (contrato final), `TASKS.md`, `PROJECT.md` e `CHANGELOG.md`
+- [x] `ClientRepository` (único lugar com Prisma no módulo)
+- [x] DTOs: `CreateClientDto`, `UpdateClientDto`, `ListClientsQueryDto` (busca + paginação)
+- [x] `ClientService`: criar, editar, inativar, reativar (CPF único; sem delete físico)
+- [x] `ClientQueryService`: buscar por id, listar/pesquisar, existência (contrato público)
+- [x] `ClientsController` + Swagger de todos os endpoints
+- [x] Unit tests do service (regras: CPF duplicado, inativação, reativação)
+- [x] e2e do módulo: criar → listar → editar → inativar → filtrar inativos
+- [x] Frontend `features/clients/`: `types`, `api`, lista com busca, formulário e página do cliente
+- [x] Página do cliente com seções de outros módulos (vazias até suas fases)
+- [x] Atualizar `MODULES.md` (contrato final), `TASKS.md`, `PROJECT.md` e `CHANGELOG.md`
 
 ## Fase 3 — Módulo `procedures` `[ ]`
 

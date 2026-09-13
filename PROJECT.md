@@ -80,8 +80,12 @@ Scripts: backend `start:dev`, `build`, `test:e2e`, `db:migrate`, `db:generate`, 
 - Layout administrativo (menu lateral com os 7 módulos, barra superior com status da
   conexão, responsivo com gaveta no mobile) e páginas base de cada módulo com estado vazio.
 - Build do frontend servido pelo backend quando `frontend/dist` existe.
+- **Módulo `clients` implementado (Fase 2)**: CRUD sem exclusão física, busca paginada,
+  inativação/reativação, CPF validado e único, Swagger completo, 6 testes unitários e
+  e2e do fluxo inteiro. Frontend: lista com busca (debounce), filtro de situação, paginação,
+  formulário em modal e página do cliente com as seções dos módulos futuros.
 - Estrutura modular dos 8 domínios criada (controllers, services, dto, repositories,
-  entities) — **sem regra de negócio ainda**: cada módulo é implementado na sua fase.
+  entities) — os outros 7 módulos ainda **sem regra de negócio**: cada um na sua fase.
 
 ## 6. Regras de negócio
 
