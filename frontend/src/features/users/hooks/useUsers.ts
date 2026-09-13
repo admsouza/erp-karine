@@ -7,16 +7,25 @@ const TAMANHO_PAGINA = 20;
 
 const FILTROS_VAZIOS: UsersFiltros = { search: '', role: '', active: '' };
 
-/** Lista de usuários com filtros e paginação. */
+/**
+ * Lista de usuários com filtros e paginação.
+ *
+ * `loading` é **derivado** do token de busca (`carregadoToken !== token`) e cada ação
+ * — aplicar, limpar, trocar de página ou recarregar — sobe o token, que está nas
+ * dependências do efeito. Antes, o `loading` era ligado à mão e dependia do efeito
+ * re-disparar: "Limpar filtros" com os filtros já vazios não mudava estado nenhum,
+ * o efeito não rodava e a tela ficava presa em "Carregando…" (decisão 7.51).
+ */
 export function useUsers() {
   const [filtros, setFiltros] = useState<UsersFiltros>(FILTROS_VAZIOS);
   const [aplicados, setAplicados] = useState<UsersFiltros>(FILTROS_VAZIOS);
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState(0);
+  const [carregadoToken, setCarregadoToken] = useState(-1);
+  const loading = carregadoToken !== token;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -34,37 +43,39 @@ export function useUsers() {
         setError(describeApiError(falha));
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) setCarregadoToken(token);
       });
     return () => controller.abort();
   }, [aplicados, page, token]);
+
+  const buscar = useCallback(() => setToken((atual) => atual + 1), []);
 
   const alterar = useCallback((campo: keyof UsersFiltros, valor: string) => {
     setFiltros((atual) => ({ ...atual, [campo]: valor }));
   }, []);
 
   const aplicar = useCallback(() => {
-    setLoading(true);
     setPage(1);
-    setAplicados(filtros);
-  }, [filtros]);
+    setAplicados({ ...filtros });
+    buscar();
+  }, [filtros, buscar]);
 
   const limpar = useCallback(() => {
-    setLoading(true);
     setFiltros(FILTROS_VAZIOS);
-    setAplicados(FILTROS_VAZIOS);
+    setAplicados({ ...FILTROS_VAZIOS });
     setPage(1);
-  }, []);
+    buscar();
+  }, [buscar]);
 
-  const irPara = useCallback((proxima: number) => {
-    setLoading(true);
-    setPage(proxima);
-  }, []);
+  const irPara = useCallback(
+    (proxima: number) => {
+      setPage(proxima);
+      buscar();
+    },
+    [buscar],
+  );
 
-  const recarregar = useCallback(() => {
-    setLoading(true);
-    setToken((atual) => atual + 1);
-  }, []);
+  const recarregar = useCallback(() => buscar(), [buscar]);
 
   return {
     filtros, alterar, aplicar, limpar,

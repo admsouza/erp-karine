@@ -13,10 +13,12 @@ import {
   createResourceAccount,
   getCashPeriod,
   inactivateResourceAccount,
+  listAccountSuggestions,
   listCashPeriods,
   listResourceAccounts,
   openCashPeriod,
   reactivateResourceAccount,
+  type AccountSuggestion,
 } from '../api/cash-api';
 import { EditResourceAccountModal } from './EditResourceAccountModal';
 import {
@@ -33,6 +35,8 @@ export function CashPanel() {
   const [counted, setCounted] = useState<Record<string, string>>({});
   const [reason, setReason] = useState('');
   const [editando, setEditando] = useState<ResourceAccount | null>(null);
+  /** Catálogo das identificações sugeridas, mantido na Manutenção de cadastros. */
+  const [catalogo, setCatalogo] = useState<AccountSuggestion[]>([]);
   const [idLocal, setIdLocal] = useState('');
   const [customName, setCustomName] = useState('');
   const [kind, setKind] = useState('CASH');
@@ -40,7 +44,7 @@ export function CashPanel() {
   const selectedName =
     idLocal === OUTRO_LOCAL
       ? customName.trim()
-      : (identificacaoEscolhida(idLocal)?.name ?? '');
+      : (identificacaoEscolhida(catalogo, idLocal)?.name ?? '');
   const [month, setMonth] = useState(
     new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' })
       .format(new Date())
@@ -51,22 +55,25 @@ export function CashPanel() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   async function reload() {
-    const [a, p] = await Promise.all([
+    const [a, p, c] = await Promise.all([
       listResourceAccounts(),
       listCashPeriods(),
+      listAccountSuggestions(),
     ]);
     setAccounts(a);
     setPeriods(p);
+    setCatalogo(c);
     if (p[0]) setDetail(await getCashPeriod(p[0].id));
   }
   useEffect(() => {
     let live = true;
-    Promise.all([listResourceAccounts(), listCashPeriods()])
-      .then(async ([a, p]) => {
+    Promise.all([listResourceAccounts(), listCashPeriods(), listAccountSuggestions()])
+      .then(async ([a, p, c]) => {
         const d = p[0] ? await getCashPeriod(p[0].id) : null;
         if (live) {
           setAccounts(a);
           setPeriods(p);
+          setCatalogo(c);
           setDetail(d);
         }
       })
@@ -98,6 +105,7 @@ export function CashPanel() {
         <EditResourceAccountModal
           key={editando.id}
           account={editando}
+          catalogo={catalogo}
           onClose={() => setEditando(null)}
           onSaved={() => {
             setEditando(null);
@@ -133,13 +141,13 @@ export function CashPanel() {
                 label="Identificação do local"
                 value={idLocal}
                 onChange={(e) => {
-                  const escolhido = identificacaoEscolhida(e.target.value);
+                  const escolhido = identificacaoEscolhida(catalogo, e.target.value);
                   setIdLocal(e.target.value);
                   if (escolhido) setKind(escolhido.kind);
                 }}
                 options={[
                   { value: '', label: 'Selecione…' },
-                  ...identificacoesOpcoes(),
+                  ...identificacoesOpcoes(catalogo),
                 ]}
               />
               {/* O tipo só é perguntado quando o nome é próprio: na lista sugerida ele já vem junto. */}

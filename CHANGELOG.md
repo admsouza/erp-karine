@@ -2,6 +2,74 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `financial` + `maintenance` · Lista de identificações vira cadastro (mantida na tela)
+
+**Alteração**
+
+- A **lista de identificações de local** (Dinheiro (gaveta), Banco do Brasil, Caixa Econômica, Itaú,
+  Nubank, Santander, Mercado Pago, Maquineta principal, Maquineta 2) deixou de ser fixa no frontend e
+  virou **cadastro de verdade**: tabela `ResourceAccountSuggestion`, semeada pela migração
+  `20260913222515_resource_account_suggestions` (`ON CONFLICT DO NOTHING`, idempotente).
+- **Manutenção de cadastros** ganhou o tipo **"Identificações sugeridas"** com a **única criação
+  permitida no hub** — botão *Nova identificação* (nome + tipo) — além de editar, inativar e reativar.
+  É o que permite incluir o banco novo sem depender de publicação. Para os demais tipos a rota de
+  criação devolve **400** (cadastro de domínio se cria na tela do dono).
+- Endpoints do dono (`financial`): `GET/POST /api/financial/account-suggestions`,
+  `PATCH /api/financial/account-suggestions/:id` e `.../inactivate|reactivate`; o seletor do
+  Financeiro → Caixa passou a **consumir o catálogo pela API** (com "Outro (digitar)" mantido).
+- **Unicidade sem diferenciar maiúsculas nem acentos**: `Itau` e `Itaú` são o mesmo banco
+  (`entities/resource-name.ts`). O índice único do Postgres é sensível a acento, então sem isso a lista
+  de escolha poderia ter dois "Itaú" e a conferência de caixa perderia o sentido. Vale também para o
+  nome do próprio local do recurso.
+- Trilha de auditoria pelo **módulo dono** (`financial`, entidade `ResourceAccountSuggestion`), sem
+  duplicar no hub — mesma regra já usada no local do recurso.
+
+**Impacto**
+
+- Para a clínica: incluir, renomear ou tirar de linha uma identificação passa a ser **operação de tela**
+  (Sistema → Manutenção de cadastros), sem mexer em código.
+- **A lista continua sendo sugestão**: "Outro (digitar)" segue disponível no cadastro do local, então
+  nada fica travado por causa dela.
+- Nada muda nos locais já cadastrados nem nos saldos; a migração só cria a tabela e semeia as nove
+  identificações que já apareciam na tela (nenhum dado existente é alterado).
+- **Uma migração aditiva** entra no deploy (roda no boot do container).
+
+**Verificação**
+
+- **104 unitários** (22 arquivos) e **94 e2e** (12 arquivos), incluindo: criação pelo hub delegando ao
+  dono sem duplicar trilha, recusa de nome repetido, recusa de criação para os demais tipos, catálogo
+  listado com `values` corretos, inativação tirando da lista do seletor (`?active=true`) e reativação.
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: o catálogo lista os 9 semeados; *Nova identificação* criou "Banco Inter";
+  renomear para "Banco Inter S.A." funcionou; inativar tirou da lista de ativos e reativar devolveu; e o
+  seletor do **Financeiro → Caixa** passou a mostrar "Banco Inter S.A. · Banco" — provando que o
+  catálogo alimentou a outra tela.
+
+## 2026-09-13 · `users` (tela) · Correção do "Carregando…" preso em Usuários
+
+**Alteração**
+
+- O hook `useUsers` (tela **Sistema → Usuários**) passou a usar o mesmo padrão da decisão 7.51: o
+  `loading` é **derivado** de um token de busca (`carregadoToken !== token`) e **cada ação** — aplicar
+  filtros, limpar, trocar de página ou recarregar — sobe o token, que está nas dependências do efeito.
+
+**Impacto**
+
+- Corrige um travamento real: **"Limpar" com os filtros já vazios** (e "Filtrar" repetido com o mesmo
+  valor) ligava o `loading` sem que o efeito re-disparasse — a tela ficava presa em "Carregando usuários…"
+  e só saía com recarga da página. O mesmo defeito já havia sido corrigido na tela de Manutenção de
+  cadastros; agora não sobra nenhum hook com o padrão antigo (`grep` por `setLoading(true)` nos hooks).
+- Sem mudança de contrato, sem backend e sem migração: nenhum comportamento de filtro/lista mudou além
+  de parar de travar.
+
+**Verificação**
+
+- `tsc`, `oxlint` e `build` aprovados.
+- **Navegador real (390px)**: lista carrega; **"Limpar" com filtros vazios** mantém a lista na tela (sem
+  "Carregando…"); **"Filtrar" repetido** com o mesmo valor também; busca por nome filtra de verdade
+  (`Usuario Teste 2` aparece e `Usuario Teste 1` não) e limpar depois da busca volta a listar todos; sem
+  erro de tela.
+
 **Publicação (2026-09-13)**
 
 - PR **#24** aprovado e integrado em `main` (merge `2a60dd1`); deploy no CapRover **concluído**, sem migração.

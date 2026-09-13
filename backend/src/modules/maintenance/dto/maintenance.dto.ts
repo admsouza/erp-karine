@@ -16,6 +16,7 @@ import { PaginationQueryDto } from '../../../common/pagination/pagination-query.
 /** Cadastros que o hub de manutenção cobre (cada um continua no seu módulo dono). */
 export const MAINTENANCE_TYPES = [
   'RESOURCE_ACCOUNT',
+  'RESOURCE_ACCOUNT_SUGGESTION',
   'CLIENT',
   'PROCEDURE',
   'SUBSCRIPTION_PLAN',

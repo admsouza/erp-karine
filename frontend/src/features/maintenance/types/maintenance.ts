@@ -1,5 +1,8 @@
+import { RESOURCE_KINDS } from '../../../shared/data/locais-recurso';
+
 export const MAINTENANCE_TYPES = {
   RESOURCE_ACCOUNT: 'Locais do recurso',
+  RESOURCE_ACCOUNT_SUGGESTION: 'Identificações sugeridas',
   CLIENT: 'Clientes',
   PROCEDURE: 'Procedimentos',
   SUBSCRIPTION_PLAN: 'Planos de assinatura',
@@ -8,6 +11,7 @@ export type MaintenanceType = keyof typeof MAINTENANCE_TYPES;
 
 export const MAINTENANCE_TYPE_ORDER: MaintenanceType[] = [
   'RESOURCE_ACCOUNT',
+  'RESOURCE_ACCOUNT_SUGGESTION',
   'CLIENT',
   'PROCEDURE',
   'SUBSCRIPTION_PLAN',
@@ -52,6 +56,7 @@ const UNIDADE = [
 /** Tela do módulo dono, para cadastrar o que a manutenção não cria. */
 export const MAINTENANCE_HOME: Record<MaintenanceType, string> = {
   RESOURCE_ACCOUNT: '/financeiro',
+  RESOURCE_ACCOUNT_SUGGESTION: '/financeiro',
   CLIENT: '/clientes',
   PROCEDURE: '/procedimentos',
   SUBSCRIPTION_PLAN: '/assinaturas',
@@ -60,6 +65,18 @@ export const MAINTENANCE_HOME: Record<MaintenanceType, string> = {
 export const MAINTENANCE_FIELDS: Record<MaintenanceType, MaintenanceField[]> = {
   // O local do recurso tem formulário próprio no modal (lista única de identificação).
   RESOURCE_ACCOUNT: [],
+  // A identificação sugerida é o próprio catálogo: nome livre + tipo.
+  RESOURCE_ACCOUNT_SUGGESTION: [
+    { key: 'name', label: 'Identificação' },
+    {
+      key: 'kind',
+      label: 'Tipo',
+      options: Object.entries(RESOURCE_KINDS).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    },
+  ],
   CLIENT: [
     { key: 'name', label: 'Nome do cliente' },
     { key: 'phone', label: 'Telefone' },

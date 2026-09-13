@@ -29,6 +29,24 @@ export const getMaintenanceSummary = async () =>
     )
   ).data;
 
+/** Catálogo de identificações de local — endpoint público do módulo financeiro. */
+export const listAccountSuggestions = async () =>
+  (
+    await http.get<{ id: string; name: string; kind: 'CASH' | 'BANK' | 'CARD'; active: boolean }[]>(
+      '/financial/account-suggestions',
+      { params: { active: 'true' } },
+    )
+  ).data;
+
+/** Cria a identificação sugerida (único tipo que o hub cria — é o catálogo que ele mantém). */
+export const createMaintenanceItem = async (
+  type: MaintenanceType,
+  input: { name: string; kind?: string },
+) =>
+  (
+    await http.post<MaintenanceItem>(`/maintenance/registrations/${type}`, input)
+  ).data;
+
 export const updateMaintenanceItem = async (
   type: MaintenanceType,
   id: string,

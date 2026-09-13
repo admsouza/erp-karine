@@ -16,6 +16,7 @@ import {
 } from '../../audit/services/audit-trail.service.js';
 import type { AuthenticatedUser } from '../../auth/entities/authenticated-user.entity.js';
 import { monthBounds } from './cash-period.service.js';
+import { mesmoNome } from '../entities/resource-name.js';
 @Injectable()
 export class ResourceAccountService {
   constructor(
@@ -32,8 +33,8 @@ export class ResourceAccountService {
   ) {
     return this.repository.transaction(async (tx) => {
       if (
-        (await this.repository.accounts(tx)).some(
-          (x) => x.name.toLowerCase() === dto.name.toLowerCase(),
+        (await this.repository.accounts(tx)).some((x) =>
+          mesmoNome(x.name, dto.name),
         )
       )
         throw new ConflictException('Local de recurso já cadastrado.');
@@ -80,8 +81,7 @@ export class ResourceAccountService {
       if (dto.name && dto.name !== account.name) {
         if (
           (await this.repository.accounts(tx)).some(
-            (x) =>
-              x.id !== id && x.name.toLowerCase() === dto.name!.toLowerCase(),
+            (x) => x.id !== id && mesmoNome(x.name, dto.name!),
           )
         )
           throw new ConflictException('Já existe um local com esse nome.');

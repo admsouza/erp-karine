@@ -141,14 +141,106 @@ describe('Manutenção de cadastros (e2e)', () => {
       'CLIENT',
       'PROCEDURE',
       'RESOURCE_ACCOUNT',
+      'RESOURCE_ACCOUNT_SUGGESTION',
       'SUBSCRIPTION_PLAN',
     ]);
+    // O catálogo de identificações vem semeado pela migração.
+    expect(resumo.body.counts.RESOURCE_ACCOUNT_SUGGESTION).toBeGreaterThanOrEqual(9);
     expect(resumo.body.counts.CLIENT).toBeGreaterThanOrEqual(1);
     expect(resumo.body.counts.RESOURCE_ACCOUNT).toBeGreaterThanOrEqual(1);
     await request(app.getHttpServer())
       .get('/api/maintenance/summary')
       .set('Cookie', comum.cookie)
       .expect(403);
+  });
+
+  it('mantém a lista de identificações sugeridas de local (catálogo que virou cadastro)', async () => {
+    const nome = `Banco Novo ${sufixo}`;
+    const criada = await request(app.getHttpServer())
+      .post('/api/financial/account-suggestions')
+      .set('Cookie', admin.cookie)
+      .send({ name: nome, kind: 'BANK' })
+      .expect(201);
+    const sugestaoId = criada.body.id;
+    try {
+      // Nome repetido (sem diferenciar maiúsculas) é recusado.
+      await request(app.getHttpServer())
+        .post('/api/financial/account-suggestions')
+        .set('Cookie', admin.cookie)
+        .send({ name: nome.toUpperCase(), kind: 'BANK' })
+        .expect(409);
+      // A lista do hub mostra o catálogo (semeado + o novo).
+      const pagina = await request(app.getHttpServer())
+        .get('/api/maintenance/registrations?type=RESOURCE_ACCOUNT_SUGGESTION')
+        .set('Cookie', admin.cookie)
+        .expect(200);
+      expect(pagina.body.total).toBeGreaterThanOrEqual(10);
+      expect(pagina.body.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: sugestaoId,
+            label: nome,
+            secondary: 'Banco',
+            values: { name: nome, kind: 'BANK' },
+          }),
+        ]),
+      );
+      // Criar pelo hub (é o catálogo que a manutenção mantém) e recusar para os demais tipos.
+      const peloHub = await request(app.getHttpServer())
+        .post('/api/maintenance/registrations/RESOURCE_ACCOUNT_SUGGESTION')
+        .set('Cookie', admin.cookie)
+        .send({ name: `Banco Pelo Hub ${sufixo}`, kind: 'BANK' })
+        .expect(201);
+      await prisma.auditEvent.deleteMany({ where: { entityId: peloHub.body.id } });
+      await prisma.resourceAccountSuggestion.delete({ where: { id: peloHub.body.id } });
+      await request(app.getHttpServer())
+        .post('/api/maintenance/registrations/CLIENT')
+        .set('Cookie', admin.cookie)
+        .send({ name: 'Cliente pelo hub' })
+        .expect(400);
+      // Renomear pelo hub: quem grava a trilha é o módulo dono (sem duplicar).
+      await request(app.getHttpServer())
+        .patch(`/api/maintenance/registrations/RESOURCE_ACCOUNT_SUGGESTION/${sugestaoId}`)
+        .set('Cookie', admin.cookie)
+        .send({ name: `${nome} renomeado`, kind: 'CARD' })
+        .expect(200);
+      const atualizada = await prisma.resourceAccountSuggestion.findUniqueOrThrow({
+        where: { id: sugestaoId },
+      });
+      expect(atualizada.name).toBe(`${nome} renomeado`);
+      expect(atualizada.kind).toBe('CARD');
+      expect(
+        await prisma.auditEvent.count({
+          where: { entityType: 'ResourceAccountSuggestion', entityId: sugestaoId, module: 'financial' },
+        }),
+      ).toBe(2);
+      expect(
+        await prisma.auditEvent.count({
+          where: { entityType: 'ResourceAccountSuggestion', entityId: sugestaoId, module: 'maintenance' },
+        }),
+      ).toBe(0);
+      // Inativar tira da lista do seletor; reativar devolve.
+      await request(app.getHttpServer())
+        .patch(`/api/maintenance/registrations/RESOURCE_ACCOUNT_SUGGESTION/${sugestaoId}/inactivate`)
+        .set('Cookie', admin.cookie)
+        .expect(200);
+      const ativas = await request(app.getHttpServer())
+        .get('/api/financial/account-suggestions?active=true')
+        .set('Cookie', admin.cookie)
+        .expect(200);
+      expect(
+        ativas.body.some((x: { id: string }) => x.id === sugestaoId),
+      ).toBe(false);
+      await request(app.getHttpServer())
+        .patch(`/api/maintenance/registrations/RESOURCE_ACCOUNT_SUGGESTION/${sugestaoId}/reactivate`)
+        .set('Cookie', admin.cookie)
+        .expect(200);
+    } finally {
+      await prisma.auditEvent.deleteMany({
+        where: { entityId: sugestaoId },
+      });
+      await prisma.resourceAccountSuggestion.delete({ where: { id: sugestaoId } });
+    }
   });
 
   it('edita o cliente pelo hub e registra a trilha (o dono não registra)', async () => {
