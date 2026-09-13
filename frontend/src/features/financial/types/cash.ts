@@ -34,7 +34,14 @@ export const RESOURCE_KIND_SUGGESTIONS: Record<
   string[]
 > = {
   CASH: ['Dinheiro (gaveta)'],
-  BANK: ['Banco principal', 'Banco secundário'],
+  BANK: [
+    'Banco do Brasil',
+    'Caixa Econômica',
+    'Itaú',
+    'Nubank',
+    'Santander',
+    'Mercado Pago',
+  ],
   CARD: ['Maquineta principal', 'Maquineta 2'],
 };
 export interface FinancialReconciliation {
