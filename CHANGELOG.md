@@ -20,6 +20,13 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - Imagem de runtime deixa de carregar as 9 vulnerabilidades altas reportadas, sem downgrade de framework/ORM e sem mudança de contrato de aplicação ou banco.
 - Overrides são temporários e devem ser removidos quando NestJS/Prisma passarem a fixar as versões corrigidas.
 
+**Publicação**
+
+- PR #10 mesclado em `main` (`415d6ab`) e deploy CapRover concluído; build remoto auditou 462 pacotes de desenvolvimento e 285 pacotes de runtime com zero vulnerabilidades.
+- Container de produção saudável, Prisma conectado ao PostgreSQL e seis migrações sem pendência; árvore instalada confirmada com `multer@2.3.0`, `deepmerge-ts@8.0.2` e `mysql2@3.24.4`.
+- Produção verificada: health e banco 200; auth, clientes, procedimentos, agenda, planos, assinaturas e Swagger protegidos com 401 sem sessão; SPA e deep links 200.
+- Navegador Chromium real: login, menu completo, catálogo de procedimentos, tela de assinaturas, APIs autenticadas e modal de nova assinatura aprovados.
+
 ---
 
 ## 2026-09-13 · `subscriptions` · Fase 5 implementada
