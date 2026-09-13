@@ -9,6 +9,8 @@ import { SubscriptionPlanQueryService } from '../../subscriptions/services/subsc
 import { SubscriptionPlanService } from '../../subscriptions/services/subscription-plan.service.js';
 import { ResourceAccountService } from '../../financial/services/resource-account.service.js';
 import { ResourceAccountSuggestionService } from '../../financial/services/resource-account-suggestion.service.js';
+import { ProductQueryService } from '../../products/services/product-query.service.js';
+import { ProductService } from '../../products/services/product.service.js';
 import {
   MAINTENANCE_TYPES,
   type MaintenanceType,
@@ -91,6 +93,8 @@ export class MaintenanceService {
     private readonly servicoPlanos: SubscriptionPlanService,
     private readonly locais: ResourceAccountService,
     private readonly sugestoes: ResourceAccountSuggestionService,
+    private readonly produtos: ProductQueryService,
+    private readonly servicoProdutos: ProductService,
     private readonly audit: AuditTrailService,
   ) {}
 
@@ -144,7 +148,16 @@ export class MaintenanceService {
       updatedAt: Date | null;
       values: Record<string, string | number | null>;
     }[] =
-      type === 'RESOURCE_ACCOUNT_SUGGESTION'
+      type === 'PRODUCT'
+        ? (await this.produtos.list({ page: 1, pageSize: 200 })).items.map((x) => ({
+            id: x.id,
+            name: x.name,
+            secondary: `${moeda(x.priceCents)}${x.unit ? ` · ${x.unit}` : ''}`,
+            active: x.active,
+            updatedAt: x.updatedAt,
+            values: { name: x.name, priceCents: x.priceCents },
+          }))
+        : type === 'RESOURCE_ACCOUNT_SUGGESTION'
         ? (await this.sugestoes.list()).map((x) => ({
             id: x.id,
             name: x.name,
@@ -239,11 +252,12 @@ export class MaintenanceService {
    * a manutenção não funciona.
    */
   async summary(): Promise<{ counts: Record<MaintenanceType, number> }> {
-    const [clientes, procedimentos, locais, sugestoes, planos] = await Promise.all([
+    const [clientes, procedimentos, locais, sugestoes, produtos, planos] = await Promise.all([
       this.clientes.list({ page: 1, pageSize: 1 } as never),
       this.procedimentos.list({ page: 1, pageSize: 1 } as never),
       this.locais.list(),
       this.sugestoes.list(),
+      this.produtos.list({ page: 1, pageSize: 1 }),
       this.planos.list({}),
     ]);
     return {
@@ -252,6 +266,7 @@ export class MaintenanceService {
         RESOURCE_ACCOUNT_SUGGESTION: sugestoes.length,
         CLIENT: clientes.total,
         PROCEDURE: procedimentos.total,
+        PRODUCT: produtos.total,
         SUBSCRIPTION_PLAN: planos.length,
       },
     };
@@ -329,6 +344,19 @@ export class MaintenanceService {
         undefined,
       );
       return atualizado;
+    }
+    if (t === 'PRODUCT') {
+      if (dto.name === undefined && dto.priceCents === undefined)
+        throw new BadRequestException(
+          'Informe ao menos um campo para alterar o produto.',
+        );
+      // O módulo dono valida e grava a própria trilha.
+      return this.servicoProdutos.update(
+        id,
+        { name: dto.name, priceCents: dto.priceCents },
+        user,
+        requestId,
+      );
     }
     if (t === 'PROCEDURE') {
       if (dto.name === undefined && dto.unit === undefined)
@@ -446,6 +474,11 @@ export class MaintenanceService {
       resultado = ativar
         ? await this.servicoProcedimentos.reactivate(id)
         : await this.servicoProcedimentos.inactivate(id);
+    } else if (t === 'PRODUCT') {
+      resultado = ativar
+        ? await this.servicoProdutos.reactivate(id, user, requestId)
+        : await this.servicoProdutos.inactivate(id, user, requestId);
+      return resultado;
     } else {
       resultado = ativar
         ? await this.servicoPlanos.reactivate(id)

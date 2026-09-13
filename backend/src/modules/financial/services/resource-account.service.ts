@@ -16,7 +16,7 @@ import {
 } from '../../audit/services/audit-trail.service.js';
 import type { AuthenticatedUser } from '../../auth/entities/authenticated-user.entity.js';
 import { monthBounds } from './cash-period.service.js';
-import { mesmoNome } from '../entities/resource-name.js';
+import { mesmoNome } from '../../../common/utils/nome-normalizado.js';
 @Injectable()
 export class ResourceAccountService {
   constructor(

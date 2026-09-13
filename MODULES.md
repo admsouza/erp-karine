@@ -20,6 +20,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | financial | `[x]` | 6 · 6.1 |
 | protocols | `[x]` | 7 |
 | audit | `[x]` | transversal |
+| products | `[x]` | 6.2 |
 | maintenance | `[x]` | Sistema |
 | exams | `[~]` | 8 |
 | dashboard | `[~]` | 9 |
@@ -338,6 +339,9 @@ Não importa os módulos donos nem seus serviços/repositories.
   maioria é credor eventual). Informar cliente em despesa (ou credor em receita) devolve **400**:
   recusar é melhor que gerar dado ambíguo. `GET /transactions/counterparties` devolve os credores já
   usados para sugerir no formulário (sem cadastro de fornecedores).
+- **Um item por lançamento:** procedimento **ou** produto (informar os dois devolve 400 — venda de
+  combo com vários itens exigiria modelar "venda + itens", decisão não tomada). O produto segue a mesma
+  regra do procedimento: `productId` + `productName` em snapshot.
 - **Procedimento vinculado** (`procedureId`) grava o **snapshot do nome** (`procedureName`): venda
   antiga não pode ser reescrita pelo catálogo de hoje. O valor que a tela sugere é o **vigente**
   (`valueOn`), mas o que fica gravado é o que o usuário confirmou.
@@ -408,6 +412,35 @@ Não importa os módulos donos nem seus serviços/repositories.
 
 ---
 
+## products
+
+**Responsabilidade:** catálogo do que a clínica **vende além de procedimentos** (produto de revenda,
+kit, cosmético). Não sabe de venda nem de caixa: quem lança é o `financial`.
+
+**Entidades:** `Product` (nome, descrição, unidade, valor, `active`/`deactivatedAt`).
+
+**Serviços públicos:**
+- `ProductQueryService` — listar/consultar produto e `exists(id)`; consumido por `financial` e `maintenance`.
+- `ProductService` — criar, corrigir, inativar e reativar (usado pela Manutenção de cadastros).
+
+**Eventos:** não emite nem consome.
+
+**Dependências permitidas:** `audit` (`AuditTrailService`). Não depende de nenhum outro módulo.
+
+**Endpoints:** `GET/POST /api/products`, `GET /api/products/options` (ativos, para o seletor da venda),
+`GET /api/products/:id`, `PATCH /api/products/:id`, `PATCH /api/products/:id/inactivate|reactivate`.
+
+**Regras principais:**
+- Nome único **sem diferenciar maiúsculas nem acentos** (`common/utils/nome-normalizado.ts`).
+- **Valor é simples, sem série de vigências**: o valor aplicado fica **gravado no lançamento**, então
+  mudar o preço no catálogo não reescreve venda antiga. Se a clínica pedir histórico de preço de
+  produto, aplica-se depois o mesmo padrão de vigência dos procedimentos (aditivo).
+- Sem exclusão física; inativar tira o produto do seletor da venda e preserva o histórico.
+- Toda alteração registra `AuditEvent` **pelo próprio módulo** (`CREATED`, `UPDATED`, `INACTIVATED`,
+  `REACTIVATED`); o hub de manutenção só lista e delega, sem duplicar evento.
+
+---
+
 ## maintenance
 
 **Responsabilidade:** **manutenção de cadastros** (seção Sistema): corrigir a identificação e
@@ -434,10 +467,12 @@ tem tabela nem regra de domínio próprias** — é um hub que consulta e delega
 **Regras principais:**
 
 - Tipos cobertos: `RESOURCE_ACCOUNT` (local do recurso), `RESOURCE_ACCOUNT_SUGGESTION` (a lista de
-  identificações que aparece no seletor do Financeiro), `CLIENT`, `PROCEDURE` e `SUBSCRIPTION_PLAN`.
+  identificações que aparece no seletor do Financeiro), `CLIENT`, `PROCEDURE`, **`PRODUCT`** e
+  `SUBSCRIPTION_PLAN`.
   Tipo desconhecido devolve **400**.
 - Campos editáveis por tipo (o resto continua na tela do módulo dono): local → **identificação pela
-  mesma lista do cadastro** (o tipo vem junto e só é perguntado no "Outro (digitar)");
+  mesma lista do cadastro** (o tipo vem junto e só é perguntado no "Outro (digitar)"); produto → nome e
+  valor;
   cliente → nome e telefone; procedimento → nome e unidade (o **valor unitário tem vigência própria** e
   não é editado aqui); plano → nome e valor.
 - **A validação é sempre do módulo dono** — o hub só monta o payload e repassa. Erros de domínio

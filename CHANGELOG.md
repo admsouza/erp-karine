@@ -2,6 +2,49 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `products` (novo) · Catálogo de produtos e venda com produto no lançamento (Parte B)
+
+**Alteração**
+
+- **Módulo `products`**: catálogo do que a clínica vende além de procedimentos (nome, unidade, descrição,
+  valor, ativo). Endpoints `GET/POST /api/products`, `GET /api/products/options` (ativos, para o seletor
+  da venda), `PATCH /api/products/:id` e `PATCH /:id/inactivate|reactivate`. Sem exclusão física, nome
+  único **sem diferenciar maiúsculas nem acentos**, trilha de auditoria pelo próprio módulo.
+- **Tela Produtos** no menu de operação (agora com **9 itens**), no mesmo padrão das outras listas: busca,
+  filtro de situação, paginação, cadastro/edição em modal, inativar/reativar.
+- **Lançamento manual aceita produto**: novo seletor **Produto** que preenche o valor do catálogo
+  (editável) e grava `productId` + **snapshot** do nome, exatamente como o procedimento.
+  **Um item por lançamento**: informar procedimento *e* produto devolve **400**.
+- **Manutenção de cadastros** ganhou o tipo **Produtos** (nome e valor, inativar/reativar) e a contagem
+  no seletor; a edição é delegada ao módulo dono, sem duplicar trilha.
+- O helper de comparação de nome (`Itau` = `Itaú`) saiu do `financial` para `common/utils/nome-normalizado.ts`
+  e passou a ser usado por `products` também.
+- Migração **aditiva** `20260913233805_products_catalog` (tabela `Product` e as colunas
+  `productId`/`productName` no lançamento).
+
+**Impacto**
+
+- **Nada muda nos lançamentos existentes** (colunas novas ficam nulas) e o valor do produto **não é
+  série histórica**: o que foi vendido fica gravado no lançamento, então reajustar o catálogo não
+  reescreve venda antiga. Se a clínica quiser histórico de preço de produto, aplica-se o mesmo padrão de
+  vigência dos procedimentos (aditivo).
+- **Venda com vários itens** (combo) continua fora: um lançamento = um item + descrição livre. Modelar
+  "venda + itens" mexeria em relatórios e conciliação — decisão explícita (7.54).
+- **e2e agora roda sequencialmente** (`fileParallelism: false`): em paralelo, a suíte do caixa (que limpa
+  o estado de caixa no `beforeAll`) apagava dados da suíte de manutenção e gerava falha intermitente. Custa
+  ~25s a mais e elimina a classe de flake por banco compartilhado (decisão 7.55).
+
+**Verificação**
+
+- **116 unitários** (23 arquivos; 3 novos do catálogo e 2 do vínculo de produto no lançamento) e
+  **99 e2e** (13 arquivos, com `products.e2e-spec.ts` cobrindo CRUD, `options` do seletor, 409 de nome
+  repetido, 400 de edição sem mudança, 404 de `DELETE` e venda de produto com snapshot + recusa de item
+  duplicado).
+- `tsc`, `oxlint` e `build` aprovados nos dois projetos.
+- **Navegador real (390px)**: cadastrei produto pela tela (`Produto UI`, R$ 120,00), editei o valor para
+  R$ 135,00, e no **Novo lançamento** o seletor mostrou o produto e **preencheu o valor R$ 135,00**;
+  sem erro de tela.
+
 **Publicação (2026-09-13)**
 
 - PR **#27** aprovado e integrado em `main` (merge `774292d`); deploy no CapRover **concluído**.

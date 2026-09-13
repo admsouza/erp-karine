@@ -33,10 +33,19 @@ function setup() {
       currentValueCents: 90000,
     }),
   };
+  const produtos = {
+    exists: vi.fn().mockResolvedValue(true),
+    findById: vi.fn().mockResolvedValue({
+      id: 'prod1',
+      name: 'Máscara de hidratação',
+      priceCents: 12000,
+    }),
+  };
   return {
     repository,
     clientes,
     procedimentos,
+    produtos,
     service: new FinancialTransactionService(
       repository as never,
       {
@@ -46,6 +55,7 @@ function setup() {
       { record: vi.fn() } as never,
       clientes as never,
       procedimentos as never,
+      produtos as never,
     ),
   };
 }
@@ -185,6 +195,36 @@ describe('FinancialTransactionService', () => {
         grossAmountCents: 10000, discountType: 'AMOUNT' as never, discountValue: 20000,
       }),
     ).rejects.toThrow('Desconto não pode ser maior');
+  });
+
+  it('vincula o produto gravando o snapshot do nome e recusa item duplicado', async () => {
+    const { service, repository, produtos } = setup();
+    await service.createManual({
+      description: 'Venda de produto', amountCents: 12000, date: '2026-09-13',
+      paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', productId: 'prod1',
+    });
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ productId: 'prod1', productName: 'Máscara de hidratação' }),
+      expect.anything(),
+    );
+    produtos.exists.mockResolvedValue(false);
+    await expect(
+      service.createManual({
+        description: 'X', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO', productId: 'prod9',
+      }),
+    ).rejects.toThrow('Produto não encontrado');
+  });
+
+  it('recusa procedimento e produto no mesmo lançamento', async () => {
+    const { service } = setup();
+    await expect(
+      service.createManual({
+        description: 'Combo', amountCents: 1000, date: '2026-09-13',
+        paymentMethod: 'PIX', type: 'RECEITA', status: 'PAGO',
+        procedureId: 'p1', productId: 'prod1',
+      }),
+    ).rejects.toThrow('um item por lançamento');
   });
 
   it('recusa desconto sem valor cheio e líquido que não confere com o desconto', async () => {

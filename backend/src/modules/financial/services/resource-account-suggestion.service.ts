@@ -15,7 +15,7 @@ import type {
   UpdateAccountSuggestionDto,
 } from '../dto/cash.dto.js';
 import { CashRepository } from '../repositories/cash.repository.js';
-import { mesmoNome } from '../entities/resource-name.js';
+import { mesmoNome } from '../../../common/utils/nome-normalizado.js';
 
 /**
  * Catálogo das **identificações sugeridas** ao cadastrar um local do recurso

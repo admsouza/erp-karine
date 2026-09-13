@@ -70,6 +70,28 @@ function setup() {
     inactivate: vi.fn(),
     reactivate: vi.fn(),
   };
+  const produtos = {
+    list: vi.fn(async () => ({
+      items: [
+        {
+          id: 'pr1',
+          name: 'Máscara de hidratação',
+          priceCents: 12000,
+          unit: 'unidade',
+          active: true,
+          updatedAt: new Date(),
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 200,
+    })),
+  };
+  const servicoProdutos = {
+    update: vi.fn(async (id: string) => ({ id })),
+    inactivate: vi.fn(),
+    reactivate: vi.fn(),
+  };
   const auditoria = { record: vi.fn() };
   const service = new MaintenanceService(
     clientes as never,
@@ -80,6 +102,8 @@ function setup() {
     servicoPlanos as never,
     locais as never,
     sugestoes as never,
+    produtos as never,
+    servicoProdutos as never,
     auditoria as never,
   );
   return {
@@ -89,6 +113,8 @@ function setup() {
     servicoProcedimentos,
     locais,
     sugestoes,
+    produtos,
+    servicoProdutos,
     servicoPlanos,
     auditoria,
   };
@@ -186,9 +212,30 @@ describe('Manutenção de cadastros', () => {
       RESOURCE_ACCOUNT_SUGGESTION: 2,
       CLIENT: 1,
       PROCEDURE: 0,
+      PRODUCT: 1,
       SUBSCRIPTION_PLAN: 1,
     });
   });
+  it('lista produto com valor e delega a edição ao módulo dono sem duplicar trilha', async () => {
+    const { service, servicoProdutos, auditoria } = setup();
+    const pagina = await service.list({ type: 'PRODUCT' });
+    expect(pagina.items).toEqual([
+      expect.objectContaining({
+        id: 'pr1',
+        type: 'PRODUCT',
+        label: 'Máscara de hidratação',
+        // `toLocaleString('pt-BR')` usa espaço não separável depois de "R$".
+        secondary: expect.stringContaining('120,00 · unidade'),
+        values: { name: 'Máscara de hidratação', priceCents: 12000 },
+      }),
+    ]);
+    await service.update('PRODUCT', 'pr1', { priceCents: 13500 }, user);
+    expect(servicoProdutos.update).toHaveBeenCalled();
+    expect(auditoria.record).not.toHaveBeenCalled();
+    await service.inactivate('PRODUCT', 'pr1', user);
+    expect(servicoProdutos.inactivate).toHaveBeenCalledWith('pr1', user, undefined);
+  });
+
   it('cria identificação sugerida pelo hub (o dono valida e grava a trilha)', async () => {
     const { service, sugestoes, auditoria } = setup();
     await service.create(
