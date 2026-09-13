@@ -401,6 +401,7 @@ tem tabela nem regra de domínio próprias** — é um hub que consulta e delega
 `audit` (`AuditTrailService`). **Não** acessa repository, controller ou arquivo interno de outro módulo.
 
 **Endpoints:** `GET /api/maintenance/registrations` (tipo, busca, situação e paginação),
+`GET /api/maintenance/summary` (quantos cadastros há em cada tipo — alimenta o seletor da tela),
 `PATCH /api/maintenance/registrations/:type/:id`,
 `PATCH /api/maintenance/registrations/:type/:id/inactivate`,
 `PATCH /api/maintenance/registrations/:type/:id/reactivate`. **Todos com `@Roles('ADMIN')`.**

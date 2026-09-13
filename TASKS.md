@@ -158,7 +158,9 @@ módulo. Não tem tabela nem regra própria: consulta e delega aos módulos dono
 - [x] Tipos cobertos: locais do recurso, clientes, procedimentos e planos de assinatura
 - [x] Trilha de auditoria sem duplicar o evento do módulo dono
 - [x] Tela mobile-first em `/sistema/manutencao` + item no menu da seção Sistema
-- [x] Testes: 7 unitários + e2e dedicado (5 casos) e verificação em navegador real
+- [x] `GET /api/maintenance/summary` com a contagem por tipo (o seletor mostra onde há cadastro)
+- [x] Estado vazio acionável: "Cadastrar em …" quando o tipo está vazio e "Limpar filtros" quando é filtro
+- [x] Testes: 8 unitários + e2e dedicado (6 casos) e verificação em navegador real
 - [ ] Novos cadastros entram sob demanda (ex.: procedimentos com valor — hoje o valor tem vigência
   própria e fica na tela do procedimento)
 

@@ -54,6 +54,14 @@ const UNIDADE = [
   { value: 'PACOTE', label: 'Pacote/Combo' },
 ];
 
+/** Tela do módulo dono, para cadastrar o que a manutenção não cria. */
+export const MAINTENANCE_HOME: Record<MaintenanceType, string> = {
+  RESOURCE_ACCOUNT: '/financeiro',
+  CLIENT: '/clientes',
+  PROCEDURE: '/procedimentos',
+  SUBSCRIPTION_PLAN: '/assinaturas',
+};
+
 export const MAINTENANCE_FIELDS: Record<MaintenanceType, MaintenanceField[]> = {
   RESOURCE_ACCOUNT: [
     { key: 'name', label: 'Identificação do local' },

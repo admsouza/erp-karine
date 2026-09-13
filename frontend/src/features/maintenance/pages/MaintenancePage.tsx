@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { describeApiError } from '../../../shared/api/http-client';
 import { Badge } from '../../../shared/components/Badge';
 import { Button } from '../../../shared/components/Button';
@@ -9,12 +10,14 @@ import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
 import { formatDateTimeRecife } from '../../../shared/utils/format';
 import {
+  getMaintenanceSummary,
   inactivateMaintenanceItem,
   listMaintenance,
   reactivateMaintenanceItem,
 } from '../api/maintenance-api';
 import { MaintenanceEditModal } from '../components/MaintenanceEditModal';
 import {
+  MAINTENANCE_HOME,
   MAINTENANCE_TYPES,
   MAINTENANCE_TYPE_ORDER,
   type MaintenanceItem,
@@ -41,6 +44,13 @@ export function MaintenancePage() {
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<MaintenanceItem | null>(null);
   const [recarregar, setRecarregar] = useState(0);
+  const [contagens, setContagens] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    getMaintenanceSummary()
+      .then((resumo) => setContagens(resumo.counts))
+      .catch(() => setContagens({}));
+  }, [recarregar]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -111,7 +121,10 @@ export function MaintenancePage() {
             }}
             options={MAINTENANCE_TYPE_ORDER.map((valor) => ({
               value: valor,
-              label: MAINTENANCE_TYPES[valor],
+              label:
+                contagens[valor] === undefined
+                  ? MAINTENANCE_TYPES[valor]
+                  : `${MAINTENANCE_TYPES[valor]} (${contagens[valor]})`,
             }))}
           />
           <Input
@@ -153,9 +166,40 @@ export function MaintenancePage() {
           <p className="text-sm text-slate-500">Carregando cadastros…</p>
         ) : itens.length === 0 ? (
           <EmptyState
-            title="Nenhum cadastro encontrado"
-            description="Ajuste o filtro ou cadastre pela tela do módulo — a manutenção não cria registros."
-          />
+            title={
+              busca || active
+                ? 'Nenhum cadastro encontrado com esse filtro'
+                : `Nenhum cadastro em ${MAINTENANCE_TYPES[type].toLowerCase()}`
+            }
+            description={
+              busca || active
+                ? 'Limpe a busca e a situação para ver todos.'
+                : 'A manutenção não cria registros — o cadastro é feito na tela do módulo. Depois de cadastrar, ele aparece aqui para correção e inativação.'
+            }
+          >
+            {busca || active ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setBusca('');
+                  setActive('');
+                  setLoading(true);
+                  setPage(1);
+                }}
+              >
+                Limpar filtros
+              </Button>
+            ) : (
+              <Link
+                to={MAINTENANCE_HOME[type]}
+                className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Cadastrar em {MAINTENANCE_TYPES[type]}
+              </Link>
+            )}
+          </EmptyState>
         ) : (
           <ul className="divide-y divide-slate-100">
             {itens.map((item) => (

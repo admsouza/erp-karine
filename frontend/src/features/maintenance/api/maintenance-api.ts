@@ -22,6 +22,13 @@ export const listMaintenance = async (
     })
   ).data;
 
+export const getMaintenanceSummary = async () =>
+  (
+    await http.get<{ counts: Record<MaintenanceType, number> }>(
+      '/maintenance/summary',
+    )
+  ).data;
+
 export const updateMaintenanceItem = async (
   type: MaintenanceType,
   id: string,

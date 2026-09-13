@@ -51,6 +51,22 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
   cliente pelo modal renomeia, **Inativar** e **Reativar** funcionam pela lista e os quatro tipos
   carregam sem erro de tela.
 
+### Correção depois do primeiro uso (mesma data)
+
+O cliente abriu a tela em produção e relatou **"não apareceu nada"**: a tela funcionava (a chamada
+devolvia 200), mas ela abre em **Locais do recurso** — e a clínica ainda não tem nenhum —, caindo no
+estado vazio, que era genérico e não dizia o que fazer.
+
+- `GET /api/maintenance/summary` (novo, ADMIN) devolve **quantos cadastros existem em cada tipo**.
+- O seletor da tela passa a mostrar a contagem: **Locais do recurso (0) · Clientes (1) ·
+  Procedimentos (1) · Planos de assinatura (0)** — dá para ver de imediato onde há dado.
+- O estado vazio ficou **específico e acionável**: quando o tipo não tem cadastro, diz que a manutenção
+  não cria registros e oferece **"Cadastrar em …"** levando à tela do módulo dono; quando é filtro sem
+  resultado, oferece **"Limpar filtros"**.
+- Verificação: unitário do `summary` (contagens por tipo) + e2e (`summary` com as quatro chaves, 403 para
+  perfil comum) e navegador real conferindo contagem no seletor, estado vazio com o caminho de cadastro
+  e o "Limpar filtros" voltando a listar.
+
 **Publicação (2026-09-13)**
 
 - PR **#22** aprovado e integrado em `main` (merge `c4f0be0`); deploy no CapRover **concluído**,
