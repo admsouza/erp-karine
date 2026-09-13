@@ -140,6 +140,7 @@ describe('Manutenção de cadastros (e2e)', () => {
     expect(Object.keys(resumo.body.counts).sort()).toEqual([
       'CLIENT',
       'PROCEDURE',
+      'PRODUCT',
       'RESOURCE_ACCOUNT',
       'RESOURCE_ACCOUNT_SUGGESTION',
       'SUBSCRIPTION_PLAN',

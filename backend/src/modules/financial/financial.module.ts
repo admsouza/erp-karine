@@ -9,6 +9,7 @@ import { CashPolicyService } from './services/cash-policy.service.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { ClientsModule } from '../clients/clients.module.js';
 import { ProceduresModule } from '../procedures/procedures.module.js';
+import { ProductsModule } from '../products/products.module.js';
 import { CashRepository } from './repositories/cash.repository.js';
 import { CashPeriodService } from './services/cash-period.service.js';
 import { ResourceAccountService } from './services/resource-account.service.js';
@@ -20,5 +21,5 @@ import { FinancialTransactionRepository } from './repositories/financial-transac
 import { FinancialEventSubscriber } from './services/financial-event.subscriber.js';
 import { FinancialQueryService } from './services/financial-query.service.js';
 import { FinancialTransactionService } from './services/financial-transaction.service.js';
-@Module({ imports: [AuditModule, ClientsModule, ProceduresModule], controllers: [FinancialTitleController, CashController, FinancialController], providers: [ReconciliationRepository, ReconciliationService, FinancialAdjustmentService, FinancialTitleService, FinancialTitleRepository, CashClosingService, CashPolicyService, CashRepository, CashPeriodService, ResourceAccountService, ResourceAccountSuggestionService, FinancialTransactionRepository, FinancialTransactionService, FinancialQueryService, FinancialEventSubscriber], exports: [FinancialQueryService, FinancialTransactionService, ResourceAccountService, ResourceAccountSuggestionService] })
+@Module({ imports: [AuditModule, ClientsModule, ProceduresModule, ProductsModule], controllers: [FinancialTitleController, CashController, FinancialController], providers: [ReconciliationRepository, ReconciliationService, FinancialAdjustmentService, FinancialTitleService, FinancialTitleRepository, CashClosingService, CashPolicyService, CashRepository, CashPeriodService, ResourceAccountService, ResourceAccountSuggestionService, FinancialTransactionRepository, FinancialTransactionService, FinancialQueryService, FinancialEventSubscriber], exports: [FinancialQueryService, FinancialTransactionService, ResourceAccountService, ResourceAccountSuggestionService] })
 export class FinancialModule {}

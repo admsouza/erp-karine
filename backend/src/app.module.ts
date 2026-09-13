@@ -20,6 +20,7 @@ import { ExamsModule } from './modules/exams/exams.module.js';
 import { FinancialModule } from './modules/financial/financial.module.js';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
 import { ProceduresModule } from './modules/procedures/procedures.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
 import { ProtocolsModule } from './modules/protocols/protocols.module.js';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module.js';
 
@@ -54,6 +55,7 @@ function staticFilesImports(): DynamicModule[] {
     AuditModule,
     ClientsModule,
     ProceduresModule,
+    ProductsModule,
     AppointmentsModule,
     SubscriptionsModule,
     FinancialModule,

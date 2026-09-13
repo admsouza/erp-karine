@@ -3,6 +3,7 @@ import { AuditModule } from '../audit/audit.module.js';
 import { ClientsModule } from '../clients/clients.module.js';
 import { FinancialModule } from '../financial/financial.module.js';
 import { ProceduresModule } from '../procedures/procedures.module.js';
+import { ProductsModule } from '../products/products.module.js';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module.js';
 import { MaintenanceController } from './controllers/maintenance.controller.js';
 import { MaintenanceService } from './services/maintenance.service.js';
@@ -19,6 +20,7 @@ import { MaintenanceService } from './services/maintenance.service.js';
     AuditModule,
     ClientsModule,
     ProceduresModule,
+    ProductsModule,
     SubscriptionsModule,
     FinancialModule,
   ],

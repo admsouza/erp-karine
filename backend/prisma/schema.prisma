@@ -211,6 +211,24 @@ model Procedure {
 /// `validTo = null` significa "vigência atual, em aberto". O histórico nunca é
 /// reescrito: mudar o preço cria uma vigência nova e fecha a anterior, para
 /// preservar a série histórica.
+/// Catálogo de produtos da clínica (o que ela vende além de procedimentos).
+/// Valor simples: o preço aplicado fica gravado no lançamento, então o histórico
+/// não depende de o catálogo manter série de vigências.
+model Product {
+  id String @id @default(uuid())
+  name String
+  description String?
+  unit String?
+  priceCents Int @default(0)
+  active Boolean @default(true)
+  deactivatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transactions FinancialTransaction[]
+
+  @@index([active])
+}
+
 model ProcedurePrice {
   id          String    @id @default(uuid())
   procedureId String
@@ -368,6 +386,8 @@ model FinancialTransaction {
   subscriptionPaymentId String?           @unique
   procedureId           String?
   procedureName         String?
+  productId             String?
+  productName           String?
   subscriptionName      String?
   // Referência externa livre (ex.: id do sistema de origem, conciliação manual)
   externalReference     String?
@@ -380,6 +400,7 @@ model FinancialTransaction {
   appointment         Appointment?         @relation(fields: [appointmentId], references: [id])
   subscription        ClientSubscription?  @relation(fields: [subscriptionId], references: [id])
   subscriptionPayment SubscriptionPayment? @relation(fields: [subscriptionPaymentId], references: [id])
+  product             Product?             @relation(fields: [productId], references: [id])
 
   @@index([clientId])
   @@index([date])

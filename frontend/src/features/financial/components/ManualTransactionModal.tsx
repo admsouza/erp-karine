@@ -12,6 +12,8 @@ import {
   listCounterparties,
   type FinancialOption,
 } from '../api/financial-api';
+import { listProductOptions } from '../../products/api/products-api';
+import type { Product } from '../../products/types/product';
 import type { ResourceAccount } from '../types/cash';
 import {
   PAYMENT_METHODS,
@@ -50,12 +52,14 @@ export function ManualTransactionModal({
   const [accounts, setAccounts] = useState<ResourceAccount[]>([]);
   const [clients, setClients] = useState<FinancialOption[]>([]);
   const [procedures, setProcedures] = useState<FinancialOption[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [credores, setCredores] = useState<string[]>([]);
   const [type, setType] = useState<TransactionType>('RECEITA');
   const [description, setDescription] = useState('');
   const [clientId, setClientId] = useState('');
   const [counterparty, setCounterparty] = useState('');
   const [procedureId, setProcedureId] = useState('');
+  const [productId, setProductId] = useState('');
   const [resourceAccountId, setResourceAccountId] = useState('');
   const [value, setValue] = useState('');
   const [discountType, setDiscountType] = useState(SEM_DESCONTO);
@@ -77,6 +81,9 @@ export function ManualTransactionModal({
         setProcedures(opcoes.procedures);
       })
       .catch((falha) => setError(describeApiError(falha)));
+    listProductOptions()
+      .then(setProducts)
+      .catch(() => setProducts([]));
     listCounterparties()
       .then(setCredores)
       .catch(() => setCredores([]));
@@ -104,6 +111,7 @@ export function ManualTransactionModal({
         clientId: receita && clientId ? clientId : undefined,
         counterparty: !receita && counterparty ? counterparty : undefined,
         procedureId: procedureId || undefined,
+        productId: productId || undefined,
         resourceAccountId: resourceAccountId || undefined,
         amountCents: liquidoCents,
         grossAmountCents: discountType ? brutoCents : undefined,
@@ -143,8 +151,20 @@ export function ManualTransactionModal({
     setConfirmando(true);
   }
 
+  function escolherProduto(id: string) {
+    setProductId(id);
+    setProcedureId('');
+    const escolhido = products.find((x) => x.id === id);
+    if (!escolhido) return;
+    if (!description) setDescription(escolhido.name);
+    if (!value && escolhido.priceCents) {
+      setValue(formatCentsToBRL(escolhido.priceCents));
+    }
+  }
+
   function escolherProcedimento(id: string) {
     setProcedureId(id);
+    setProductId('');
     const escolhido = procedures.find((x) => x.id === id);
     if (!escolhido) return;
     if (!description) setDescription(escolhido.name);
@@ -213,6 +233,15 @@ export function ManualTransactionModal({
               options={[
                 { value: '', label: 'Sem procedimento' },
                 ...procedures.map((item) => ({ value: item.id, label: item.name })),
+              ]}
+            />
+            <Select
+              label="Produto"
+              value={productId}
+              onChange={(e) => escolherProduto(e.target.value)}
+              options={[
+                { value: '', label: 'Sem produto' },
+                ...products.map((item) => ({ value: item.id, label: item.name })),
               ]}
             />
             <Input

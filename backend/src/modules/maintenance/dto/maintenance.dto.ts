@@ -19,6 +19,7 @@ export const MAINTENANCE_TYPES = [
   'RESOURCE_ACCOUNT_SUGGESTION',
   'CLIENT',
   'PROCEDURE',
+  'PRODUCT',
   'SUBSCRIPTION_PLAN',
 ] as const;
 export type MaintenanceType = (typeof MAINTENANCE_TYPES)[number];

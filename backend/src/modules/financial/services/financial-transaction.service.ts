@@ -6,6 +6,7 @@ import type { AssignResourceDto } from '../dto/cash.dto.js';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ClientQueryService } from '../../clients/services/client-query.service.js';
 import { ProcedureQueryService } from '../../procedures/services/procedure-query.service.js';
+import { ProductQueryService } from '../../products/services/product-query.service.js';
 import type { AppointmentCompleted } from '../../appointments/events/appointment-completed.event.js';
 import type { SubscriptionPaymentReceived } from '../../subscriptions/events/subscription-payment-received.event.js';
 import type { CreateManualTransactionDto } from '../dto/financial.dto.js';
@@ -14,7 +15,7 @@ import { FinancialTransactionRepository } from '../repositories/financial-transa
 import type { PaymentMethod, Prisma } from '../../../generated/prisma/client.js';
 @Injectable()
 export class FinancialTransactionService {
-  constructor(private readonly repository: FinancialTransactionRepository, private readonly cash: CashRepository, private readonly policy: CashPolicyService, private readonly audit: AuditTrailService, private readonly clientes: ClientQueryService, private readonly procedimentos: ProcedureQueryService) {}
+  constructor(private readonly repository: FinancialTransactionRepository, private readonly cash: CashRepository, private readonly policy: CashPolicyService, private readonly audit: AuditTrailService, private readonly clientes: ClientQueryService, private readonly procedimentos: ProcedureQueryService, private readonly produtos: ProductQueryService) {}
 
   /**
    * Lançamento manual (venda avulsa ou despesa).
@@ -38,6 +39,10 @@ export class FinancialTransactionService {
         throw new BadRequestException('Cliente é só para receita; em despesa informe o credor.');
       if (receita && dto.counterparty)
         throw new BadRequestException('Credor é só para despesa; em receita informe o cliente.');
+      if (dto.productId && dto.procedureId)
+        throw new BadRequestException(
+          'Escolha um item por lançamento: procedimento ou produto.',
+        );
       if (dto.clientId && !(await this.clientes.exists(dto.clientId)))
         throw new NotFoundException('Cliente não encontrado.');
       let procedureName: string | null = null;
@@ -47,9 +52,15 @@ export class FinancialTransactionService {
         // Snapshot: o nome de hoje não pode reescrever o histórico do que foi vendido.
         procedureName = (await this.procedimentos.getById(dto.procedureId)).name;
       }
+      let productName: string | null = null;
+      if (dto.productId) {
+        if (!(await this.produtos.exists(dto.productId)))
+          throw new NotFoundException('Produto não encontrado.');
+        productName = (await this.produtos.findById(dto.productId))!.name;
+      }
       const { discountCents, grossAmountCents } = this.desconto(dto);
 
-      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, counterparty: dto.counterparty?.trim() || null, procedureId: dto.procedureId ?? null, procedureName, grossAmountCents, discountCents, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
+      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, counterparty: dto.counterparty?.trim() || null, procedureId: dto.procedureId ?? null, procedureName, productId: dto.productId ?? null, productName, grossAmountCents, discountCents, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
       if(user)await this.audit.record({actorUserId:user.id,actorName:user.name,actorEmail:user.email,module:'financial',entityType:'FinancialTransaction',entityId:item.id,action:'CREATED',requestId,changes:[{field:'amountCents',before:null,after:item.amountCents},...(discountCents===null?[]:[{field:'discountCents',before:null,after:discountCents}]),{field:'resourceAccountId',before:null,after:item.resourceAccountId}]},tx);
       return toFinancialTransactionEntity(item);
     });

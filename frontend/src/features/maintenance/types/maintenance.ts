@@ -5,6 +5,7 @@ export const MAINTENANCE_TYPES = {
   RESOURCE_ACCOUNT_SUGGESTION: 'Identificações sugeridas',
   CLIENT: 'Clientes',
   PROCEDURE: 'Procedimentos',
+  PRODUCT: 'Produtos',
   SUBSCRIPTION_PLAN: 'Planos de assinatura',
 } as const;
 export type MaintenanceType = keyof typeof MAINTENANCE_TYPES;
@@ -14,6 +15,7 @@ export const MAINTENANCE_TYPE_ORDER: MaintenanceType[] = [
   'RESOURCE_ACCOUNT_SUGGESTION',
   'CLIENT',
   'PROCEDURE',
+  'PRODUCT',
   'SUBSCRIPTION_PLAN',
 ];
 
@@ -59,6 +61,7 @@ export const MAINTENANCE_HOME: Record<MaintenanceType, string> = {
   RESOURCE_ACCOUNT_SUGGESTION: '/financeiro',
   CLIENT: '/clientes',
   PROCEDURE: '/procedimentos',
+  PRODUCT: '/produtos',
   SUBSCRIPTION_PLAN: '/assinaturas',
 };
 
@@ -84,6 +87,10 @@ export const MAINTENANCE_FIELDS: Record<MaintenanceType, MaintenanceField[]> = {
   PROCEDURE: [
     { key: 'name', label: 'Nome do procedimento' },
     { key: 'unit', label: 'Unidade de medida', options: UNIDADE },
+  ],
+  PRODUCT: [
+    { key: 'name', label: 'Nome do produto' },
+    { key: 'priceCents', label: 'Valor (R$)', moeda: true },
   ],
   SUBSCRIPTION_PLAN: [
     { key: 'name', label: 'Nome do plano' },

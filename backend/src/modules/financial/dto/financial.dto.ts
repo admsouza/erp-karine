@@ -15,6 +15,7 @@ export class CreateManualTransactionDto {
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() clientId?: string;
   @ApiPropertyOptional({ description: 'Credor da despesa (quem recebeu)' }) @Transform(trim) @IsOptional() @IsString() @MaxLength(120) counterparty?: string;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() procedureId?: string;
+  @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() productId?: string;
   @ApiPropertyOptional({ description: 'Valor cheio antes do desconto (centavos)' }) @IsOptional() @IsInt() @Min(1) @Max(100_000_000) grossAmountCents?: number;
   @ApiPropertyOptional({ enum: DiscountType }) @IsOptional() @IsEnum(DiscountType) discountType?: DiscountType;
   @ApiPropertyOptional({ description: 'Percentual em pontos-base (10% = 1000) ou centavos' }) @IsOptional() @IsInt() @Min(0) @Max(100_000_000) discountValue?: number;
@@ -25,6 +26,7 @@ export class ListFinancialTransactionsQueryDto {
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() clientId?: string;
   @ApiPropertyOptional({ description: 'Credor da despesa (quem recebeu)' }) @Transform(trim) @IsOptional() @IsString() @MaxLength(120) counterparty?: string;
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() procedureId?: string;
+  @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() productId?: string;
   @ApiPropertyOptional({ description: 'Valor cheio antes do desconto (centavos)' }) @IsOptional() @IsInt() @Min(1) @Max(100_000_000) grossAmountCents?: number;
   @ApiPropertyOptional({ enum: DiscountType }) @IsOptional() @IsEnum(DiscountType) discountType?: DiscountType;
   @ApiPropertyOptional({ description: 'Percentual em pontos-base (10% = 1000) ou centavos' }) @IsOptional() @IsInt() @Min(0) @Max(100_000_000) discountValue?: number;

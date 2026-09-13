@@ -17,7 +17,7 @@ export const financialOptions=async():Promise<{clients:FinancialOption[];procedu
 };
 /** Credores já usados — sugestão do campo credor (sem cadastro de fornecedores). */
 export const listCounterparties=async()=>(await http.get<string[]>('/financial/transactions/counterparties')).data;
-export const createManualTransaction=async(input:{resourceAccountId?:string;description:string;clientId?:string;counterparty?:string;procedureId?:string;grossAmountCents?:number;discountType?:'PERCENT'|'AMOUNT';discountValue?:number;amountCents:number;date:string;paymentMethod:PaymentMethod;type:TransactionType;status:FinancialStatus;externalReference?:string;notes?:string})=>(await http.post<FinancialTransaction>('/financial/transactions',input)).data;
+export const createManualTransaction=async(input:{resourceAccountId?:string;description:string;clientId?:string;counterparty?:string;procedureId?:string;productId?:string;grossAmountCents?:number;discountType?:'PERCENT'|'AMOUNT';discountValue?:number;amountCents:number;date:string;paymentMethod:PaymentMethod;type:TransactionType;status:FinancialStatus;externalReference?:string;notes?:string})=>(await http.post<FinancialTransaction>('/financial/transactions',input)).data;
 export const cancelFinancialTransaction=async(id:string)=>(await http.patch<FinancialTransaction>(`/financial/transactions/${id}/cancel`)).data;
 
 export const assignFinancialResource=async(id:string,resourceAccountId:string,reason:string)=>(await http.patch(`/financial/transactions/${id}/resource`,{resourceAccountId,reason})).data;
