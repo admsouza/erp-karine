@@ -14,6 +14,19 @@ export const inactivateResourceAccount = async (id: string) =>
   (await http.patch<ResourceAccount>(`/financial/accounts/${id}/inactivate`)).data;
 export const reactivateResourceAccount = async (id: string) =>
   (await http.patch<ResourceAccount>(`/financial/accounts/${id}/reactivate`)).data;
+export interface AccountSuggestion {
+  id: string;
+  name: string;
+  kind: 'CASH' | 'BANK' | 'CARD';
+  active: boolean;
+}
+/** Catálogo das identificações sugeridas (mantido na Manutenção de cadastros). */
+export const listAccountSuggestions = async (activeOnly = true) =>
+  (
+    await http.get<AccountSuggestion[]>('/financial/account-suggestions', {
+      params: activeOnly ? { active: 'true' } : undefined,
+    })
+  ).data;
 export const listCashPeriods = async () =>
   (await http.get<CashPeriod[]>('/financial/cash-periods')).data;
 export const getCashPeriod = async (id: string) =>

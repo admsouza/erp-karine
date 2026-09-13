@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { describeApiError } from '../../../shared/api/http-client';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
@@ -10,13 +10,19 @@ import {
   identificacaoEscolhida,
   identificacoesOpcoes,
   valorDaIdentificacao,
+  type IdentificacaoLocal,
 } from '../../../shared/data/locais-recurso';
 import { formatCentsToBRL, parseBRLToCents } from '../../../shared/utils/format';
-import { updateMaintenanceItem } from '../api/maintenance-api';
+import {
+  createMaintenanceItem,
+  listAccountSuggestions,
+  updateMaintenanceItem,
+} from '../api/maintenance-api';
 import {
   MAINTENANCE_FIELDS,
   MAINTENANCE_TYPES,
   type MaintenanceItem,
+  type MaintenanceType,
 } from '../types/maintenance';
 
 /**
@@ -24,33 +30,31 @@ import {
  * módulo dono continua validando — aqui só montamos o formulário e enviamos
  * os campos que podem ser corrigidos no hub.
  *
- * O **local do recurso** é o único com seletor de identificação: usa a mesma lista
- * do cadastro (espécie, bancos e maquinetas) e só pergunta o tipo quando o nome é
- * próprio — na lista sugerida o tipo já vem junto, então pedir de novo seria redundante.
+ * O **local do recurso** usa o **catálogo de identificações** (o mesmo do cadastro, mantido
+ * no próprio hub) e só pergunta o tipo quando o nome é próprio — na lista o tipo já vem junto.
+ * A **identificação sugerida** em si é editada como texto: é ela que forma o catálogo.
  */
 export function MaintenanceEditModal({
   item,
+  type,
   onClose,
   onSaved,
 }: {
-  item: MaintenanceItem;
+  /** Ausente = criação (só o catálogo de identificações é criado pelo hub). */
+  item?: MaintenanceItem;
+  type: MaintenanceType;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const campos = MAINTENANCE_FIELDS[item.type];
-  const ehLocal = item.type === 'RESOURCE_ACCOUNT';
-  const [identificacao, setIdentificacao] = useState(() =>
-    ehLocal
-      ? valorDaIdentificacao(
-          String(item.values.name ?? ''),
-          (item.values.kind as never) ?? 'CASH',
-        )
-      : '',
-  );
+  const editando = item !== undefined;
+  const campos = MAINTENANCE_FIELDS[type];
+  const ehLocal = type === 'RESOURCE_ACCOUNT' && editando;
+  const [catalogo, setCatalogo] = useState<IdentificacaoLocal[]>([]);
+  const [identificacao, setIdentificacao] = useState<string | null>(null);
   const [valores, setValores] = useState<Record<string, string>>(() => {
     const inicial: Record<string, string> = {};
-    for (const campo of campos) {
-      const atual = item.values[campo.key];
+    for (const campo of MAINTENANCE_FIELDS[type]) {
+      const atual = item?.values[campo.key];
       inicial[campo.key] =
         campo.moeda && typeof atual === 'number'
           ? formatCentsToBRL(atual)
@@ -58,25 +62,28 @@ export function MaintenanceEditModal({
             ? ''
             : String(atual);
     }
-    if (ehLocal) {
-      // Nome próprio só entra no texto quando a identificação não está na lista.
-      inicial.nomeProprio =
-        valorDaIdentificacao(
-          String(item.values.name ?? ''),
-          (item.values.kind as never) ?? 'CASH',
-        ) === OUTRO_LOCAL
-          ? String(item.values.name ?? '')
-          : '';
-    }
     return inicial;
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!ehLocal) return;
+    listAccountSuggestions()
+      .then((sugestoes) =>
+        setCatalogo(sugestoes.map((x) => ({ name: x.name, kind: x.kind }))),
+      )
+      .catch(() => setCatalogo([]));
+  }, [ehLocal]);
+
+  const nomeAtual = String(item?.values.name ?? '');
+  const kindAtual = (item?.values.kind as IdentificacaoLocal['kind']) ?? 'CASH';
+  const selecionada =
+    identificacao ?? valorDaIdentificacao(catalogo, nomeAtual, kindAtual);
   const nomeDoLocal =
-    identificacao === OUTRO_LOCAL
+    selecionada === OUTRO_LOCAL
       ? (valores.nomeProprio ?? '').trim()
-      : (identificacaoEscolhida(identificacao)?.name ?? '');
+      : (identificacaoEscolhida(catalogo, selecionada)?.name ?? '');
 
   async function submit(evento: FormEvent) {
     evento.preventDefault();
@@ -87,9 +94,9 @@ export function MaintenanceEditModal({
       if (ehLocal) {
         corpo.name = nomeDoLocal;
         corpo.kind =
-          identificacao === OUTRO_LOCAL
+          selecionada === OUTRO_LOCAL
             ? valores.kind
-            : (identificacaoEscolhida(identificacao)?.kind ?? valores.kind);
+            : (identificacaoEscolhida(catalogo, selecionada)?.kind ?? valores.kind);
       } else {
         for (const campo of campos) {
           const bruto = valores[campo.key]?.trim() ?? '';
@@ -97,7 +104,12 @@ export function MaintenanceEditModal({
           corpo[campo.key] = campo.moeda ? parseBRLToCents(bruto) : bruto;
         }
       }
-      await updateMaintenanceItem(item.type, item.id, corpo);
+      if (item) await updateMaintenanceItem(item.type, item.id, corpo);
+      else
+        await createMaintenanceItem(type, {
+          name: String(corpo.name ?? ''),
+          kind: corpo.kind === undefined ? undefined : String(corpo.kind),
+        });
       onSaved();
       onClose();
     } catch (falha) {
@@ -108,21 +120,25 @@ export function MaintenanceEditModal({
   }
 
   return (
-    <Modal open title={`Editar ${MAINTENANCE_TYPES[item.type]}`} onClose={onClose}>
+    <Modal
+      open
+      title={editando ? `Editar ${MAINTENANCE_TYPES[type]}` : `Nova ${MAINTENANCE_TYPES[type]}`}
+      onClose={onClose}
+    >
       <form className="space-y-4" onSubmit={submit}>
         {ehLocal ? (
           <>
             <Select
               label="Identificação do local"
-              value={identificacao}
+              value={selecionada}
               onChange={(e) => setIdentificacao(e.target.value)}
-              options={identificacoesOpcoes()}
+              options={identificacoesOpcoes(catalogo)}
             />
-            {identificacao === OUTRO_LOCAL ? (
+            {selecionada === OUTRO_LOCAL ? (
               <>
                 <Select
                   label="Tipo de local"
-                  value={valores.kind ?? 'CASH'}
+                  value={valores.kind ?? kindAtual}
                   onChange={(e) => setValores({ ...valores, kind: e.target.value })}
                   options={Object.entries(RESOURCE_KINDS).map(([value, label]) => ({
                     value,
@@ -180,7 +196,7 @@ export function MaintenanceEditModal({
             Cancelar
           </Button>
           <Button type="submit" disabled={saving || (ehLocal && !nomeDoLocal)}>
-            {saving ? 'Salvando…' : 'Salvar alteração'}
+            {saving ? 'Salvando…' : editando ? 'Salvar alteração' : 'Adicionar'}
           </Button>
         </div>
       </form>

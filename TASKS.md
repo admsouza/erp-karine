@@ -173,6 +173,10 @@ módulo. Não tem tabela nem regra própria: consulta e delega aos módulos dono
   Nenhum tem caminho alcançável com o **mesmo valor** — os filtros só disparam quando o valor muda
   (input/select), a paginação já é desabilitada durante o carregamento e os `reload` sobem token. Ficam
   registrados como candidatos à padronização quando forem tocados (decisão 7.51).
+- [x] **Catálogo de identificações virou cadastro** (`ResourceAccountSuggestion`): migração com seed das
+  9 identificações que estavam no frontend, CRUD na manutenção ("Nova identificação" + editar + inativar/
+  reativar) e o seletor do Financeiro consumindo o catálogo pela API (decisão 7.52)
+- [x] Unicidade de nome de local/identificação **sem diferenciar acentos** (`Itau` = `Itaú`)
 - [ ] Novos cadastros entram sob demanda (ex.: procedimentos com valor — hoje o valor tem vigência
   própria e fica na tela do procedimento)
 

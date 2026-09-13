@@ -8,6 +8,7 @@ import { ProcedureService } from '../../procedures/services/procedure.service.js
 import { SubscriptionPlanQueryService } from '../../subscriptions/services/subscription-plan-query.service.js';
 import { SubscriptionPlanService } from '../../subscriptions/services/subscription-plan.service.js';
 import { ResourceAccountService } from '../../financial/services/resource-account.service.js';
+import { ResourceAccountSuggestionService } from '../../financial/services/resource-account-suggestion.service.js';
 import {
   MAINTENANCE_TYPES,
   type MaintenanceType,
@@ -89,6 +90,7 @@ export class MaintenanceService {
     private readonly planos: SubscriptionPlanQueryService,
     private readonly servicoPlanos: SubscriptionPlanService,
     private readonly locais: ResourceAccountService,
+    private readonly sugestoes: ResourceAccountSuggestionService,
     private readonly audit: AuditTrailService,
   ) {}
 
@@ -142,7 +144,16 @@ export class MaintenanceService {
       updatedAt: Date | null;
       values: Record<string, string | number | null>;
     }[] =
-      type === 'RESOURCE_ACCOUNT'
+      type === 'RESOURCE_ACCOUNT_SUGGESTION'
+        ? (await this.sugestoes.list()).map((x) => ({
+            id: x.id,
+            name: x.name,
+            secondary: ROTULO_LOCAL[x.kind] ?? x.kind,
+            active: x.active,
+            updatedAt: x.updatedAt,
+            values: { name: x.name, kind: x.kind },
+          }))
+        : type === 'RESOURCE_ACCOUNT'
         ? (await this.locais.list()).map((x) => ({
             id: x.id,
             name: x.name,
@@ -228,20 +239,47 @@ export class MaintenanceService {
    * a manutenção não funciona.
    */
   async summary(): Promise<{ counts: Record<MaintenanceType, number> }> {
-    const [clientes, procedimentos, locais, planos] = await Promise.all([
+    const [clientes, procedimentos, locais, sugestoes, planos] = await Promise.all([
       this.clientes.list({ page: 1, pageSize: 1 } as never),
       this.procedimentos.list({ page: 1, pageSize: 1 } as never),
       this.locais.list(),
+      this.sugestoes.list(),
       this.planos.list({}),
     ]);
     return {
       counts: {
         RESOURCE_ACCOUNT: locais.length,
+        RESOURCE_ACCOUNT_SUGGESTION: sugestoes.length,
         CLIENT: clientes.total,
         PROCEDURE: procedimentos.total,
         SUBSCRIPTION_PLAN: planos.length,
       },
     };
+  }
+
+  /**
+   * Cria **apenas a identificação sugerida de local** — é o catálogo que a clínica mantém
+   * por aqui (incluir banco novo sem depender de deploy). Os demais cadastros continuam
+   * sendo criados na tela do módulo dono.
+   */
+  async create(
+    type: string,
+    dto: MaintenanceUpdateInput,
+    user: AuthenticatedUser,
+    requestId?: string,
+  ) {
+    const t = this.tipo(type);
+    if (t !== 'RESOURCE_ACCOUNT_SUGGESTION')
+      throw new BadRequestException(
+        'A manutenção de cadastros não cria este tipo de cadastro.',
+      );
+    if (!dto.name || !dto.kind)
+      throw new BadRequestException('Informe a identificação e o tipo.');
+    return await this.sugestoes.create(
+      { name: dto.name, kind: dto.kind as never },
+      user,
+      requestId,
+    );
   }
 
   async update(
@@ -252,18 +290,16 @@ export class MaintenanceService {
     requestId?: string,
   ) {
     const t = this.tipo(type);
-    if (t === 'RESOURCE_ACCOUNT') {
+    if (t === 'RESOURCE_ACCOUNT' || t === 'RESOURCE_ACCOUNT_SUGGESTION') {
       if (dto.name === undefined && dto.kind === undefined)
         throw new BadRequestException(
           'Informe ao menos um campo para alterar o local do recurso.',
         );
       // O módulo dono valida e grava a própria trilha.
-      return this.locais.update(
-        id,
-        { name: dto.name, kind: dto.kind as never },
-        user,
-        requestId,
-      );
+      const payload = { name: dto.name, kind: dto.kind as never };
+      return t === 'RESOURCE_ACCOUNT'
+        ? this.locais.update(id, payload, user, requestId)
+        : this.sugestoes.update(id, payload, user, requestId);
     }
     if (t === 'CLIENT') {
       if (dto.name === undefined && dto.phone === undefined)
@@ -394,11 +430,12 @@ export class MaintenanceService {
     const acao = ativar ? 'REACTIVATED' : 'INACTIVATED';
     const estado = { field: 'active', before: !ativar, after: ativar };
     let resultado: unknown;
-    if (t === 'RESOURCE_ACCOUNT') {
+    if (t === 'RESOURCE_ACCOUNT' || t === 'RESOURCE_ACCOUNT_SUGGESTION') {
       // Dono grava a própria trilha.
+      const servico = t === 'RESOURCE_ACCOUNT' ? this.locais : this.sugestoes;
       resultado = ativar
-        ? await this.locais.reactivate(id, user, requestId)
-        : await this.locais.inactivate(id, user, requestId);
+        ? await servico.reactivate(id, user, requestId)
+        : await servico.inactivate(id, user, requestId);
       return resultado;
     }
     if (t === 'CLIENT') {

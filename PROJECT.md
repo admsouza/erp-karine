@@ -99,7 +99,8 @@ A sessão usa cookie `httpOnly` de 7 dias (ver `ARCHITECTURE.md`, seção 8.2).
 - Envelope de erro padronizado em toda a API, inclusive 404 de rota inexistente.
 - Layout administrativo (menu lateral com os 7 módulos de operação + seção **Sistema**, barra superior
   com status da conexão, responsivo com gaveta no mobile) e páginas base de cada módulo com estado vazio.
-- **Seção Sistema**: Auditoria, Usuários, **Manutenção de cadastros** e Integração (todas ADMIN).
+- **Seção Sistema**: Auditoria, Usuários, **Manutenção de cadastros** (locais do recurso,
+  **identificações sugeridas**, clientes, procedimentos e planos de assinatura) e Integração (todas ADMIN).
 - Build do frontend servido pelo backend quando `frontend/dist` existe.
 - **Módulo `clients` implementado (Fase 2)**: CRUD sem exclusão física, busca paginada,
   inativação/reativação, CPF validado e único, Swagger completo, 6 testes unitários e
@@ -172,6 +173,10 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   apurado de cada local do último período fechado — digitar saldo inicial é recusado.
 - Locais do recurso (`ResourceAccount`): **espécie** (`CASH`), **banco** (`BANK`) e
   **conta de maquineta** (`CARD`), com cadastro próprio (mais de uma conta/maquineta é permitido).
+- A **lista de identificações** oferecida no cadastro é um cadastro à parte
+  (`ResourceAccountSuggestion`), mantido em **Sistema → Manutenção de cadastros**: a clínica inclui
+  banco novo, renomeia e tira de linha sem depender de publicação. Nome próprio ("Outro (digitar)")
+  continua disponível, então a lista **sugere**, não trava.
 - O local pode ser **corrigido** (nome e tipo) a qualquer momento, com registro em auditoria — renomear
   não move valor, porque o saldo é ligado ao local e não ao nome.
 - Local **não é excluído**: inativar tira o local das listas de novos lançamentos e de novas aberturas,

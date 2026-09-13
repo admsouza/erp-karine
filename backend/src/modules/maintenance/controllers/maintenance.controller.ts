@@ -5,6 +5,7 @@ import {
   Headers,
   Param,
   Patch,
+  Post,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -31,6 +32,15 @@ export class MaintenanceController {
 
   @Get('summary') summary() {
     return this.service.summary();
+  }
+
+  @Post('registrations/:type') create(
+    @Param('type') type: string,
+    @Body() dto: MaintenanceUpdateDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-request-id') requestId?: string,
+  ) {
+    return this.service.create(type, dto, user, requestId || randomUUID());
   }
 
   @Patch('registrations/:type/:id') update(

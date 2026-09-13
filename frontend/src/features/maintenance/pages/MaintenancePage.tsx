@@ -50,6 +50,7 @@ export function MaintenancePage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<MaintenanceItem | null>(null);
+  const [criando, setCriando] = useState(false);
   const [recarregar, setRecarregar] = useState(0);
   const [contagens, setContagens] = useState<Record<string, number>>({});
 
@@ -116,6 +117,17 @@ export function MaintenancePage() {
       />
 
       <Card>
+        {type === 'RESOURCE_ACCOUNT_SUGGESTION' ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-500">
+              É a lista que aparece no seletor do Financeiro → Caixa. Inclua aqui os
+              bancos e maquinetas que a clínica usa.
+            </p>
+            <Button size="sm" onClick={() => setCriando(true)}>
+              Nova identificação
+            </Button>
+          </div>
+        ) : null}
         <form
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
           onSubmit={(evento) => {
@@ -289,9 +301,20 @@ export function MaintenancePage() {
         <MaintenanceEditModal
           key={editando.id}
           item={editando}
+          type={editando.type}
           onClose={() => setEditando(null)}
           onSaved={() => {
             setEditando(null);
+            recarregarTudo();
+          }}
+        />
+      ) : null}
+      {criando ? (
+        <MaintenanceEditModal
+          type="RESOURCE_ACCOUNT_SUGGESTION"
+          onClose={() => setCriando(false)}
+          onSaved={() => {
+            setCriando(false);
             recarregarTudo();
           }}
         />

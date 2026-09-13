@@ -11,6 +11,7 @@ import {
   identificacaoEscolhida,
   identificacoesOpcoes,
   valorDaIdentificacao,
+  type IdentificacaoLocal,
 } from '../../../shared/data/locais-recurso';
 import type { ResourceAccount } from '../types/cash';
 
@@ -23,14 +24,16 @@ import type { ResourceAccount } from '../types/cash';
  */
 export function EditResourceAccountModal({
   account,
+  catalogo,
   onClose,
   onSaved,
 }: {
   account: ResourceAccount;
+  catalogo: IdentificacaoLocal[];
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const inicial = valorDaIdentificacao(account.name, account.kind);
+  const inicial = valorDaIdentificacao(catalogo, account.name, account.kind);
   const [idLocal, setIdLocal] = useState(inicial);
   const [outroNome, setOutroNome] = useState(
     inicial === OUTRO_LOCAL ? account.name : '',
@@ -41,7 +44,7 @@ export function EditResourceAccountModal({
   const nome =
     idLocal === OUTRO_LOCAL
       ? outroNome.trim()
-      : (identificacaoEscolhida(idLocal)?.name ?? '');
+      : (identificacaoEscolhida(catalogo, idLocal)?.name ?? '');
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -65,11 +68,11 @@ export function EditResourceAccountModal({
           label="Identificação do local"
           value={idLocal}
           onChange={(e) => {
-            const escolhido = identificacaoEscolhida(e.target.value);
+            const escolhido = identificacaoEscolhida(catalogo, e.target.value);
             setIdLocal(e.target.value);
             if (escolhido) setKind(escolhido.kind);
           }}
-          options={identificacoesOpcoes()}
+          options={identificacoesOpcoes(catalogo)}
         />
         {/* O tipo só é perguntado no nome próprio: na lista sugerida ele já vem junto. */}
         {idLocal === OUTRO_LOCAL ? (

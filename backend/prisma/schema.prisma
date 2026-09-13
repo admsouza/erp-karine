@@ -491,6 +491,18 @@ model ResourceAccount {
   balances CashBalance[]
 }
 
+/// Catálogo de identificações sugeridas ao cadastrar um local do recurso
+/// (espécie, bancos, maquinetas). É a lista que aparece no seletor do Financeiro.
+model ResourceAccountSuggestion {
+  id String @id @default(uuid())
+  name String @unique
+  kind ResourceAccountKind
+  active Boolean @default(true)
+  deactivatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model CashPeriod {
   id String @id @default(uuid())
   month String @unique

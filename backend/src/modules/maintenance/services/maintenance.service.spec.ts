@@ -54,6 +54,22 @@ function setup() {
     inactivate: vi.fn(),
     reactivate: vi.fn(),
   };
+  const sugestoes = {
+    list: vi.fn(async () => [
+      {
+        id: 's1',
+        name: 'Banco do Brasil',
+        kind: 'BANK',
+        active: true,
+        updatedAt: new Date(),
+      },
+      { id: 's2', name: 'Maquineta 2', kind: 'CARD', active: false, updatedAt: new Date() },
+    ]),
+    create: vi.fn(async (dto: unknown) => ({ id: 'nova', ...(dto as object) })),
+    update: vi.fn(async (id: string) => ({ id })),
+    inactivate: vi.fn(),
+    reactivate: vi.fn(),
+  };
   const auditoria = { record: vi.fn() };
   const service = new MaintenanceService(
     clientes as never,
@@ -63,6 +79,7 @@ function setup() {
     planos as never,
     servicoPlanos as never,
     locais as never,
+    sugestoes as never,
     auditoria as never,
   );
   return {
@@ -71,6 +88,7 @@ function setup() {
     servicoClientes,
     servicoProcedimentos,
     locais,
+    sugestoes,
     servicoPlanos,
     auditoria,
   };
@@ -165,9 +183,60 @@ describe('Manutenção de cadastros', () => {
     // Locais: 2 no mock · Clientes: total 1 da paginação · Planos: 1 · Procedimentos: 0
     expect(resumo.counts).toEqual({
       RESOURCE_ACCOUNT: 2,
+      RESOURCE_ACCOUNT_SUGGESTION: 2,
       CLIENT: 1,
       PROCEDURE: 0,
       SUBSCRIPTION_PLAN: 1,
     });
+  });
+  it('cria identificação sugerida pelo hub (o dono valida e grava a trilha)', async () => {
+    const { service, sugestoes, auditoria } = setup();
+    await service.create(
+      'RESOURCE_ACCOUNT_SUGGESTION',
+      { name: 'Banco Inter', kind: 'BANK' },
+      user,
+    );
+    expect(sugestoes.create).toHaveBeenCalledWith(
+      { name: 'Banco Inter', kind: 'BANK' },
+      user,
+      undefined,
+    );
+    expect(auditoria.record).not.toHaveBeenCalled();
+  });
+  it('recusa criação dos cadastros que não são o catálogo', async () => {
+    const { service, servicoClientes } = setup();
+    await expect(
+      service.create('CLIENT', { name: 'Cliente novo' }, user),
+    ).rejects.toThrow('não cria este tipo');
+    expect(servicoClientes.update).not.toHaveBeenCalled();
+  });
+  it('lista as identificações sugeridas de local e delega a edição sem duplicar trilha', async () => {
+    const { service, sugestoes, auditoria } = setup();
+    const pagina = await service.list({ type: 'RESOURCE_ACCOUNT_SUGGESTION' });
+    expect(pagina.items).toEqual([
+      expect.objectContaining({
+        id: 's1',
+        type: 'RESOURCE_ACCOUNT_SUGGESTION',
+        label: 'Banco do Brasil',
+        secondary: 'Banco',
+        values: { name: 'Banco do Brasil', kind: 'BANK' },
+      }),
+      expect.objectContaining({
+        id: 's2',
+        label: 'Maquineta 2',
+        secondary: 'Conta de maquineta',
+        active: false,
+      }),
+    ]);
+    await service.update(
+      'RESOURCE_ACCOUNT_SUGGESTION',
+      's1',
+      { name: 'BB' },
+      user,
+    );
+    expect(sugestoes.update).toHaveBeenCalled();
+    expect(auditoria.record).not.toHaveBeenCalled();
+    await service.inactivate('RESOURCE_ACCOUNT_SUGGESTION', 's1', user);
+    expect(sugestoes.inactivate).toHaveBeenCalledWith('s1', user, undefined);
   });
 });

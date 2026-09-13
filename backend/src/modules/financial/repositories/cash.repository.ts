@@ -60,6 +60,29 @@ export class CashRepository {
   ) {
     return tx.cashBalance.deleteMany({ where: { periodId, accountId } });
   }
+  suggestions(tx?: Prisma.TransactionClient) {
+    return (tx ?? this.prisma).resourceAccountSuggestion.findMany({
+      orderBy: [{ kind: 'asc' }, { name: 'asc' }],
+    });
+  }
+  suggestion(id: string, tx?: Prisma.TransactionClient) {
+    return (tx ?? this.prisma).resourceAccountSuggestion.findUnique({
+      where: { id },
+    });
+  }
+  createSuggestion(
+    data: Prisma.ResourceAccountSuggestionCreateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.resourceAccountSuggestion.create({ data });
+  }
+  updateSuggestion(
+    id: string,
+    data: Prisma.ResourceAccountSuggestionUpdateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.resourceAccountSuggestion.update({ where: { id }, data });
+  }
   createPeriod(
     data: Prisma.CashPeriodCreateInput,
     tx: Prisma.TransactionClient,

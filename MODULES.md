@@ -291,7 +291,8 @@ vinculado coerente com a correção do pagamento, dentro da mesma transação.
 indicadores de faturamento. **Não** decide se um atendimento existe nem se uma assinatura
 está ativa: pergunta ao módulo dono.
 
-**Entidades:** `FinancialTransaction`, `ResourceAccount`, `CashPeriod`, `CashBalance`,
+**Entidades:** `FinancialTransaction`, `ResourceAccount`, `ResourceAccountSuggestion`,
+`CashPeriod`, `CashBalance`,
 `FinancialTitle`, `FinancialSettlement`, `FinancialReconciliation`.
 
 **Serviços públicos:**
@@ -302,6 +303,8 @@ está ativa: pergunta ao módulo dono.
   último período fechado) e fechar o período com o saldo apurado por local.
 - `ResourceAccountService` — cadastro, correção da identificação e inativação/reativação dos
   locais do recurso (`CASH`, `BANK`, `CARD`).
+- `ResourceAccountSuggestionService` — **catálogo das identificações sugeridas** (espécie, bancos e
+  maquinetas) que monta o seletor das telas: listar, criar, corrigir e inativar/reativar.
 - `FinancialTitleService` — contas a receber/pagar e baixas parciais ou totais.
 - `FinancialAdjustmentService` — ajuste rastreável de lançamento de período já fechado.
 - `ReconciliationService` — conferência do período por local e registro das divergências.
@@ -317,6 +320,8 @@ Não importa os módulos donos nem seus serviços/repositories.
 `PATCH /api/financial/transactions/:id/resource`, `POST /api/financial/transactions/:id/adjustments`,
 `GET /api/financial/summary`, `GET /api/financial/reports`,
 `GET/POST /api/financial/accounts`,
+`GET/POST /api/financial/account-suggestions`, `PATCH /api/financial/account-suggestions/:id`,
+`PATCH /api/financial/account-suggestions/:id/inactivate|reactivate`,
 `PATCH /api/financial/accounts/:id`, `PATCH /api/financial/accounts/:id/inactivate`,
 `PATCH /api/financial/accounts/:id/reactivate`,
 `GET/POST /api/financial/cash-periods`, `GET /api/financial/cash-periods/:id`,
@@ -356,6 +361,10 @@ Não importa os módulos donos nem seus serviços/repositories.
   e é registrado na trilha.
 - Todas as operações (abertura, fechamento, ajuste, conciliação, baixa) rodam em **uma transação** e
   gravam `AuditEvent` pelo caso de uso.
+- **A lista de identificações é cadastro** (`ResourceAccountSuggestion`), semeada pela migração com as
+  antigas sugestões fixas do frontend. Nome único **sem diferenciar maiúsculas nem acentos** (`Itau` e
+  `Itaú` são o mesmo banco — `entities/resource-name.ts`), `active` + `deactivatedAt` (sem exclusão
+  física) e trilha de auditoria pelo caso de uso. É **sugestão**: o local aceita qualquer nome.
 - **Local do recurso é editável**: `PATCH /accounts/:id` corrige identificação (nome) e tipo, recusa
   nome já usado por outro local (409, sem diferenciar maiúsculas) e recusa edição sem mudança (400).
   Renomear **não move valor** — o saldo é ligado ao `id`, então o histórico passa a exibir o nome novo.
@@ -408,7 +417,8 @@ tem tabela nem regra de domínio próprias** — é um hub que consulta e delega
 
 **Regras principais:**
 
-- Tipos cobertos: `RESOURCE_ACCOUNT` (local do recurso), `CLIENT`, `PROCEDURE` e `SUBSCRIPTION_PLAN`.
+- Tipos cobertos: `RESOURCE_ACCOUNT` (local do recurso), `RESOURCE_ACCOUNT_SUGGESTION` (a lista de
+  identificações que aparece no seletor do Financeiro), `CLIENT`, `PROCEDURE` e `SUBSCRIPTION_PLAN`.
   Tipo desconhecido devolve **400**.
 - Campos editáveis por tipo (o resto continua na tela do módulo dono): local → **identificação pela
   mesma lista do cadastro** (o tipo vem junto e só é perguntado no "Outro (digitar)");
@@ -420,6 +430,9 @@ tem tabela nem regra de domínio próprias** — é um hub que consulta e delega
   quando o módulo dono **não** registra. Hoje o dono registra em `financial` (local do recurso), então
   essas operações **não** geram evento do hub; clientes, procedimentos e planos (que não registram)
   passam a ter rastro por aqui.
+- **Única criação permitida no hub:** a identificação sugerida (`POST /api/maintenance/registrations/:type`).
+  É o catálogo que a clínica mantém por aqui — incluir banco novo não depende de deploy. Para os demais
+  tipos a rota devolve **400**, porque cadastro de domínio se cria na tela do dono.
 - Sem exclusão física em nenhum caminho; `DELETE` continua **404**.
 
 ---
