@@ -19,6 +19,7 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | subscriptions | `[x]` | 5 |
 | financial | `[x]` | 6 |
 | protocols | `[x]` | 7 |
+| audit | `[x]` | transversal |
 | exams | `[~]` | 8 |
 | dashboard | `[~]` | 9 |
 
@@ -244,18 +245,20 @@ pagamentos dessas assinaturas.
 **Serviços públicos:**
 - `SubscriptionPlanService` / `SubscriptionPlanQueryService`.
 - `SubscriptionService` — contratar, cancelar, encerrar, marcar inadimplente.
-- `SubscriptionPaymentService` — registrar pagamento.
+- `SubscriptionPaymentService` — registrar, detalhar, editar (com motivo) e timeline do pagamento.
 - `SubscriptionQueryService` — assinaturas por cliente, assinaturas ativas.
 
 **Eventos emitidos:** `SubscriptionPaymentReceived` (previsto).
 
 **Eventos consumidos:** nenhum.
 
-**Dependências permitidas:** `clients` (serviço público).
+**Dependências permitidas:** `clients` (serviço público), `audit` (`AuditTrailService`) e `financial`
+(`FinancialTransactionService.synchronizeSubscriptionPayment`) — este último só para manter o lançamento
+vinculado coerente com a correção do pagamento, dentro da mesma transação.
 
-**Não depende de:** `financial`.
+**Não depende de:** repositories ou tabelas de outros módulos.
 
-**Endpoints (implementados):** `POST/GET /api/subscription-plans`, `GET/PATCH /api/subscription-plans/:id`, `PATCH /api/subscription-plans/:id/inactivate|reactivate`; `POST/GET /api/subscriptions`, `GET /api/subscriptions/:id`, `PATCH /api/subscriptions/:id/status` e `POST/GET /api/subscriptions/:id/payments`.
+**Endpoints (implementados):** `POST/GET /api/subscription-plans`, `GET/PATCH /api/subscription-plans/:id`, `PATCH /api/subscription-plans/:id/inactivate|reactivate`; `POST/GET /api/subscriptions`, `GET /api/subscriptions/:id`, `PATCH /api/subscriptions/:id/status`; `POST/GET /api/subscriptions/:id/payments`; `GET /api/subscriptions/:id/payments/:paymentId`, `PATCH /api/subscriptions/:id/payments/:paymentId` (exige `reason`), `GET /api/subscriptions/:id/payments/:paymentId/timeline`.
 
 **Regras principais:**
 - Status da assinatura: `ATIVA`, `CANCELADA`, `ENCERRADA`, `INADIMPLENTE`.
@@ -265,7 +268,9 @@ pagamentos dessas assinaturas.
   responsabilidade do módulo financial (reagindo ao evento/contrato).
 - A assinatura preserva snapshot de nome, periodicidade, sessões por período e valor contratado.
 - Não há exclusão física; status finais não reabrem. Um cliente não pode ter duas assinaturas ativas/inadimplentes do mesmo plano.
-- `SubscriptionQueryService` é exportado para financial/dashboard; o módulo só depende de `ClientQueryService`.
+- `SubscriptionQueryService` é exportado para financial/dashboard; além de `ClientQueryService`, o módulo usa apenas os contratos públicos de `audit` e `financial` descritos acima.
+- **Pagamento pode ser corrigido** depois de lançado (`PATCH .../payments/:paymentId`), exigindo **motivo** e alterando somente os campos realmente informados; edição sem mudança efetiva é recusada (400).
+- Cada edição registra um `AuditEvent` imutável (autor, motivo, data/hora, campos alterados antes → depois) e sincroniza o lançamento financeiro vinculado na mesma transação, sem criar segundo lançamento.
 
 ---
 
@@ -333,6 +338,35 @@ e `GET /api/clients/:id/protocols`.
 - Cliente/procedimento são validados por contratos públicos e têm nome em snapshot. Atendimento opcional
   precisa pertencer ao cliente, estar realizado e só pode aparecer uma vez no histórico.
 - Só ficha ativa em andamento recebe edição administrativa e novas sessões; não há edição/exclusão de sessão.
+
+---
+
+## audit (transversal)
+
+**Responsabilidade:** guardar a **trilha de alterações** do sistema — quem mudou o quê, quando, por quê e
+com que valores antes/depois. É infraestrutura de domínio: não conhece regra de negócio de nenhum módulo.
+
+**Entidades:** `AuditEvent` (**append-only**: não existe endpoint, serviço ou campo para editar ou apagar).
+
+**Estado:** implementado (transversal) — backend, frontend (linha do tempo do pagamento) e testes.
+
+**Serviços públicos:**
+- `AuditTrailService.record(evento, tx?)` — grava o evento (aceita transação Prisma para entrar na mesma operação do fato).
+- `AuditTrailService.timeline(entityType, entityId, page, pageSize)` — lista o histórico mais recente primeiro.
+
+**Eventos emitidos:** nenhum. **Eventos consumidos:** nenhum (o registro é pedido explicitamente pelo módulo dono).
+
+**Dependências permitidas:** nenhuma de outros módulos. **Quem depende dele:** `subscriptions` (primeiro consumidor).
+
+**Endpoints (implementados):** nenhum endpoint próprio; a timeline é exposta pelo módulo dono
+(`GET /api/subscriptions/:id/payments/:paymentId/timeline`), sempre autenticado.
+
+**Regras principais:**
+- `changes` guarda **apenas os campos efetivamente alterados**, com valor anterior e novo.
+- `actorUserId` + snapshot de nome/e-mail; `reason` obrigatório para edição financeira; `requestId` correlaciona a requisição.
+- Não há histórico retroativo: a trilha vale a partir da migração `20260913160000_audit_payment_history`.
+- **Sem interceptor genérico:** cada caso de uso decide o que registrar, porque auditoria automática de `PATCH` perde o significado de negócio e pode capturar dado sensível.
+- Adoção é incremental por módulo; nenhum histórico passado é reescrito.
 
 ---
 

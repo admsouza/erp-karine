@@ -186,9 +186,9 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 
 `Client`, `Procedure`, `Appointment`, `SubscriptionPlan`, `ClientSubscription`,
 `SubscriptionPayment`, `FinancialTransaction`, `Protocol`, `ProtocolSession`,
-`ExamRecommendation`, `ExamRecommendationItem` — todas com UUID, `createdAt`, `updatedAt` e
-soft delete conforme a entidade. O dono de cada entidade está em `MODULES.md`; o schema é
-`backend/prisma/schema.prisma`.
+`ExamRecommendation`, `ExamRecommendationItem`, `AuditEvent` — todas com UUID, `createdAt`,
+`updatedAt` e soft delete conforme a entidade (`AuditEvent` é append-only). O dono de cada entidade
+está em `MODULES.md`; o schema é `backend/prisma/schema.prisma`.
 
 ```
 Client 1─N Appointment            Appointment N─1 Procedure (opcional)
@@ -198,6 +198,7 @@ Client 1─N FinancialTransaction   FinancialTransaction N─1 Appointment (opci
                                   FinancialTransaction N─1 SubscriptionPayment (opcional, único)
 Client 1─N Protocol               Protocol 1─N ProtocolSession
 Client 1─N ExamRecommendation     ExamRecommendation 1─N ExamRecommendationItem
+AuditEvent: trilha polimórfica (module/entityType/entityId), sem FK de domínio
 ```
 
 ## 8. Estrutura de pastas
@@ -215,7 +216,8 @@ Detalhamento das camadas e das regras de dependência: `ARCHITECTURE.md` (seçã
 ## 9. Funcionalidades pendentes
 
 Ordem de execução em `TASKS.md`: Fase 2 `clients` → 3 `procedures` → 4 `appointments` →
-5 `subscriptions` → 6 `financial` → 7 `protocols` → 8 `exams` → 9 `dashboard` → 10 revisão
+5 `subscriptions` → 6 `financial` → 7 `protocols` → **transversal `audit` (trilha de alterações +
+edição de pagamento com motivo e linha do tempo)** → 8 `exams` → 9 `dashboard` → 10 revisão
 arquitetural, UX, validações, testes e documentação final.
 
 Decisões ainda abertas: autorização por perfil/recuperação de senha e rotina de backup do banco

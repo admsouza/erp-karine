@@ -3,7 +3,7 @@
 > Este arquivo é o **ponto de entrada para qualquer agente que for continuar este projeto**.
 > Leia ele inteiro antes de escrever código. Depois leia `PROJECT.md`, `ARCHITECTURE.md`,
 > `MODULES.md`, `TASKS.md` e `CHANGELOG.md` (a raiz do repo é a fonte da verdade).
-> Última atualização: 2026-09-13, após a Fase 7 (protocolos).
+> Última atualização: 2026-09-13, após a trilha de auditoria e a correção de pagamento (transversal).
 
 ---
 
@@ -16,7 +16,7 @@ protocolos, exames, dashboard.
 - **Repo:** `admsouza/erp-karine` (GitHub, privado) · clone de trabalho em `/opt/data/erp-karine`
 - **Produção:** https://erp-estetica.solucoes.cloud (CapRover, app `erp-estetica`)
 - **Usuário de produção:** `mkarineon@gmail.com` (perfil ADMIN) — senha com o cliente
-- **Estado:** Fases 1 a 7 publicadas e verificadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos).
+- **Estado:** Fases 1 a 7 publicadas e verificadas (incluindo autenticação, agenda, assinaturas, financeiro e protocolos) **+ módulo transversal `audit`** (trilha de alterações e edição de pagamento com motivo).
   **Próxima: Fase 8 — `exams`.**
 
 ## 2. Regras de arquitetura que NÃO podem ser quebradas
@@ -142,6 +142,8 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
 | Patch silencioso | `patch` com âncora não única ou inexistente falha **sem erro** se você não olhar o retorno. Imprima o resultado e confirme com `grep` depois. |
 | Ordem do `NotFoundModule` | Tem que ser o **último** em `app.module.ts`, senão o curinga engole `/api/health`. |
 | Swagger e guards | O `SwaggerModule` registra handlers direto no Express e **não passa pelos guards** — a proteção é um middleware no `app.setup.ts`, registrado **antes** do Swagger. |
+| Checksum de migração divergente | `prisma migrate dev` acusa "migração modificada após aplicada" e sugere `migrate reset`. **Não resete.** Prove de que lado está o problema: compare o `sha256` do arquivo com o `checksum` gravado em **produção** e compare o schema de dev e produção (`information_schema.columns`, `diff` vazio = sem drift). Em 2026-09-13 a linha obsoleta era só a de **dev** (resíduo de uma variação anterior aplicada 15 min antes do conteúdo final); a correção foi `UPDATE _prisma_migrations SET checksum='<sha256 do arquivo>'` **em dev** + `prisma migrate deploy`. Reset apagaria o banco de dev inteiro (usuário de dev incluído) sem corrigir o arquivo, que é o que produção usa. Migração já aplicada em produção é **imutável**: correção entra como migração nova. |
+| Test double não espelha o repositório | Um mock de `updateInTransaction` que devolve `work(...)` em vez do registro atualizado faz o teste falhar com `undefined` e parece bug de produção. O mock tem que devolver o mesmo contrato do repository real (`await work(...); return registro`). |
 
 ## 7. Estado atual (o que está em produção)
 
@@ -154,6 +156,15 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
   página de detalhe.
 - **Assinaturas:** planos com periodicidade e sessões, contratação por cliente com snapshot comercial,
   status, pagamentos e filtros. `SubscriptionQueryService` é o contrato público para financeiro/dashboard.
+  **Pagamento é editável depois de lançado** (`PATCH /api/subscriptions/:id/payments/:paymentId`) com
+  **motivo obrigatório**; a edição recusa no-op (400), sincroniza o lançamento financeiro vinculado na
+  mesma transação (sem duplicar) e grava um evento de auditoria. Na UI, cada pagamento do histórico abre
+  o detalhe com **Editar pagamento** e a **linha do tempo**.
+- **Auditoria (`audit`, transversal):** `AuditEvent` append-only + `AuditTrailService` (contrato público,
+  aceita `tx`). Registra autor (id + nome/e-mail), módulo, entidade, ação, `requestId`, motivo e **só os
+  campos alterados** (antes → depois). Sem endpoint de edição/exclusão; sem histórico retroativo. A
+  adoção é incremental e feita **pelo caso de uso** do módulo dono — **não** existe interceptor genérico
+  (perderia o significado de negócio e poderia capturar dado sensível).
 - **Financeiro:** receitas/despesas, lançamentos manuais e automáticos por eventos, idempotência por
   vínculos únicos, cancelamento lógico, filtros, indicadores e relatórios históricos.
 - **Protocolos:** fichas clínicas com status, snapshots de cliente/procedimento, vínculo opcional a

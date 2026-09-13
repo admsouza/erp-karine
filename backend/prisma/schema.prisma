@@ -121,6 +121,25 @@ model Session {
   @@index([expiresAt])
 }
 
+/// Evento de auditoria append-only. Não há endpoints de edição ou exclusão.
+model AuditEvent {
+  id          String   @id @default(uuid())
+  actorUserId String
+  actorName   String?
+  actorEmail  String?
+  module      String
+  entityType  String
+  entityId    String
+  action      String
+  requestId   String?
+  reason      String?
+  changes     Json
+  createdAt   DateTime @default(now())
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId])
+  @@index([requestId])
+}
+
 enum Role {
   ADMIN
   USER
