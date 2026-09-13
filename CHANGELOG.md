@@ -2,6 +2,18 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+**Publicação (2026-09-13)**
+
+- PR **#24** aprovado e integrado em `main` (merge `2a60dd1`); deploy no CapRover **concluído**, sem migração.
+- Produção: `/api/health` → `database: up`; bundle `index-DiJhXJjG.js`. **Navegador real (390px, só
+  leitura)**: em Financeiro → Caixa o formulário mostra **apenas a identificação** (10 sugestões +
+  "Selecione…"), **sem** o campo "Tipo de local"; escolher `Itaú · Banco` não pede tipo; escolher
+  "Outro (digitar)" faz o campo de tipo aparecer. Sem erro de tela.
+- **Nada gravado em produção** (0 locais, 0 eventos de trilha do hub) e o usuário temporário de
+  verificação foi excluído. A edição do local **pela manutenção**, que exige um local cadastrado, foi
+  verificada no ambiente de desenvolvimento e pelo e2e — em produção ela aparece assim que o primeiro
+  local for cadastrado.
+
 ## 2026-09-13 · `financial` + `maintenance` (tela) · Lista única de identificação, sem o tipo redundante
 
 **Alteração**
