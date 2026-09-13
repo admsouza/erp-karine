@@ -91,6 +91,17 @@ export function ExamIcon(props: IconProps) {
   );
 }
 
+/** Lista de itens com marcador — catálogo de procedimentos. */
+export function ProcedureIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 4h9a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      <path d="M6 8H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1" />
+      <path d="M11 9h5M11 13h5M11 17h3" />
+    </Icon>
+  );
+}
+
 export function MenuIcon(props: IconProps) {
   return (
     <Icon {...props}>

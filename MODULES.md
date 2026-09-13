@@ -128,17 +128,37 @@ situação ativo/inativo). É o módulo dono da identidade do cliente.
 **Responsabilidade:** catálogo de procedimentos da clínica (nome, descrição, duração,
 valor padrão, ativo).
 
+**Estado:** implementado (Fase 3).
+
 **Entidades:** `Procedure`.
 
-**Serviços públicos (previstos):**
-- `ProcedureService` — criar, editar, inativar.
-- `ProcedureQueryService` — buscar por id, listar ativos.
+**Serviços públicos:**
+- `ProcedureService` — criar, editar, inativar, reativar.
+- `ProcedureQueryService` — buscar por id, listar/pesquisar, verificar existência. **É o contrato
+  que agenda, protocolos e financeiro usam para referenciar procedimento pelo id.**
 
 **Eventos:** emite nenhum; consome nenhum.
 
 **Dependências permitidas:** nenhuma (módulo base).
 
-**Endpoints (previstos):** `POST/GET/GET :id/PATCH /api/procedures`, `PATCH /api/procedures/:id/inactivate`.
+**Endpoints (implementados, todos com Swagger):**
+
+| Método | Rota | Descrição |
+| ------ | ---- | --------- |
+| POST | `/api/procedures` | cadastrar |
+| GET | `/api/procedures` | listar/pesquisar (paginado) |
+| GET | `/api/procedures/:id` | detalhar |
+| PATCH | `/api/procedures/:id` | editar |
+| PATCH | `/api/procedures/:id/inactivate` | inativar |
+| PATCH | `/api/procedures/:id/reactivate` | reativar |
+
+**Regras principais (implementadas):**
+- Nome **único** (409 `Já existe procedimento com este nome.`), mínimo de 3 caracteres.
+- Valor padrão **em centavos (`Int`)**, nunca float; a tela converte o que o usuário digita.
+- Duração em minutos, inteiro, entre 5 e 600, ou vazio.
+- Nunca excluir: `active = false` (409 ao repetir); reativar devolve ao catálogo.
+- Listagem ordenada por nome, paginada, com busca por nome/descrição e filtro `active=true|false`
+  (contrato em texto, pelo mesmo motivo do módulo de clientes).
 
 **Regras principais:**
 - Outros módulos referenciam procedimento **por id** e guardam um *snapshot* do nome/valor

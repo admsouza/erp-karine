@@ -3,12 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
 import { configureApp } from './../src/app.setup.js';
-import { PrismaService } from './../src/common/database/prisma.service.js';
 import { createSession, destroySession, type TestSession } from './helpers/auth.js';
 
 describe('Autenticação (e2e)', () => {
   let app: INestApplication;
-  let prisma: PrismaService;
   let sessao: TestSession;
 
   beforeAll(async () => {
@@ -16,7 +14,6 @@ describe('Autenticação (e2e)', () => {
     app = moduleFixture.createNestApplication();
     configureApp(app);
     await app.init();
-    prisma = app.get(PrismaService);
     sessao = await createSession(app, 'auth');
   });
 
@@ -70,7 +67,25 @@ describe('Autenticação (e2e)', () => {
     }
   });
 
-  it('recusa requisição de escrita com Origin de outro site (CSRF)', async () => {
+  it('aceita escrita quando o Origin é o da própria aplicação', async () => {
+    await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', sessao.cookie)
+      .set('Origin', 'http://127.0.0.1:3001')
+      .send({})
+      .expect(400);
+  });
+
+  it('aceita escrita do front em desenvolvimento (mesmo host, porta diferente)', async () => {
+    await request(app.getHttpServer())
+      .post('/api/clients')
+      .set('Cookie', sessao.cookie)
+      .set('Origin', 'http://127.0.0.1:5173')
+      .send({})
+      .expect(400);
+  });
+
+  it('recusa escrita com Origin de outro site (CSRF)', async () => {
     await request(app.getHttpServer())
       .post('/api/clients')
       .set('Cookie', sessao.cookie)
