@@ -222,6 +222,28 @@ export class MaintenanceService {
     };
   }
 
+  /**
+   * Quantos cadastros existem em cada tipo. Alimenta o seletor da tela — sem isso a
+   * pessoa abre num tipo vazio (ex.: locais do recurso sem nenhum cadastro) e pensa que
+   * a manutenção não funciona.
+   */
+  async summary(): Promise<{ counts: Record<MaintenanceType, number> }> {
+    const [clientes, procedimentos, locais, planos] = await Promise.all([
+      this.clientes.list({ page: 1, pageSize: 1 } as never),
+      this.procedimentos.list({ page: 1, pageSize: 1 } as never),
+      this.locais.list(),
+      this.planos.list({}),
+    ]);
+    return {
+      counts: {
+        RESOURCE_ACCOUNT: locais.length,
+        CLIENT: clientes.total,
+        PROCEDURE: procedimentos.total,
+        SUBSCRIPTION_PLAN: planos.length,
+      },
+    };
+  }
+
   async update(
     type: string,
     id: string,

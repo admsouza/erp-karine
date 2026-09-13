@@ -159,4 +159,15 @@ describe('Manutenção de cadastros', () => {
       service.list({ type: 'INEXISTENTE' as never }),
     ).rejects.toThrow('Tipo de cadastro inválido');
   });
+  it('resume quantos cadastros existem em cada tipo (para o seletor da tela)', async () => {
+    const { service } = setup();
+    const resumo = await service.summary();
+    // Locais: 2 no mock · Clientes: total 1 da paginação · Planos: 1 · Procedimentos: 0
+    expect(resumo.counts).toEqual({
+      RESOURCE_ACCOUNT: 2,
+      CLIENT: 1,
+      PROCEDURE: 0,
+      SUBSCRIPTION_PLAN: 1,
+    });
+  });
 });

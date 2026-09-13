@@ -29,6 +29,10 @@ export class MaintenanceController {
     return this.service.list(query);
   }
 
+  @Get('summary') summary() {
+    return this.service.summary();
+  }
+
   @Patch('registrations/:type/:id') update(
     @Param('type') type: string,
     @Param('id') id: string,

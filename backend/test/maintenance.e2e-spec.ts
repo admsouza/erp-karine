@@ -132,6 +132,25 @@ describe('Manutenção de cadastros (e2e)', () => {
       .expect(400);
   });
 
+  it('resume as contagens por tipo (para o seletor não abrir em tipo vazio)', async () => {
+    const resumo = await request(app.getHttpServer())
+      .get('/api/maintenance/summary')
+      .set('Cookie', admin.cookie)
+      .expect(200);
+    expect(Object.keys(resumo.body.counts).sort()).toEqual([
+      'CLIENT',
+      'PROCEDURE',
+      'RESOURCE_ACCOUNT',
+      'SUBSCRIPTION_PLAN',
+    ]);
+    expect(resumo.body.counts.CLIENT).toBeGreaterThanOrEqual(1);
+    expect(resumo.body.counts.RESOURCE_ACCOUNT).toBeGreaterThanOrEqual(1);
+    await request(app.getHttpServer())
+      .get('/api/maintenance/summary')
+      .set('Cookie', comum.cookie)
+      .expect(403);
+  });
+
   it('edita o cliente pelo hub e registra a trilha (o dono não registra)', async () => {
     await request(app.getHttpServer())
       .patch(`/api/maintenance/registrations/CLIENT/${clienteId}`)
