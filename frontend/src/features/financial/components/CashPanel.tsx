@@ -17,7 +17,9 @@ import {
   openCashPeriod,
 } from '../api/cash-api';
 import {
+  OUTRO_LOCAL,
   RESOURCE_KINDS,
+  RESOURCE_KIND_SUGGESTIONS,
   type CashPeriod,
   type ResourceAccount,
 } from '../types/cash';
@@ -27,8 +29,12 @@ export function CashPanel() {
   const [detail, setDetail] = useState<CashPeriod | null>(null);
   const [counted, setCounted] = useState<Record<string, string>>({});
   const [reason, setReason] = useState('');
-  const [name, setName] = useState('');
+  const [idLocal, setIdLocal] = useState('');
+  const [customName, setCustomName] = useState('');
   const [kind, setKind] = useState('CASH');
+  // Nome que vai para o cadastro: sugestão escolhida ou o nome próprio digitado.
+  const selectedName =
+    idLocal === OUTRO_LOCAL ? customName.trim() : idLocal;
   const [month, setMonth] = useState(
     new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Recife' })
       .format(new Date())
@@ -97,28 +103,59 @@ export function CashPanel() {
               onSubmit={(e) => {
                 e.preventDefault();
                 void act(async () => {
-                  await createResourceAccount({ name, kind });
-                  setName('');
+                  await createResourceAccount({
+                    name: selectedName,
+                    kind,
+                  });
+                  setIdLocal('');
+                  setCustomName('');
                 });
               }}
             >
-              <Input
-                label="Nome do local"
-                value={name}
-                required
-                onChange={(e) => setName(e.target.value)}
+              <Select
+                label="Identificação do local"
+                value={idLocal}
+                onChange={(e) => setIdLocal(e.target.value)}
+                options={[
+                  { value: '', label: 'Selecione…' },
+                  ...RESOURCE_KIND_SUGGESTIONS[
+                    kind as keyof typeof RESOURCE_KIND_SUGGESTIONS
+                  ].map((s) => ({ value: s, label: s })),
+                  { value: OUTRO_LOCAL, label: 'Outro (digitar)' },
+                ]}
               />
               <Select
                 label="Tipo de local"
                 value={kind}
-                onChange={(e) => setKind(e.target.value)}
+                onChange={(e) => {
+                  setKind(e.target.value);
+                  setIdLocal('');
+                  setCustomName('');
+                }}
                 options={Object.entries(RESOURCE_KINDS).map(
                   ([value, label]) => ({ value, label }),
                 )}
               />
-              <Button disabled={busy} type="submit">
+              <Button disabled={busy || !selectedName} type="submit">
                 Adicionar local
               </Button>
+              {idLocal === OUTRO_LOCAL ? (
+                <Input
+                  label="Nome do local"
+                  value={customName}
+                  required
+                  className="sm:col-span-3"
+                  hint="Ex.: Banco Itaú — conta da clínica, Maquineta Cielo"
+                  onChange={(e) => setCustomName(e.target.value)}
+                />
+              ) : (
+                <p className="text-xs text-slate-400 sm:col-span-3">
+                  Espécie: dinheiro na gaveta · Banco: cada conta usada ·
+                  Maquineta: cada máquina/adquirente. Depois de cadastrar, o
+                  local é só selecionado nos lançamentos, nas baixas e na
+                  conciliação.
+                </p>
+              )}
             </form>
             <ul className="mt-3 space-y-1 text-sm">
               {accounts.map((a) => (

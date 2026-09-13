@@ -26,6 +26,17 @@ export const RESOURCE_KINDS = {
   BANK: 'Banco',
   CARD: 'Conta de maquineta',
 };
+/** Valor do seletor que libera o campo de nome próprio (mais de um banco/maquineta). */
+export const OUTRO_LOCAL = '__outro__';
+/** Sugestões de identificação por tipo — a clínica com um local de cada usa a primeira. */
+export const RESOURCE_KIND_SUGGESTIONS: Record<
+  keyof typeof RESOURCE_KINDS,
+  string[]
+> = {
+  CASH: ['Dinheiro (gaveta)'],
+  BANK: ['Banco principal', 'Banco secundário'],
+  CARD: ['Maquineta principal', 'Maquineta 2'],
+};
 export interface FinancialReconciliation {
   id: string;
   periodId: string;
