@@ -18,6 +18,17 @@ Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 - A ordem é alfabética por nome, e não por "principal/secundário": com mais de uma conta, cada uma é
   cadastrada pelo nome do banco (duas contas do mesmo banco usam "Outro (digitar)").
 
+**Publicação (2026-09-13)**
+
+- PR **#18** aprovado e integrado em `main` (merge `70e5ad2`); deploy no CapRover **concluído**
+  (`erp-estetica`) — **sem migração**.
+- Verificação em produção (sessão temporária, removida em seguida): `/api/health` → `database: up`; o bundle
+  servido é o novo (`index-BJfH-NUp.js`) e a aba **Caixa** → tipo `Banco` mostra **Banco do Brasil, Caixa
+  Econômica, Itaú, Nubank, Santander, Mercado Pago** + "Outro (digitar)"; `Conta de maquineta` e `Espécie`
+  mantêm suas sugestões; sem erro de tela.
+- **Nada foi gravado no banco de produção**: 0 usuários de verificação, 0 locais, 0 caixas e 0 contas
+  (confirmado por consulta após a verificação).
+
 ## 2026-09-13 · `financial` (tela) · Cadastro do local por seleção e rótulo "Identificação do local"
 
 **Alteração**
