@@ -299,7 +299,8 @@ está ativa: pergunta ao módulo dono.
   assinatura, quantidade de recebimentos.
 - `CashPeriodService` / `CashClosingService` — abrir o caixa do mês (transportando os saldos do
   último período fechado) e fechar o período com o saldo apurado por local.
-- `ResourceAccountService` — cadastro dos locais do recurso (`CASH`, `BANK`, `CARD`).
+- `ResourceAccountService` — cadastro, correção da identificação e inativação/reativação dos
+  locais do recurso (`CASH`, `BANK`, `CARD`).
 - `FinancialTitleService` — contas a receber/pagar e baixas parciais ou totais.
 - `FinancialAdjustmentService` — ajuste rastreável de lançamento de período já fechado.
 - `ReconciliationService` — conferência do período por local e registro das divergências.
@@ -315,6 +316,8 @@ Não importa os módulos donos nem seus serviços/repositories.
 `PATCH /api/financial/transactions/:id/resource`, `POST /api/financial/transactions/:id/adjustments`,
 `GET /api/financial/summary`, `GET /api/financial/reports`,
 `GET/POST /api/financial/accounts`,
+`PATCH /api/financial/accounts/:id`, `PATCH /api/financial/accounts/:id/inactivate`,
+`PATCH /api/financial/accounts/:id/reactivate`,
 `GET/POST /api/financial/cash-periods`, `GET /api/financial/cash-periods/:id`,
 `POST /api/financial/cash-periods/:id/close`,
 `GET /api/financial/cash-periods/:id/reconciliations`,
@@ -352,6 +355,14 @@ Não importa os módulos donos nem seus serviços/repositories.
   e é registrado na trilha.
 - Todas as operações (abertura, fechamento, ajuste, conciliação, baixa) rodam em **uma transação** e
   gravam `AuditEvent` pelo caso de uso.
+- **Local do recurso é editável**: `PATCH /accounts/:id` corrige identificação (nome) e tipo, recusa
+  nome já usado por outro local (409, sem diferenciar maiúsculas) e recusa edição sem mudança (400).
+  Renomear **não move valor** — o saldo é ligado ao `id`, então o histórico passa a exibir o nome novo.
+- **Local não é excluído**: `PATCH /accounts/:id/inactivate` tira o local das listas de novos
+  lançamentos e de novas aberturas (`active=false` + `deactivatedAt`) e remove o saldo zerado do mês
+  aberto. Recusa se houver lançamento no mês aberto (409) — o fechamento perderia a composição. Os
+  meses **fechados** continuam intactos, com o apurado daquele local. `PATCH /accounts/:id/reactivate`
+  devolve o local e recria o saldo do mês aberto começando do zero.
 
 **Contas a receber / a pagar (`FinancialTitle`):**
 - Tipo `RECEITA` (a receber) ou `DESPESA` (a pagar), vencimento, valor e descrição; situação

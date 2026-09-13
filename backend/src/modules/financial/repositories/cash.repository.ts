@@ -43,6 +43,23 @@ export class CashRepository {
   ) {
     return tx.resourceAccount.create({ data });
   }
+  account(id: string, tx?: Prisma.TransactionClient) {
+    return (tx ?? this.prisma).resourceAccount.findUnique({ where: { id } });
+  }
+  updateAccount(
+    id: string,
+    data: Prisma.ResourceAccountUpdateInput,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.resourceAccount.update({ where: { id }, data });
+  }
+  deleteBalances(
+    periodId: string,
+    accountId: string,
+    tx: Prisma.TransactionClient,
+  ) {
+    return tx.cashBalance.deleteMany({ where: { periodId, accountId } });
+  }
   createPeriod(
     data: Prisma.CashPeriodCreateInput,
     tx: Prisma.TransactionClient,

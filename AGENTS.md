@@ -217,10 +217,11 @@ Para render simples de uma página sem CDP: `chrome-headless-shell --dump-dom --
 
 ## 8. Próximos passos (em ordem)
 
-0. **Próximo ajuste de tela pendente do cliente (se pedir):** o cadastro de local já é lista única
-   (espécie, bancos pelo nome, maquinetas e "Outro (digitar)"), o tipo é derivado da escolha e o caixa
-   mostra o **saldo total = soma dos locais**. Novos bancos que a clínica usar entram em
-   `features/financial/types/cash.ts` (`IDENTIFICACOES_LOCAL`) — é só uma lista no frontend.
+0. **Ajuste de tela pendente do cliente (se pedir):** o cadastro de local é lista única (espécie, bancos
+   pelo nome, maquinetas e "Outro (digitar)"), o tipo é derivado da escolha, o local pode ser **editado**
+   (nome/tipo, com auditoria) e **inativado/reativado** — inativo sai dos novos lançamentos e de novas
+   aberturas, preservando os meses fechados. O caixa mostra o **saldo total = soma dos locais**. Novos
+   bancos entram em `features/financial/types/cash.ts` (`IDENTIFICACOES_LOCAL`) — é só uma lista no frontend.
 1. **Ajuste do cliente nos 6 procedimentos** (unidade + valor vigente). Ele pode pedir para aplicar
    em lote: nesse caso use `PATCH /api/procedures/:id` (unidade) e
    `PATCH /api/procedures/:id/prices/:priceId` (valor vigente) — nunca crie vigência nova para corrigir

@@ -171,6 +171,10 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   apurado de cada local do último período fechado — digitar saldo inicial é recusado.
 - Locais do recurso (`ResourceAccount`): **espécie** (`CASH`), **banco** (`BANK`) e
   **conta de maquineta** (`CARD`), com cadastro próprio (mais de uma conta/maquineta é permitido).
+- O local pode ser **corrigido** (nome e tipo) a qualquer momento, com registro em auditoria — renomear
+  não move valor, porque o saldo é ligado ao local e não ao nome.
+- Local **não é excluído**: inativar tira o local das listas de novos lançamentos e de novas aberturas,
+  preservando os meses já fechados. Não se inativa local com lançamento no mês aberto.
 - **O saldo é um só**: o **saldo total do caixa é a soma de todos os locais**. O detalhe por local
   existe para a conferência física (gaveta, cada banco, cada maquineta), e a tela mostra o total
   consolidado (inicial, entradas, saídas, esperado, apurado e divergência) **acima** da composição

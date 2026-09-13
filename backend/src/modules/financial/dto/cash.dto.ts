@@ -23,6 +23,17 @@ export class CreateResourceAccountDto {
   name: string;
   @IsEnum(ResourceAccountKind) kind: ResourceAccountKind;
 }
+export class UpdateResourceAccountDto {
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name?: string;
+  @IsOptional()
+  @IsEnum(ResourceAccountKind)
+  kind?: ResourceAccountKind;
+}
 export class CountBalanceDto {
   @IsUUID() accountId: string;
   @IsInt() @Min(-2_000_000_000) @Max(2_000_000_000) amountCents: number;
