@@ -39,17 +39,17 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 
 ## auth
 
-**Responsabilidade:** autenticação e sessão. Não conhece regra de negócio da clínica.
+**Responsabilidade:** autenticação, sessão e **administração de usuários**. Não conhece regra de negócio da clínica. É o **dono da tabela `User`** — por isso a gestão de usuários vive aqui e não num módulo `users` (que faria dois módulos escreverem na mesma tabela).
 
-**Depende de:** nada (usa `common/database`).
+**Depende de:** `audit` (`AuditTrailService`, para registrar alterações de usuário) e `common/database`.
 
 **Não depende de:** nenhum módulo de domínio.
 
 **Entidades:** `User` (e-mail único, hash bcrypt, perfil, ativo, `mustChangePassword`), `Session` (hash do token, expiração, revogação, IP/user-agent).
 
-**Serviços públicos:** `AuthService` (login, logout, troca de senha, `me`), `SessionService` (emitir/resolver/revogar sessão).
+**Serviços públicos:** `AuthService` (login, logout, troca de senha, `me`), `SessionService` (emitir/resolver/revogar sessão), `UserAdminService` (administração de usuários — usado só pelo `UsersController`).
 
-**Eventos:** nenhum.
+**Eventos:** nenhum. Cada alteração de usuário gera evento na trilha de `audit`.
 
 **Endpoints:**
 
@@ -59,6 +59,12 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 | POST | `/api/auth/logout` | encerra a sessão atual | exigida |
 | GET | `/api/auth/me` | usuário da sessão | exigida |
 | POST | `/api/auth/password` | troca a própria senha e derruba as outras sessões | exigida |
+| GET | `/api/users` | lista com busca, perfil, situação e paginação | **ADMIN** |
+| POST | `/api/users` | cria usuário com senha inicial e troca obrigatória | **ADMIN** |
+| PATCH | `/api/users/:id/role` | troca o perfil (ADMIN/USER) | **ADMIN** |
+| PATCH | `/api/users/:id/inactivate` | inativa e encerra as sessões do usuário | **ADMIN** |
+| PATCH | `/api/users/:id/reactivate` | reativa o usuário | **ADMIN** |
+| POST | `/api/users/:id/password` | redefine a senha (temporária) e encerra as sessões | **ADMIN** |
 
 **Regras principais:**
 
@@ -70,6 +76,10 @@ serviços públicos, eventos, endpoints ou regras dos módulos descritos neste d
 - Requisição de escrita com `Origin` de outro site recebe 403 (defesa de CSRF, via `OriginGuard`).
 - Senha mínima: 8 caracteres, com letras e números; não pode ser igual ao e-mail. Senha temporária obriga troca no primeiro acesso.
 - Documentação Swagger também exige sessão (validada por middleware, porque o Swagger não passa pelos guards do Nest).
+- **Administração de usuários:** e-mail único (409), senha inicial e redefinida sempre com **troca obrigatória**, inativação e redefinição **encerram as sessões abertas**, o usuário **inativo não faz login**.
+- **Nunca ficar sem administrador ativo:** não é possível rebaixar ou inativar o último ADMIN, nem o próprio admin se rebaixar ou se inativar (400/409).
+- Não existe `DELETE` de usuário — só inativação.
+- A senha **nunca** é gravada na trilha de auditoria: o evento registra o fato ("senha redefinida"), não a credencial.
 
 **Ao criar usuários em produção:** `node dist/scripts/create-user.js --email <email> --password <senha> --name <nome>` (idempotente por e-mail).
 

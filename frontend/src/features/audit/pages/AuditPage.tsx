@@ -27,8 +27,9 @@ const TOM_ACAO: Record<string, 'info' | 'success' | 'warning' | 'danger' | 'neut
 };
 
 /** Valor de um campo auditado, no formato do tipo dele (dinheiro, data, texto). */
-function valorAuditado(campo: string, valor: string | number | null): string {
+function valorAuditado(campo: string, valor: string | number | boolean | null): string {
   if (valor === null || valor === '') return '—';
+  if (typeof valor === 'boolean') return valor ? 'Sim' : 'Não';
   if (typeof valor === 'number') return campo.endsWith('Cents') ? formatCentsToBRL(valor) : String(valor);
   if (campo === 'paymentMethod') return paymentMethodLabel(valor);
   if (ISO_DATE_TIME.test(valor)) return campo === 'paidAt' ? formatDate(valor) : formatDateTimeRecife(valor);

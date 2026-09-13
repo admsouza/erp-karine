@@ -114,6 +114,20 @@ organizada para o sistema inteiro (módulo transversal, não remendo na tela).
 - [x] **Autorização por perfil** finalmente implementada para esta área: `RolesGuard` global + `@Roles('ADMIN')`, falhando fechado (403); o item de menu é escondido para outros perfis
 - [ ] Adoção gradual da trilha nos demais módulos (clientes, procedimentos, agenda, protocolos) — o padrão está definido; a adoção é incremental e não reescreve histórico passado
 
+## Transversal — Seção `Sistema`: auditoria, usuários e integração `[~]`
+
+O menu ganhou a seção **Sistema** (administração do próprio sistema, hoje toda de ADMIN). O módulo de
+auditoria deixou de ser um item solto e passou a morar dentro dela.
+
+- [x] Seção `Sistema` no menu, com os itens **Auditoria**, **Usuários** e **Integração** (`/sistema/*`)
+- [x] Auditoria movida para `/sistema/auditoria` (com redirecionamento de `/auditoria`)
+- [x] **Gestão de usuários** (`/sistema/usuarios`): listar com busca/perfil/situação, criar, trocar perfil, inativar/reativar e redefinir senha — com senha inicial sempre com troca obrigatória
+- [x] Proteções: e-mail único, **não deixar o sistema sem administrador ativo**, o admin não se inativa nem se rebaixa, inativação/redefinição encerram as sessões, senha nunca vai para a trilha
+- [x] Todas as alterações de usuário registradas na trilha de auditoria (`audit`)
+- [x] **Integração**: tela preparada listando os pontos que já existem (auditoria, eventos de domínio, contratos públicos) e o que está em preparação — **sem agente de IA conectado ainda**
+- [ ] **Políticas de acesso por usuário** (o que cada perfil pode ver/fazer além de ADMIN x USER) — decisão futura do cliente
+- [ ] **Agente de IA na Integração** (credencial própria, escopo de leitura e ações auditadas) — fase futura
+
 ## Fase 8 — Módulo `exams` `[ ]`
 
 - [ ] Recomendação com vários itens; status RECOMENDADO / REALIZADO / CANCELADO

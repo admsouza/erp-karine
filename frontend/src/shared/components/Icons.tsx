@@ -111,6 +111,26 @@ export function AuditIcon(props: IconProps) {
   );
 }
 
+export function UsersIcon(props: IconProps) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" />
+      <circle cx="9.5" cy="7.5" r="3" />
+      <path d="M17 11a3 3 0 1 0 0-6" />
+      <path d="M21 20v-1.5a4 4 0 0 0-3-3.87" />
+    </svg>
+  );
+}
+
+export function IntegrationIcon(props: IconProps) {
+  return (
+    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="8" width="16" height="10" rx="2" />
+      <path d="M9 8V5M15 8V5M9 13h.01M15 13h.01M12 18v3" />
+    </svg>
+  );
+}
+
 export function MenuIcon(props: IconProps) {
   return (
     <Icon {...props}>

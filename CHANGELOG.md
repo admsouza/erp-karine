@@ -2,6 +2,30 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `auth` + `Sistema` · Seção Sistema e gestão de usuários
+
+**Alteração**
+
+- O menu ganhou a seção **Sistema**, com **Auditoria**, **Usuários** e **Integração**. A auditoria saiu de `/auditoria` para `/sistema/auditoria` (a rota antiga redireciona).
+- **Gestão de usuários** (`/sistema/usuarios`): listar com busca/nome/e-mail, filtro por perfil e situação, criar usuário, trocar perfil (ADMIN/USER), inativar, reativar e redefinir senha.
+- Endpoints `GET/POST /api/users`, `PATCH /api/users/:id/role`, `PATCH /api/users/:id/inactivate|reactivate`, `POST /api/users/:id/password` — **todos com `@Roles('ADMIN')`**.
+- **Integração**: tela preparada que lista os pontos de integração já existentes (trilha de auditoria, eventos de domínio, contratos públicos) e o que está por vir. **Nenhum agente de IA conectado ainda** — a tela não executa ação.
+- O contrato de auditoria passou a aceitar **booleano** em `changes` (inativação/reversão de usuário), com renderização "Sim/Não" na tela.
+
+**Impacto**
+
+- Menu passa a ter **11 itens** organizados em seções (8 de operação + 3 em Sistema).
+- Sem migração: `User.active` e `lastLoginAt` já existiam e o login já bloqueava usuário inativo.
+- Regras de proteção novas: e-mail único, senha inicial/redefinida **sempre** com troca obrigatória, inativação e redefinição **encerram as sessões**, **não é possível ficar sem administrador ativo**, o admin não se inativa nem se rebaixa, e a senha **nunca** é gravada na trilha.
+- Toda alteração de usuário gera evento no módulo `audit` (aparece em Auditoria).
+
+**Verificação**
+
+- **69 unitários** e **74 e2e**: criação com troca obrigatória, e-mail repetido (409), senha fraca/perfil inválido/e-mail inválido (400), filtros e paginação, troca de perfil, redefinição (senha antiga deixa de valer, senha nova exige troca e não aparece na trilha), inativação bloqueando login e reativação liberando, proteção do próprio admin, 403 para perfil `USER`, 401 sem sessão e 404 para exclusão física.
+- typecheck, lint e builds dos dois projetos aprovados.
+
+---
+
 ## 2026-09-13 · `audit` · Tela de auditoria do sistema (ADMIN) e autorização por perfil
 
 **Alteração**

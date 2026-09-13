@@ -15,6 +15,8 @@ import { ProtocolsPage } from '../../features/protocols/pages/ProtocolsPage';
 import { ProtocolDetailPage } from '../../features/protocols/pages/ProtocolDetailPage';
 import { ExamsPage } from '../../features/exams/pages/ExamsPage';
 import { AuditPage } from '../../features/audit/pages/AuditPage';
+import { UsersPage } from '../../features/users/pages/UsersPage';
+import { IntegrationsPage } from '../../features/integrations/pages/IntegrationsPage';
 import { RequireRole } from '../../features/auth/components/RequireRole';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -44,7 +46,11 @@ export function AppRouter() {
           <Route path="/protocolos" element={<ProtocolsPage />} />
           <Route path="/protocolos/:id" element={<ProtocolDetailPage />} />
           <Route path="/exames" element={<ExamsPage />} />
-          <Route path="/auditoria" element={<RequireRole role="ADMIN"><AuditPage /></RequireRole>} />
+          {/* Seção Sistema — hoje toda restrita ao ADMIN (o backend também bloqueia). */}
+          <Route path="/sistema/auditoria" element={<RequireRole role="ADMIN"><AuditPage /></RequireRole>} />
+          <Route path="/sistema/usuarios" element={<RequireRole role="ADMIN"><UsersPage /></RequireRole>} />
+          <Route path="/sistema/integracoes" element={<RequireRole role="ADMIN"><IntegrationsPage /></RequireRole>} />
+          <Route path="/auditoria" element={<Navigate to="/sistema/auditoria" replace />} />
           <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Route>

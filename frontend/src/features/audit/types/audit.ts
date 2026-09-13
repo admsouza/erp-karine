@@ -2,8 +2,8 @@
 
 export interface AuditChange {
   field: string;
-  before: string | number | null;
-  after: string | number | null;
+  before: string | number | boolean | null;
+  after: string | number | boolean | null;
 }
 
 export interface AuditEvent {
