@@ -52,6 +52,12 @@ Registro resumido das alterações relevantes. Mais recente no topo.
   SPA servida em `/` e em `/clientes` (fallback de rota), assets do build servidos.
 - Vite dev em `5173`: HTML 200, proxy `/api/health` 200, transform de TSX e CSS do Tailwind OK.
 
+**Repositório**
+
+- Código publicado em https://github.com/admsouza/erp-karine (branch `main`, primeiro commit
+  `9b031fd`, 75 arquivos). Confirmado que `.env`, `dev.db`, `node_modules` e o cliente Prisma
+  gerado não entram no versionamento.
+
 **Pendências**
 
 - Deploy no CapRover ainda não configurado (Dockerfile, volume persistente, `migrate deploy`).
