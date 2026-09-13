@@ -73,6 +73,7 @@ export const AUDIT_MODULES: Record<string, string> = {
 };
 
 export const AUDIT_ENTITY_TYPES: Record<string, string> = {
+  User: 'Usuário do sistema',
   Client: 'Cliente',
   Procedure: 'Procedimento',
   Appointment: 'Agendamento',
@@ -91,6 +92,12 @@ export const AUDIT_FIELD_LABELS: Record<string, string> = {
   notes: 'Observação',
   date: 'Data',
   description: 'Descrição',
+  // Campos de usuário (módulo auth)
+  name: 'Nome',
+  email: 'E-mail',
+  role: 'Perfil',
+  active: 'Situação',
+  passwordHash: 'Senha',
 };
 
 /** Espelha o catálogo de formas de pagamento dos módulos financeiro/assinaturas. */
