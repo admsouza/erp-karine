@@ -91,12 +91,12 @@ Antecipada antes da Fase 3 por decisão do cliente (havia dado de paciente em ap
 - [x] Frontend mobile-first: indicadores, lançamentos, filtros, lançamento manual e estados de tela
 - [x] Testes unitários/e2e, smoke HTTP, auditoria e verificação em navegador real
 
-## Fase 7 — Módulo `protocols` `[ ]`
+## Fase 7 — Módulo `protocols` `[x]`
 
-- [ ] Fichas + sessões (sessão somente por acréscimo — nunca sobrescrever)
-- [ ] Histórico cronológico e visualização para impressão
-- [ ] Frontend: `features/protocols/`
-- [ ] Testes do módulo
+- [x] Fichas + sessões (sessão somente por acréscimo — nunca sobrescrever)
+- [x] Histórico cronológico e visualização para impressão
+- [x] Frontend: `features/protocols/` com filtros, detalhes, formulários e estados de tela
+- [x] Testes unitários/e2e, smoke HTTP e navegador real
 
 ## Fase 8 — Módulo `exams` `[ ]`
 

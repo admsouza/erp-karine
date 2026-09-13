@@ -12,8 +12,8 @@
 - **Repositório:** https://github.com/admsouza/erp-karine
 - **App CapRover:** `erp-estetica` → https://erp-estetica.solucoes.cloud
 - **Cliente:** clínica de estética
-- **Estado atual:** Fases 1 a 6 concluídas: fundação, clientes, autenticação, procedimentos, agenda, assinaturas e financeiro.
-  Próxima: Fase 7 — módulo `protocols`.
+- **Estado atual:** Fases 1 a 7 concluídas: fundação, clientes, autenticação, procedimentos, agenda, assinaturas, financeiro e protocolos.
+  Próxima: Fase 8 — módulo `exams`.
 
 ---
 
@@ -163,6 +163,10 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
 ### Protocolos
 - Cliente pode ter vários protocolos; cada um com várias sessões.
 - **Histórico clínico nunca é sobrescrito**: sessões são acrescentadas em ordem cronológica.
+- Implementado: ficha com status `EM_ANDAMENTO`, `CONCLUIDO` ou `CANCELADO`, inativação lógica,
+  snapshots de cliente/procedimento e vínculo opcional de sessão com procedimento e atendimento realizado.
+- Dados administrativos da ficha só mudam enquanto em andamento; sessões não têm endpoint de edição/exclusão.
+- Frontend mobile-first com filtros, detalhe, criação/edição, registro de sessão e impressão.
 
 ### Recomendações de exames
 - Recomendação com vários itens; status `RECOMENDADO`, `REALIZADO`, `CANCELADO`.

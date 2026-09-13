@@ -78,6 +78,12 @@ enum ExamStatus {
   CANCELADO
 }
 
+enum ProtocolStatus {
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+}
+
 // ---------------------------------------------------------------------------
 // Módulo: clients
 // ---------------------------------------------------------------------------
@@ -172,8 +178,10 @@ model Procedure {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  appointments Appointment[]
-  prices       ProcedurePrice[]
+  appointments     Appointment[]
+  prices           ProcedurePrice[]
+  protocols        Protocol[]
+  protocolSessions ProtocolSession[]
 
   @@index([active])
 }
@@ -224,6 +232,7 @@ model Appointment {
   client               Client                @relation(fields: [clientId], references: [id])
   procedure            Procedure?            @relation(fields: [procedureId], references: [id])
   financialTransaction FinancialTransaction?
+  protocolSession      ProtocolSession?
 
   @@index([clientId])
   @@index([scheduledAt])
@@ -345,6 +354,9 @@ model FinancialTransaction {
 model Protocol {
   id               String    @id @default(uuid())
   clientId         String
+  clientName       String    @default("")
+  procedureId      String?
+  procedureName    String?
   date             DateTime
   title            String
   chiefComplaint   String?
@@ -356,32 +368,46 @@ model Protocol {
   evolution        String?
   notes            String?
   active           Boolean   @default(true)
+  status           ProtocolStatus @default(EM_ANDAMENTO)
   deletedAt        DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  client   Client            @relation(fields: [clientId], references: [id])
-  sessions ProtocolSession[]
+  client    Client            @relation(fields: [clientId], references: [id])
+  procedure Procedure?        @relation(fields: [procedureId], references: [id])
+  sessions  ProtocolSession[]
 
   @@index([clientId])
+  @@index([procedureId])
+  @@index([status])
+  @@index([active])
   @@index([date])
 }
 
 model ProtocolSession {
   id                 String   @id @default(uuid())
   protocolId         String
+  procedureId        String?
+  procedureName      String?
+  appointmentId      String?  @unique
+  appointmentSnapshot String?
   date               DateTime
   procedurePerformed String
+  professional       String?
   productsUsed       String?
   parameters         String?
   notes              String?
   evolution          String?
+  guidelines         String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  protocol Protocol @relation(fields: [protocolId], references: [id])
+  protocol    Protocol     @relation(fields: [protocolId], references: [id])
+  procedure   Procedure?   @relation(fields: [procedureId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
 
   @@index([protocolId])
+  @@index([procedureId])
   @@index([date])
 }
 

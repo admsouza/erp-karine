@@ -2,6 +2,25 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-13 · `protocols` · Fase 7 implementada
+
+**Alteração**
+
+- Fichas clínicas com status, inativação lógica, snapshots de cliente/procedimento e edição administrativa controlada.
+- Sessões append-only em ordem cronológica, com procedimento e atendimento realizado opcionais via contratos públicos.
+- Frontend mobile-first: filtros, estados loading/erro/vazio, criação/edição, detalhe, evolução e impressão.
+
+**Impacto**
+
+- Migração aditiva `protocols_module`, com backfill apenas do snapshot de nome de fichas preexistentes; nenhum registro clínico é removido ou reescrito.
+- `ProtocolQueryService` passa a ser contrato público para consultas futuras.
+
+**Verificação**
+
+- TDD com RED observado; 53 unitários e 55 e2e, typecheck, lint, builds e `npm audit` zero.
+
+---
+
 ## 2026-09-13 · `financial` · Fase 6 implementada
 
 **Alteração**
