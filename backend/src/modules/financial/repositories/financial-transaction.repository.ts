@@ -23,6 +23,8 @@ export class FinancialTransactionRepository {
   findById(id: string, tx?: Prisma.TransactionClient) { return (tx ?? this.prisma).financialTransaction.findUnique({ where: { id } }); }
   findByAppointmentId(appointmentId: string,tx?:Prisma.TransactionClient) { return (tx??this.prisma).financialTransaction.findUnique({ where: { appointmentId } }); }
   findBySubscriptionPaymentId(subscriptionPaymentId: string, tx?: Prisma.TransactionClient) { return (tx ?? this.prisma).financialTransaction.findUnique({ where: { subscriptionPaymentId } }); }
+  hasAdjustments(transactionId:string,tx:Prisma.TransactionClient){return tx.financialTransaction.findFirst({where:{adjustmentOfId:transactionId},select:{id:true}});}
+  remove(id: string, tx: Prisma.TransactionClient) { return tx.financialTransaction.delete({ where: { id } }); }
   update(id: string, data: Prisma.FinancialTransactionUncheckedUpdateInput, tx?: Prisma.TransactionClient) { return (tx ?? this.prisma).financialTransaction.update({ where: { id }, data }); }
   updateWithTransaction(id: string, data: Prisma.FinancialTransactionUncheckedUpdateInput, tx: Prisma.TransactionClient) { return tx.financialTransaction.update({ where: { id }, data }); }
   findMany(filters: FinancialFilters) { return this.prisma.financialTransaction.findMany({ where: { date: filters.from || filters.to ? { gte: filters.from, lt: filters.to } : undefined, clientId: filters.clientId, origin: filters.origin, type: filters.type, status: filters.status }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }] }); }

@@ -162,7 +162,7 @@ vinculado, desconto (% ou R$), remoção de categoria e confirmação de pagamen
 - [x] **Situação perguntada ao salvar** ("Já foi recebido/pago?" → Sim `PAGO` / Não `PENDENTE`)
 - [x] Testes: 6 unitários novos + e2e das regras (papéis, desconto, sugestão de credores)
 - [x] **Parte B — produtos:** catálogo de venda, compra ou ambos, com preço de venda/custo de compra; Financeiro filtra por tipo e mantém `productId` + snapshot no lançamento
-- [x] **Administração financeira:** apenas `ADMIN` altera ou exclui logicamente qualquer lançamento existente, com motivo e auditoria; define local ou cria ajuste; criação permanece para usuário autenticado
+- [x] **Administração financeira:** apenas `ADMIN` altera ou exclui lançamento existente, com motivo e auditoria; excluir lançamento aberto cancela e excluir o já cancelado remove da lista; define local ou cria ajuste; criação permanece para usuário autenticado
 - [x] **Descrição** movida para último campo do Novo lançamento, após o resumo de valores
 - [x] Produto disponível também na Manutenção de cadastros (editar valores/nome, inativar/reativar)
 - [ ] Avaliar o desconto na composição dos relatórios (bruto − desconto = líquido) e o caso de

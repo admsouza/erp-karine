@@ -169,7 +169,7 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   (editável) e o nome fica em snapshot. **Desconto** por percentual ou em reais, com o valor cheio, o
   desconto e o **líquido** gravados. Ao salvar, o sistema **pergunta se já foi recebido/pago** — Sim
   grava `PAGO`, Não grava `PENDENTE`. `Categoria` saiu do formulário (o dado antigo permanece).
-- **Somente ADMIN** pode alterar ou excluir qualquer lançamento financeiro existente, por formulário com motivo obrigatório e trilha de auditoria; exclusão é lógica (`CANCELADO`), portanto não apaga histórico. Local e ajuste também são exclusivos de ADMIN; qualquer usuário autenticado continua podendo criar lançamento novo.
+- **Somente ADMIN** pode alterar ou excluir lançamento financeiro existente, por formulário com motivo obrigatório e trilha de auditoria. A primeira exclusão cancela (`CANCELADO`); uma segunda exclusão de lançamento já cancelado remove a linha da lista e preserva a trilha de auditoria. Local e ajuste também são exclusivos de ADMIN; qualquer usuário autenticado continua podendo criar lançamento novo.
 - Regra financeira vive no backend, nunca no frontend.
 - Implementado: receitas e despesas manuais, geração automática idempotente por eventos,
   cancelamento lógico, filtros, indicadores e relatórios por snapshots históricos.

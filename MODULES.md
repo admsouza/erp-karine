@@ -317,7 +317,7 @@ está ativa: pergunta ao módulo dono.
 **Dependências permitidas:** contratos públicos de evento de `appointments` e `subscriptions`.
 Não importa os módulos donos nem seus serviços/repositories.
 
-**Endpoints:** `POST/GET /api/financial/transactions`, `PATCH /api/financial/transactions/:id` (**ADMIN**, edição auditada), `DELETE /api/financial/transactions/:id` (**ADMIN**, exclusão lógica auditada), `PATCH /api/financial/transactions/:id/cancel`,
+**Endpoints:** `POST/GET /api/financial/transactions`, `PATCH /api/financial/transactions/:id` (**ADMIN**, edição auditada), `DELETE /api/financial/transactions/:id` (**ADMIN**, cancela lançamento aberto ou remove o já cancelado), `PATCH /api/financial/transactions/:id/cancel`,
 `PATCH /api/financial/transactions/:id/resource`, `POST /api/financial/transactions/:id/adjustments`,
 `GET /api/financial/summary`, `GET /api/financial/reports`,
 `GET/POST /api/financial/accounts`,
