@@ -2,6 +2,11 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-14 · Publicação · custo de produto e administração financeira
+
+- Integrado em `main` pelo merge `5cb190b` e publicado no CapRover (`erp-estetica`).
+- Produção confirmada: `/api/health` retornou banco `up`; SPA entregou o bundle `index-WF24SEJD.js`; rota `/financeiro` renderizou a tela de acesso no navegador headless.
+
 ## 2026-09-14 · `financial` · Edição e exclusão administrativa de lançamentos
 
 - `ADMIN` passa a editar qualquer lançamento financeiro aberto no fluxo, com motivo obrigatório e evento de auditoria contendo os campos alterados.
