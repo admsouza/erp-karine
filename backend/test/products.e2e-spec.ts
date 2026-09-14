@@ -148,6 +148,7 @@ describe('Catálogo de produtos (e2e)', () => {
       productId: produtoId,
       productName: `Produto E2E ${sufixo}`,
       amountCents: 4900,
+      productCostCents: 2800,
     });
     const compra = await request(app.getHttpServer())
       .post('/api/financial/transactions')

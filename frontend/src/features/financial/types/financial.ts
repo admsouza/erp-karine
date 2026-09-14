@@ -5,5 +5,5 @@ export const PAYMENT_METHODS={PIX:'Pix',DINHEIRO:'Dinheiro',CARTAO_CREDITO:'Cart
 export type TransactionType=keyof typeof TRANSACTION_TYPES; export type FinancialStatus=keyof typeof FINANCIAL_STATUSES; export type TransactionOrigin=keyof typeof TRANSACTION_ORIGINS; export type PaymentMethod=keyof typeof PAYMENT_METHODS;
 export interface FinancialTransaction{resourceAccountId:string|null;adjustmentOfId:string|null;id:string;clientId:string|null;description:string;category:string|null;amountCents:number;date:string;paymentMethod:PaymentMethod;origin:TransactionOrigin;type:TransactionType;status:FinancialStatus;procedureName:string|null;subscriptionName:string|null;externalReference:string|null;notes:string|null;cancelledAt:string|null}
 export interface FinancialSummary{revenueCents:number;expenseCents:number;balanceCents:number;receiptCount:number}
-export interface FinancialReports{byProcedure:{name:string;amountCents:number}[];bySubscription:{name:string;amountCents:number}[]}
+export interface FinancialReports{byProcedure:{name:string;amountCents:number}[];bySubscription:{name:string;amountCents:number}[];byProduct:{name:string;revenueCents:number;costCents:number;profitCents:number;unknownCostCount:number}[]}
 export interface FinancialFilters{from?:string;to?:string;origin?:TransactionOrigin;type?:TransactionType;status?:FinancialStatus}

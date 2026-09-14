@@ -68,7 +68,7 @@ export function ProductFormModal({
         <Select label="Uso do produto" value={commercialUse} onChange={(e) => setCommercialUse(e.target.value as 'VENDA' | 'COMPRA' | 'AMBOS')} options={[{ value: 'VENDA', label: 'Venda ao cliente' }, { value: 'COMPRA', label: 'Compra de credor' }, { value: 'AMBOS', label: 'Venda e compra' }]} />
         <div className="grid gap-4 sm:grid-cols-2">
           {commercialUse !== 'COMPRA' && <Input label="Preço de venda (R$)" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />}
-          {commercialUse !== 'VENDA' && <Input label="Custo de compra (R$)" inputMode="decimal" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} />}
+          <Input label="Custo de compra (R$)" hint="Usado no cálculo do lucro das vendas" inputMode="decimal" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} />
           <Input label="Unidade" hint="Ex.: unidade, caixa, ml" value={unit} onChange={(e) => setUnit(e.target.value)} />
         </div>
         <Input

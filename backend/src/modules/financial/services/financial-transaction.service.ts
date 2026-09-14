@@ -53,6 +53,7 @@ export class FinancialTransactionService {
         procedureName = (await this.procedimentos.getById(dto.procedureId)).name;
       }
       let productName: string | null = null;
+      let productCostCents: number | null = null;
       if (dto.productId) {
         if (!(await this.produtos.exists(dto.productId)))
           throw new NotFoundException('Produto não encontrado.');
@@ -62,10 +63,11 @@ export class FinancialTransactionService {
         if (commercialUse !== 'AMBOS' && (receita ? commercialUse !== 'VENDA' : commercialUse !== 'COMPRA'))
           throw new BadRequestException(receita ? 'Este produto é somente para compra de credor.' : 'Este produto é somente para venda ao cliente.');
         productName = produto.name;
+        productCostCents = receita ? produto.purchasePriceCents : null;
       }
       const { discountCents, grossAmountCents } = this.desconto(dto);
 
-      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, counterparty: dto.counterparty?.trim() || null, procedureId: dto.procedureId ?? null, procedureName, productId: dto.productId ?? null, productName, grossAmountCents, discountCents, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
+      const item=await this.repository.create({ ...dto, description: dto.description.trim(), category: dto.category?.trim() || null, date, origin: 'MANUAL', clientId: dto.clientId ?? null, counterparty: dto.counterparty?.trim() || null, procedureId: dto.procedureId ?? null, procedureName, productId: dto.productId ?? null, productName, productCostCents, grossAmountCents, discountCents, externalReference: dto.externalReference?.trim() || null, notes: dto.notes?.trim() || null },tx);
       if(user)await this.audit.record({actorUserId:user.id,actorName:user.name,actorEmail:user.email,module:'financial',entityType:'FinancialTransaction',entityId:item.id,action:'CREATED',requestId,changes:[{field:'amountCents',before:null,after:item.amountCents},...(discountCents===null?[]:[{field:'discountCents',before:null,after:discountCents}]),{field:'resourceAccountId',before:null,after:item.resourceAccountId}]},tx);
       return toFinancialTransactionEntity(item);
     });

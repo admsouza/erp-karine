@@ -399,6 +399,8 @@ model FinancialTransaction {
   procedureName         String?
   productId             String?
   productName           String?
+  /// Custo unitário do produto no instante da venda; preserva a margem histórica.
+  productCostCents      Int?
   subscriptionName      String?
   // Referência externa livre (ex.: id do sistema de origem, conciliação manual)
   externalReference     String?
