@@ -2,6 +2,14 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-14 · `products` + `financial` · Produtos de venda/compra e proteção administrativa
+
+- Produto agora define uso comercial: **Venda ao cliente**, **Compra de credor** ou ambos, com preço de venda e custo de compra sugeridos. A migração aditiva preserva o antigo `priceCents` como preço de venda e inicia o custo em zero.
+- O Financeiro filtra o seletor pelo tipo do lançamento, preenche o valor compatível e o backend recusa produto incompatível; a descrição foi movida para o último campo do modal.
+- Só `ADMIN` pode cancelar, definir local ou criar ajuste de lançamento financeiro existente. Criar lançamento novo continua permitido a usuários autenticados.
+- Verificação local: e2e de Produtos e Financeiro (12 testes), typecheck e build dos dois projetos.
+
+
 **Publicação (2026-09-13)**
 
 - PR **#28** aprovado e integrado em `main` (merge `5d5d6de`); deploy no CapRover **concluído**.

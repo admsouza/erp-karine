@@ -81,13 +81,13 @@ export function ManualTransactionModal({
         setProcedures(opcoes.procedures);
       })
       .catch((falha) => setError(describeApiError(falha)));
-    listProductOptions()
+    listProductOptions(type)
       .then(setProducts)
       .catch(() => setProducts([]));
     listCounterparties()
       .then(setCredores)
       .catch(() => setCredores([]));
-  }, [open]);
+  }, [open, type]);
 
   const receita = type === 'RECEITA';
   const brutoCents = value ? parseBRLToCents(value) : 0;
@@ -157,8 +157,9 @@ export function ManualTransactionModal({
     const escolhido = products.find((x) => x.id === id);
     if (!escolhido) return;
     if (!description) setDescription(escolhido.name);
-    if (!value && escolhido.priceCents) {
-      setValue(formatCentsToBRL(escolhido.priceCents));
+    const suggestedCents = receita ? escolhido.priceCents : escolhido.purchasePriceCents;
+    if (!value && suggestedCents) {
+      setValue(formatCentsToBRL(suggestedCents));
     }
   }
 
@@ -177,17 +178,11 @@ export function ManualTransactionModal({
     <>
       <Modal open={open} title="Novo lançamento" onClose={onClose}>
         <form className="space-y-4" onSubmit={submit}>
-          <Input
-            label="Descrição"
-            required
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
               label="Tipo"
               value={type}
-              onChange={(e) => setType(e.target.value as TransactionType)}
+              onChange={(e) => { setType(e.target.value as TransactionType); setProductId(''); }}
               options={Object.entries(TRANSACTION_TYPES).map(([value, label]) => ({
                 value,
                 label,
@@ -302,6 +297,7 @@ export function ManualTransactionModal({
               <span>{formatCentsToBRL(liquidoCents)}</span>
             </p>
           </div>
+          <Input label="Descrição" required value={description} onChange={(e) => setDescription(e.target.value)} />
           {error ? (
             <p role="alert" className="text-sm text-rose-600">
               {error}

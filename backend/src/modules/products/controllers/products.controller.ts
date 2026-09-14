@@ -40,8 +40,8 @@ export class ProductsController {
   }
 
   @Get('options')
-  async options() {
-    return (await this.query.listActive()).map(ProductResponseDto.from);
+  async options(@Query('type') type?: 'RECEITA' | 'DESPESA') {
+    return (await this.query.listActive(type)).map(ProductResponseDto.from);
   }
 
   @Get(':id')

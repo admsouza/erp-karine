@@ -15,7 +15,11 @@ export interface TestSession {
  * Cria um usuário de teste e faz login de verdade (passando pelo guard),
  * devolvendo o cookie de sessão para as requisições autenticadas.
  */
-export async function createSession(app: INestApplication, rotulo = 'e2e'): Promise<TestSession> {
+export async function createSession(
+  app: INestApplication,
+  rotulo = 'e2e',
+  role: 'ADMIN' | 'USER' = 'ADMIN',
+): Promise<TestSession> {
   const prisma = app.get(PrismaService);
   const email = `${rotulo}.${Math.random().toString(36).slice(2, 8)}@teste.local`;
   const password = 'SenhaE2e123';
@@ -25,7 +29,7 @@ export async function createSession(app: INestApplication, rotulo = 'e2e'): Prom
       name: 'Usuário de teste',
       email,
       passwordHash: await bcrypt.hash(password, 4),
-      role: 'ADMIN',
+      role,
     },
   });
 

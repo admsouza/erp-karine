@@ -161,9 +161,10 @@ vinculado, desconto (% ou R$), remoção de categoria e confirmação de pagamen
 - [x] **Categoria removida do formulário** (coluna e histórico preservados)
 - [x] **Situação perguntada ao salvar** ("Já foi recebido/pago?" → Sim `PAGO` / Não `PENDENTE`)
 - [x] Testes: 6 unitários novos + e2e das regras (papéis, desconto, sugestão de credores)
-- [x] **Parte B — produtos:** módulo `products` (nome, unidade, valor, ativo) com tela própria no menu,
-  `productId` + snapshot no lançamento e item no seletor da venda (um item por lançamento)
-- [x] Produto disponível também na Manutenção de cadastros (editar valor/nome, inativar/reativar)
+- [x] **Parte B — produtos:** catálogo de venda, compra ou ambos, com preço de venda/custo de compra; Financeiro filtra por tipo e mantém `productId` + snapshot no lançamento
+- [x] **Administração financeira:** apenas `ADMIN` cancela, define local ou cria ajuste de lançamento existente; criação permanece para usuário autenticado
+- [x] **Descrição** movida para último campo do Novo lançamento, após o resumo de valores
+- [x] Produto disponível também na Manutenção de cadastros (editar valores/nome, inativar/reativar)
 - [ ] Avaliar o desconto na composição dos relatórios (bruto − desconto = líquido) e o caso de
   **estorno/devolução para cliente** (hoje uma despesa não se vincula a cliente, por decisão 7.53)
 
