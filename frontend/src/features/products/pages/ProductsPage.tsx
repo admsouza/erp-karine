@@ -15,7 +15,7 @@ import type { Product } from '../types/product';
 const TAMANHO_PAGINA = 20;
 
 /**
- * Catálogo de produtos: o que a clínica vende além de procedimentos.
+ * Catálogo de produtos: itens vendidos ao cliente, comprados de credor, ou ambos.
  *
  * O `loading` é **derivado** de um token de busca (decisão 7.51) — ação que não muda filtro
  * nenhum não pode deixar a tela presa em "Carregando…".
@@ -80,7 +80,7 @@ export function ProductsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Produtos"
-        description="O que a clínica vende além dos procedimentos. O valor fica gravado em cada venda, então mudar o preço aqui não reescreve o passado."
+        description="Cadastre produtos para venda ao cliente, compra de credor ou ambos. O lançamento preserva o valor aplicado."
         actions={<Button onClick={() => setCriando(true)}>Novo produto</Button>}
       />
 

@@ -56,7 +56,12 @@ export class FinancialTransactionService {
       if (dto.productId) {
         if (!(await this.produtos.exists(dto.productId)))
           throw new NotFoundException('Produto não encontrado.');
-        productName = (await this.produtos.findById(dto.productId))!.name;
+        const produto = await this.produtos.findById(dto.productId);
+        if (!produto) throw new NotFoundException('Produto não encontrado.');
+        const commercialUse = produto.commercialUse ?? 'VENDA';
+        if (commercialUse !== 'AMBOS' && (receita ? commercialUse !== 'VENDA' : commercialUse !== 'COMPRA'))
+          throw new BadRequestException(receita ? 'Este produto é somente para compra de credor.' : 'Este produto é somente para venda ao cliente.');
+        productName = produto.name;
       }
       const { discountCents, grossAmountCents } = this.desconto(dto);
 

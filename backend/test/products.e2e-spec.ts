@@ -42,12 +42,20 @@ describe('Catálogo de produtos (e2e)', () => {
     const criado = await request(app.getHttpServer())
       .post('/api/products')
       .set('Cookie', session.cookie)
-      .send({ name: `Produto E2E ${sufixo}`, priceCents: 4500, unit: 'unidade' })
+            .send({
+        name: `Produto E2E ${sufixo}`,
+        priceCents: 4500,
+        purchasePriceCents: 2800,
+        commercialUse: 'AMBOS',
+        unit: 'unidade',
+      })
       .expect(201);
     produtoId = criado.body.id;
     expect(criado.body).toMatchObject({
       name: `Produto E2E ${sufixo}`,
       priceCents: 4500,
+      purchasePriceCents: 2800,
+      commercialUse: 'AMBOS',
       active: true,
     });
     // Nome repetido (sem diferenciar maiúsculas) e validação de entrada
@@ -141,6 +149,22 @@ describe('Catálogo de produtos (e2e)', () => {
       productName: `Produto E2E ${sufixo}`,
       amountCents: 4900,
     });
+    const compra = await request(app.getHttpServer())
+      .post('/api/financial/transactions')
+      .set('Cookie', session.cookie)
+      .send({ description: `Compra de produto ${sufixo}`, productId: produtoId, counterparty: `Credor ${sufixo}`, amountCents: 2800, date: new Date().toISOString(), paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' })
+      .expect(201);
+    expect(compra.body).toMatchObject({ productId: produtoId, productName: `Produto E2E ${sufixo}`, amountCents: 2800, type: 'DESPESA' });
+    await request(app.getHttpServer())
+      .patch(`/api/products/${produtoId}`)
+      .set('Cookie', session.cookie)
+      .send({ commercialUse: 'VENDA' })
+      .expect(200);
+    await request(app.getHttpServer())
+      .post('/api/financial/transactions')
+      .set('Cookie', session.cookie)
+      .send({ description: 'Compra incompatível', productId: produtoId, counterparty: 'Credor', amountCents: 100, date: new Date().toISOString(), paymentMethod: 'PIX', type: 'DESPESA', status: 'PAGO' })
+      .expect(400);
     await request(app.getHttpServer())
       .post('/api/financial/transactions')
       .set('Cookie', session.cookie)

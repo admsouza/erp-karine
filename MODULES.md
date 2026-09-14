@@ -414,10 +414,9 @@ Não importa os módulos donos nem seus serviços/repositories.
 
 ## products
 
-**Responsabilidade:** catálogo do que a clínica **vende além de procedimentos** (produto de revenda,
-kit, cosmético). Não sabe de venda nem de caixa: quem lança é o `financial`.
+**Responsabilidade:** catálogo de produto de revenda, kit e cosmético para **venda ao cliente**, **compra de credor** ou ambos. Não sabe de lançamento nem de caixa: quem lança é o `financial`.
 
-**Entidades:** `Product` (nome, descrição, unidade, valor, `active`/`deactivatedAt`).
+**Entidades:** `Product` (nome, descrição, unidade, preço de venda, custo de compra, uso comercial, `active`/`deactivatedAt`).
 
 **Serviços públicos:**
 - `ProductQueryService` — listar/consultar produto e `exists(id)`; consumido por `financial` e `maintenance`.
@@ -432,10 +431,9 @@ kit, cosmético). Não sabe de venda nem de caixa: quem lança é o `financial`.
 
 **Regras principais:**
 - Nome único **sem diferenciar maiúsculas nem acentos** (`common/utils/nome-normalizado.ts`).
-- **Valor é simples, sem série de vigências**: o valor aplicado fica **gravado no lançamento**, então
-  mudar o preço no catálogo não reescreve venda antiga. Se a clínica pedir histórico de preço de
-  produto, aplica-se depois o mesmo padrão de vigência dos procedimentos (aditivo).
-- Sem exclusão física; inativar tira o produto do seletor da venda e preserva o histórico.
+- **Valores são simples, sem série de vigências**: preço de venda e custo de compra sugeridos; o valor aplicado fica **gravado no lançamento**, então mudar catálogo não reescreve histórico.
+- O catálogo é filtrado no Financeiro conforme o tipo (`RECEITA` → `VENDA`/`AMBOS`, `DESPESA` → `COMPRA`/`AMBOS`) e o serviço recusa a combinação incompatível.
+- Sem exclusão física; inativar tira o produto dos seletores e preserva o histórico.
 - Toda alteração registra `AuditEvent` **pelo próprio módulo** (`CREATED`, `UPDATED`, `INACTIVATED`,
   `REACTIVATED`); o hub de manutenção só lista e delega, sem duplicar evento.
 

@@ -169,6 +169,7 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   (editável) e o nome fica em snapshot. **Desconto** por percentual ou em reais, com o valor cheio, o
   desconto e o **líquido** gravados. Ao salvar, o sistema **pergunta se já foi recebido/pago** — Sim
   grava `PAGO`, Não grava `PENDENTE`. `Categoria` saiu do formulário (o dado antigo permanece).
+- **Somente ADMIN** pode alterar/cancelar lançamento financeiro existente (inclusive definir local ou criar ajuste); qualquer usuário autenticado continua podendo criar lançamento novo.
 - Regra financeira vive no backend, nunca no frontend.
 - Implementado: receitas e despesas manuais, geração automática idempotente por eventos,
   cancelamento lógico, filtros, indicadores e relatórios por snapshots históricos.
@@ -224,11 +225,8 @@ vigência nova, então relatórios e atendimentos antigos continuam com o preço
   de resultado. Visualização limpa, preparada para impressão/PDF.
 
 ### Produtos
-- Catálogo do que a clínica vende além de procedimentos (revenda, kit, cosmético): nome, unidade,
-  descrição, valor, ativo. **Valor simples** — o preço aplicado fica gravado em cada venda, então mudar
-  o catálogo não reescreve o passado.
-- No **lançamento manual** a venda aponta para **um item**: procedimento **ou** produto (o produto
-  preenche o valor do catálogo, editável, e o nome fica em snapshot).
+- Catálogo de revenda, kit e cosmético para **venda ao cliente**, **compra de credor** ou ambos: nome, unidade, descrição, preço de venda, custo de compra e ativo. Valores simples — o lançamento guarda nome e valor efetivo, então o histórico não é reescrito.
+- No lançamento manual o seletor mostra somente produtos compatíveis: venda para receita e compra para despesa; o respectivo valor sugerido é preenchido mas segue editável. Um lançamento aponta para procedimento **ou** produto.
 
 ### Manutenção de cadastros (Sistema)
 - Hub para **corrigir** e **inativar/reativar** cadastros básicos: locais do recurso, clientes,

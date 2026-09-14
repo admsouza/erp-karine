@@ -36,6 +36,8 @@ export class ProductService {
       description: dto.description || null,
       unit: dto.unit || null,
       priceCents: dto.priceCents ?? 0,
+      purchasePriceCents: dto.purchasePriceCents ?? 0,
+      commercialUse: dto.commercialUse ?? 'VENDA',
     });
     await this.audit.record(
       {
@@ -50,6 +52,8 @@ export class ProductService {
         changes: [
           { field: 'name', before: null, after: produto.name },
           { field: 'priceCents', before: null, after: produto.priceCents },
+          { field: 'purchasePriceCents', before: null, after: produto.purchasePriceCents },
+          { field: 'commercialUse', before: null, after: produto.commercialUse },
         ],
       },
       undefined,
@@ -84,6 +88,14 @@ export class ProductService {
     if (dto.priceCents !== undefined && dto.priceCents !== produto.priceCents) {
       data.priceCents = dto.priceCents;
       changes.push({ field: 'priceCents', before: produto.priceCents, after: dto.priceCents });
+    }
+    if (dto.purchasePriceCents !== undefined && dto.purchasePriceCents !== produto.purchasePriceCents) {
+      data.purchasePriceCents = dto.purchasePriceCents;
+      changes.push({ field: 'purchasePriceCents', before: produto.purchasePriceCents, after: dto.purchasePriceCents });
+    }
+    if (dto.commercialUse !== undefined && dto.commercialUse !== produto.commercialUse) {
+      data.commercialUse = dto.commercialUse;
+      changes.push({ field: 'commercialUse', before: produto.commercialUse, after: dto.commercialUse });
     }
     if (!changes.length)
       throw new BadRequestException('Informe uma alteração diferente do valor atual.');

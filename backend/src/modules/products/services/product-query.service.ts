@@ -22,9 +22,9 @@ export class ProductQueryService {
     return { items: items.map(toProductEntity), total, page, pageSize };
   }
 
-  async listActive(): Promise<ProductEntity[]> {
+  async listActive(type?: 'RECEITA' | 'DESPESA'): Promise<ProductEntity[]> {
     return (await this.repository.findAll())
-      .filter((x) => x.active)
+      .filter((x) => x.active && (!type || x.commercialUse === 'AMBOS' || (type === 'RECEITA' ? x.commercialUse === 'VENDA' : x.commercialUse === 'COMPRA')))
       .map(toProductEntity);
   }
 

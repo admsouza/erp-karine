@@ -3,6 +3,7 @@ import { describeApiError } from '../../../shared/api/http-client';
 import { Button } from '../../../shared/components/Button';
 import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
+import { Select } from '../../../shared/components/Select';
 import { formatCentsToBRL, parseBRLToCents } from '../../../shared/utils/format';
 import { createProduct, updateProduct } from '../api/products-api';
 import type { Product } from '../types/product';
@@ -21,9 +22,9 @@ export function ProductFormModal({
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
   const [unit, setUnit] = useState(product?.unit ?? '');
-  const [price, setPrice] = useState(
-    product ? formatCentsToBRL(product.priceCents) : '',
-  );
+  const [price, setPrice] = useState(product ? formatCentsToBRL(product.priceCents) : '');
+  const [purchasePrice, setPurchasePrice] = useState(product ? formatCentsToBRL(product.purchasePriceCents) : '');
+  const [commercialUse, setCommercialUse] = useState(product?.commercialUse ?? 'VENDA');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -37,6 +38,8 @@ export function ProductFormModal({
         description: description.trim(),
         unit: unit.trim(),
         priceCents: price ? parseBRLToCents(price) : 0,
+        purchasePriceCents: purchasePrice ? parseBRLToCents(purchasePrice) : 0,
+        commercialUse,
       };
       if (product) await updateProduct(product.id, corpo);
       else await createProduct(corpo);
@@ -62,19 +65,11 @@ export function ProductFormModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+        <Select label="Uso do produto" value={commercialUse} onChange={(e) => setCommercialUse(e.target.value as 'VENDA' | 'COMPRA' | 'AMBOS')} options={[{ value: 'VENDA', label: 'Venda ao cliente' }, { value: 'COMPRA', label: 'Compra de credor' }, { value: 'AMBOS', label: 'Venda e compra' }]} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Valor (R$)"
-            inputMode="decimal"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-          <Input
-            label="Unidade"
-            hint="Ex.: unidade, caixa, ml"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-          />
+          {commercialUse !== 'COMPRA' && <Input label="Preço de venda (R$)" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />}
+          {commercialUse !== 'VENDA' && <Input label="Custo de compra (R$)" inputMode="decimal" value={purchasePrice} onChange={(e) => setPurchasePrice(e.target.value)} />}
+          <Input label="Unidade" hint="Ex.: unidade, caixa, ml" value={unit} onChange={(e) => setUnit(e.target.value)} />
         </div>
         <Input
           label="Descrição"

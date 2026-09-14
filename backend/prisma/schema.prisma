@@ -214,19 +214,30 @@ model Procedure {
 /// Catálogo de produtos da clínica (o que ela vende além de procedimentos).
 /// Valor simples: o preço aplicado fica gravado no lançamento, então o histórico
 /// não depende de o catálogo manter série de vigências.
+enum ProductCommercialUse {
+  VENDA
+  COMPRA
+  AMBOS
+}
+
 model Product {
-  id String @id @default(uuid())
-  name String
-  description String?
-  unit String?
-  priceCents Int @default(0)
-  active Boolean @default(true)
-  deactivatedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  transactions FinancialTransaction[]
+  id                  String               @id @default(uuid())
+  name                String
+  description         String?
+  unit                String?
+  /// Preço sugerido ao vender para o cliente. O lançamento guarda o valor aplicado.
+  priceCents          Int                  @default(0)
+  /// Custo sugerido ao comprar de um credor. O lançamento guarda o valor aplicado.
+  purchasePriceCents  Int                  @default(0)
+  commercialUse       ProductCommercialUse @default(VENDA)
+  active              Boolean              @default(true)
+  deactivatedAt       DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  transactions        FinancialTransaction[]
 
   @@index([active])
+  @@index([commercialUse])
 }
 
 model ProcedurePrice {

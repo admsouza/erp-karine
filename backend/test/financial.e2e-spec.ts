@@ -7,7 +7,7 @@ import { PrismaService } from '../src/common/database/prisma.service.js';
 import { createSession, destroySession, type TestSession } from './helpers/auth.js';
 
 describe('Módulo financeiro (e2e)', () => {
-  let app: INestApplication; let prisma: PrismaService; let session: TestSession;
+  let app: INestApplication; let prisma: PrismaService; let session: TestSession; let userSession: TestSession;
   let clientId = ''; let procedureId = ''; let appointmentId = ''; let planId = ''; let subscriptionId = ''; let manualId = '';
   const token = Math.random().toString(36).slice(2, 9);
   const now = new Date();
@@ -17,7 +17,8 @@ describe('Módulo financeiro (e2e)', () => {
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = module.createNestApplication(); configureApp(app); await app.init(); prisma = app.get(PrismaService); session = await createSession(app, 'financial');
-    clientId = (await prisma.client.create({ data: { fullName: `Cliente Financeiro ${token}` } })).id;
+ userSession = await createSession(app, 'financial-user', 'USER');
+ clientId = (await prisma.client.create({ data: { fullName: `Cliente Financeiro ${token}` } })).id;
     procedureId = (await prisma.procedure.create({ data: { name: `Procedimento Financeiro ${token}` } })).id;
     await prisma.procedurePrice.create({ data: { procedureId, valueCents: 30000, validFrom: new Date('2026-01-01') } });
     planId = (await prisma.subscriptionPlan.create({ data: { name: `Plano Financeiro ${token}`, priceCents: 15000 } })).id;
@@ -29,7 +30,7 @@ describe('Módulo financeiro (e2e)', () => {
     if (subscriptionId) await prisma.clientSubscription.deleteMany({ where: { id: subscriptionId } });
     await prisma.procedurePrice.deleteMany({ where: { procedureId } }); await prisma.procedure.deleteMany({ where: { id: procedureId } });
     await prisma.subscriptionPlan.deleteMany({ where: { id: planId } }); await prisma.client.deleteMany({ where: { id: clientId } });
-    await destroySession(app, session); await app.close();
+    await destroySession(app, userSession); await destroySession(app, session); await app.close();
   });
   it('gera uma única receita ao realizar atendimento e preserva snapshot', async () => {
     const created = await request(app.getHttpServer()).post('/api/appointments').set('Cookie', session.cookie).send({ clientId, procedureId, scheduledAt: `${testDate}T09:00:00-03:00` }).expect(201); appointmentId = created.body.id;
@@ -61,6 +62,9 @@ describe('Módulo financeiro (e2e)', () => {
     const reports = await request(app.getHttpServer()).get('/api/financial/reports').query({ from: testDate, to: nextDate, clientId }).set('Cookie', session.cookie).expect(200);
     expect(reports.body.byProcedure).toContainEqual({ name: `Procedimento Financeiro ${token}`, amountCents: 30000 });
     expect(reports.body.bySubscription).toContainEqual({ name: `Plano Financeiro ${token}`, amountCents: 15000 });
+  });
+  it('somente administrador pode alterar ou cancelar lançamento existente', async () => {
+    await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', userSession.cookie).expect(403);
   });
   it('cancela sem excluir e impede cancelamento duplicado', async () => {
     await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', session.cookie).expect(200);
