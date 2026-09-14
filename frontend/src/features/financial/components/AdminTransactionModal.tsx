@@ -35,7 +35,7 @@ export function AdminTransactionModal({ item, mode, onClose, onSaved }: { item: 
   const deleting = mode === 'delete';
   return <Modal open title={deleting ? 'Excluir lançamento' : 'Alterar lançamento'} onClose={onClose}>
     <form className="space-y-4" onSubmit={submit}>
-      {deleting ? <p className="text-sm text-slate-600">O lançamento sairá do fluxo operacional, mas permanecerá na auditoria como excluído.</p> : <div className="grid gap-4 sm:grid-cols-2">
+      {deleting ? <p className="text-sm text-slate-600">{item.status === 'CANCELADO' ? 'O lançamento cancelado será removido da lista. A trilha de auditoria permanecerá.' : 'O lançamento será cancelado e poderá ser removido definitivamente depois, se necessário.'}</p> : <div className="grid gap-4 sm:grid-cols-2">
         <Input className="sm:col-span-2" label="Descrição" required value={description} onChange={(e) => setDescription(e.target.value)} />
         <Input label="Valor (R$)" required inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Input label="Data" required type="date" value={date} onChange={(e) => setDate(e.target.value)} />

@@ -2,6 +2,12 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-14 · `financial` · Remoção de lançamentos cancelados
+
+- ADMIN agora vê **Excluir** também em lançamentos `CANCELADO`.
+- A primeira exclusão cancela o lançamento; excluir novamente o já cancelado remove a linha financeira e mantém o evento `DELETED` na auditoria.
+- Baixas de contas e lançamentos com ajustes vinculados continuam bloqueados contra remoção.
+
 ## 2026-09-14 · Publicação · custo de produto e administração financeira
 
 - Integrado em `main` pelo merge `5cb190b` e publicado no CapRover (`erp-estetica`).
