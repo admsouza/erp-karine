@@ -2,6 +2,19 @@
 
 Mais recente no topo. Formato: **data · módulo · alteração · impacto**.
 
+## 2026-09-14 · `financial` · Edição e exclusão administrativa de lançamentos
+
+- `ADMIN` passa a editar qualquer lançamento financeiro aberto no fluxo, com motivo obrigatório e evento de auditoria contendo os campos alterados.
+- `DELETE /api/financial/transactions/:id` é exclusão lógica: marca `CANCELADO`, mantém o registro e exige motivo; usuários comuns recebem `403`.
+- A tela Financeiro mostra **Alterar** e **Excluir** exclusivamente para ADMIN. Período fechado e baixa de conta continuam imutáveis para preservar conciliação e títulos.
+
+## 2026-09-14 · `products` + `financial` · Custo histórico e lucro de produto
+
+- O campo **Custo de compra (R$)** agora permanece visível inclusive para produto configurado apenas para venda.
+- Toda venda nova de produto grava o custo no próprio lançamento (`productCostCents`), preservando a margem mesmo após mudança de custo no catálogo.
+- Financeiro passa a exibir **Lucro por produto**: venda, custo e lucro; vendas antigas sem custo ficam sinalizadas e não têm margem retroativamente inventada.
+
+
 ## 2026-09-14 · `products` + `financial` · Produtos de venda/compra e proteção administrativa
 
 **Publicação (2026-09-14)**

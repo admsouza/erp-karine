@@ -22,6 +22,12 @@ export class CreateManualTransactionDto {
   @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(120) externalReference?: string;
   @ApiPropertyOptional() @Transform(trim) @IsOptional() @IsString() @MaxLength(1000) notes?: string;
 }
+export class UpdateFinancialTransactionDto extends CreateManualTransactionDto {
+  @ApiProperty({ description: 'Motivo obrigatório da alteração' }) @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(500) reason: string;
+}
+export class DeleteFinancialTransactionDto {
+  @ApiProperty({ description: 'Motivo obrigatório da exclusão lógica' }) @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(500) reason: string;
+}
 export class ListFinancialTransactionsQueryDto {
   @ApiPropertyOptional({ format: 'uuid' }) @IsOptional() @IsUUID() clientId?: string;
   @ApiPropertyOptional({ description: 'Credor da despesa (quem recebeu)' }) @Transform(trim) @IsOptional() @IsString() @MaxLength(120) counterparty?: string;

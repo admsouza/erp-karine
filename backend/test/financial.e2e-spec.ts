@@ -63,12 +63,18 @@ describe('Módulo financeiro (e2e)', () => {
     expect(reports.body.byProcedure).toContainEqual({ name: `Procedimento Financeiro ${token}`, amountCents: 30000 });
     expect(reports.body.bySubscription).toContainEqual({ name: `Plano Financeiro ${token}`, amountCents: 15000 });
   });
-  it('somente administrador pode alterar ou cancelar lançamento existente', async () => {
-    await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', userSession.cookie).expect(403);
+  it('recusa edição e exclusão de lançamento existente para usuário comum', async () => {
+    const payload = { counterparty: `Distribuidora alterada ${token}`, description: `Material alterado ${token}`, amountCents: 6500, date: `${testDate}T11:30:00-03:00`, paymentMethod: 'DINHEIRO', type: 'DESPESA', status: 'PENDENTE', reason: 'Correção do lançamento' };
+    await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}`).set('Cookie', userSession.cookie).send(payload).expect(403);
+    await request(app.getHttpServer()).delete(`/api/financial/transactions/${manualId}`).set('Cookie', userSession.cookie).send({ reason: 'Lançamento lançado em duplicidade' }).expect(403);
   });
-  it('cancela sem excluir e impede cancelamento duplicado', async () => {
-    await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', session.cookie).expect(200);
-    await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}/cancel`).set('Cookie', session.cookie).expect(409);
+  it('permite ao administrador editar qualquer lançamento manual com auditoria', async () => {
+    const updated = await request(app.getHttpServer()).patch(`/api/financial/transactions/${manualId}`).set('Cookie', session.cookie).send({ counterparty: `Distribuidora alterada ${token}`, description: `Material alterado ${token}`, amountCents: 6500, date: `${testDate}T11:30:00-03:00`, paymentMethod: 'DINHEIRO', type: 'DESPESA', status: 'PENDENTE', reason: 'Correção do lançamento' }).expect(200);
+    expect(updated.body).toMatchObject({ id: manualId, description: `Material alterado ${token}`, amountCents: 6500, paymentMethod: 'DINHEIRO', status: 'PENDENTE' });
+  });
+  it('exclui logicamente sem apagar histórico e impede exclusão repetida', async () => {
+    await request(app.getHttpServer()).delete(`/api/financial/transactions/${manualId}`).set('Cookie', session.cookie).send({ reason: 'Lançamento lançado em duplicidade' }).expect(200);
+    await request(app.getHttpServer()).delete(`/api/financial/transactions/${manualId}`).set('Cookie', session.cookie).send({ reason: 'Lançamento lançado em duplicidade' }).expect(409);
     expect(await prisma.financialTransaction.findUnique({ where: { id: manualId } })).toMatchObject({ status: 'CANCELADO', cancelledAt: expect.any(Date) });
   });
   it('mantém papéis de receita/despesa, vincula procedimento e aplica desconto', async () => {
